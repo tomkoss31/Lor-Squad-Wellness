@@ -66,6 +66,10 @@ interface Personne {
   email: string;
   /** « lead · pub Meta » — d'où on la connaît. */
   origine: string;
+  /** Le coach à qui SA FICHE est attribuée dans le CRM (18/09). Sans lui, un
+   *  rendez-vous calé depuis le compte d'une autre coach atterrissait chez
+   *  elle en silence : la fiche disait Thomas, l'agenda montrait Mélanie. */
+  coachFiche?: string | null;
 }
 
 interface Props {
@@ -184,7 +188,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        let req = sb.from("prospect_leads").select("first_name, last_name, phone, email, source, created_at").order("created_at", { ascending: false }).limit(6);
+        let req = sb.from("prospect_leads").select("first_name, last_name, phone, email, source, created_at, assigned_to_user_id").order("created_at", { ascending: false }).limit(6);
         if (q) {
           const chiffres = q.replace(/\D/g, "");
           const clauses = [`first_name.ilike.%${q}%`, `last_name.ilike.%${q}%`];
@@ -200,6 +204,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
             telephone: String(l.phone ?? "").trim(),
             email: String(l.email ?? "").trim(),
             origine: `lead · ${String(l.source ?? "") || "site"}`,
+            coachFiche: typeof l.assigned_to_user_id === "string" ? l.assigned_to_user_id : null,
           })),
         );
       } catch {
@@ -520,6 +525,18 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                   Changer
                 </button>
               </div>
+
+              {/* La fiche et le rendez-vous doivent désigner la MÊME coach. On ne
+                  corrige pas en douce : on le dit, et on propose le geste. */}
+              {personne?.coachFiche && coach && personne.coachFiche !== coach ? (
+                <div style={alerte("amber")}>
+                  <b>{personne.prenom} est suivie par {coachs.find((c) => c.id === personne.coachFiche)?.prenom ?? "une autre coach"}.</b>{" "}
+                  Ce rendez-vous serait pour {coachs.find((c) => c.id === coach)?.prenom ?? "—"}.
+                  <button type="button" onClick={() => setCoach(personne.coachFiche!)} style={{ ...lien, display: "block", marginTop: 6, textAlign: "left", alignSelf: "flex-start" }}>
+                    Le mettre à {coachs.find((c) => c.id === personne.coachFiche)?.prenom ?? "elle"}
+                  </button>
+                </div>
+              ) : null}
 
               {personne ? (
                 <div>
