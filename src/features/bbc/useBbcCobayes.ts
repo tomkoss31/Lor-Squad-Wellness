@@ -17,6 +17,8 @@ function startOfTodayISO(): string {
 
 export interface UseBbcCobayesResult {
   count: number;
+  /** Les `contact_label` notés aujourd'hui — « Contacter » s'en sert pour marquer les lignes faites (18/09). */
+  faits: string[];
   target: number;
   loading: boolean;
   logCobaye: (templateKey: string, contactLabel: string) => Promise<void>;
@@ -25,6 +27,7 @@ export interface UseBbcCobayesResult {
 
 export function useBbcCobayes(userId: string | null | undefined, target = DEFAULT_TARGET): UseBbcCobayesResult {
   const [count, setCount] = useState(0);
+  const [faits, setFaits] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -38,12 +41,13 @@ export function useBbcCobayes(userId: string | null | undefined, target = DEFAUL
         setLoading(false);
         return;
       }
-      const { count: c } = await sb
+      const { data, count: c } = await sb
         .from("outreach_messages")
-        .select("*", { count: "exact", head: true })
+        .select("contact_label", { count: "exact" })
         .eq("user_id", userId)
         .gte("sent_at", startOfTodayISO());
       if (typeof c === "number") setCount(c);
+      if (Array.isArray(data)) setFaits(data.map((r: { contact_label: string | null }) => r.contact_label ?? "").filter(Boolean));
     } catch {
       // Silent-fail — reste à 0.
     } finally {
@@ -82,5 +86,5 @@ export function useBbcCobayes(userId: string | null | undefined, target = DEFAUL
     [userId, refetch],
   );
 
-  return { count, target, loading, logCobaye, refetch };
+  return { count, faits, target, loading, logCobaye, refetch };
 }

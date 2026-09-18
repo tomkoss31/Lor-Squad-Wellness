@@ -1,27 +1,30 @@
 // =============================================================================
-// BbcApp — l'environnement BBC dédié (chantier BBC Lot 1, 2026-07-24).
+// BbcApp — le mode BBC, « le club en cinq onglets » (livraison A, 18/09/2026).
 //
-// Prise de contrôle COMPLÈTE de l'écran : sa propre sidebar + sa propre
-// navigation interne, à la place du chrome classic. Monté par AppLayout quand
-// le coach est en BBC (club_model='bbc' ou aperçu admin).
+// Thomas, 17-18/09 : « l'app est clairement trop compliquée ». La maquette
+// cliquable (scratchpad/maquette-bbc-cliquable.html, v7) a été construite sur
+// SA journée, pas sur les menus : ce fichier la pose sur les vues existantes.
 //
-// ÉTAT AU 2026-08-11 (cartographie faite par le code, pas par les fiches) :
-// les 14 vues sont codées ET alimentées — par un hook Supabase ou par des props
-// venues d'ici. Plus aucun écran « à venir », plus aucune donnée d'exemple.
+//   Matin · Agenda · ＋ · Contacter · Membres        ← la barre, une seule
+//   ⋯ Plus (en haut à droite)                       ← tout le reste, tel quel
 //
-// Le commentaire précédent annonçait l'inverse (« Lot 1 = charpente avec des
-// données d'exemple, les autres vues arrivent aux lots suivants »). Il datait
-// du cadrage et n'avait jamais été corrigé à la livraison — trois semaines à
-// faire croire qu'il restait la moitié du travail.
+// Le ＋ est posé dans une bosse de la barre (CSS, bbc-tokens.css) et ouvre les
+// trois gestes du comptoir : Pointer, Caler un RDV, Nouvelle évaluation.
+// Le BBC ne refait pas ce que l'app standard fait : « Sa fiche de lead » sort
+// vers le CRM, « L'app complète » vers le mode Classic.
 //
-// Ce qui manque au BBC n'est pas du code, ce sont des DONNÉES : 0 rituel,
-// 0 créneau configuré, 1 carte membre en base. Cf.
-// docs/audits/CARTOGRAPHIE_BBC_2026-08-11.md
+// Ce qui a été RETIRÉ de l'accueil : « Cobayes du jour » (0/20, 7 envois en
+// 2 mois) devient « Contacter aujourd'hui », rempli par l'app ; la bannière
+// Formation, les cœurs à un palier et le prochain appel vivent dans Plus, la
+// fiche membre et « prochaine étape ». Les vues elles-mêmes n'ont pas bougé.
 // =============================================================================
 
 import "../../styles/bbc-tokens.css";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Club, ClubSettings } from "../../types/domain";
+import { useCrmLeads, type CrmLead } from "../../hooks/useCrmLeads";
+import type { Reponse } from "../crm/qualification";
 import { BbcModeSwitch } from "./BbcModeSwitch";
 import type { VueBbcParAdresse } from "./bbcRoutes";
 import { BbcScripts } from "./views/BbcScripts";
@@ -33,31 +36,34 @@ import { BbcLexique } from "./views/BbcLexique";
 import { BbcCrm } from "./views/BbcCrm";
 import { BbcBoites } from "./views/BbcBoites";
 import { BbcAgenda } from "./agenda/BbcAgenda";
-import { RdvDuJour } from "./agenda/RdvDuJour";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
 import { BbcAppels } from "./views/BbcAppels";
-import { BbcLiensTiroir, construireLiens } from "./views/BbcLiens";
+import { BbcLiensTiroir } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
 import { BbcClub100 } from "./views/BbcClub100";
-import { BbcCobayeSheet } from "./BbcCobayeSheet";
+import { BbcMatin } from "./views/BbcMatin";
+import { BbcContacter, BbcContactSheet } from "./views/BbcContacter";
+import { BbcPlus } from "./views/BbcPlus";
 import { BbcNewMemberSheet } from "./BbcNewMemberSheet";
-import { BbcNewMemberButton } from "./BbcNewMemberButton";
+import { CalerRdvSheet } from "./agenda/CalerRdvSheet";
+import { cleJour, couleurCoach } from "./agenda/agendaClub";
+import { useCoachsDuClub } from "./useCoachsDuClub";
 import { useBbcCobayes } from "./useBbcCobayes";
 import { useBbcMembers } from "./useBbcMembers";
-import { useBbcHearts, nextPalier } from "./useBbcHearts";
-import { useBbcCalls } from "./useBbcCalls";
-import { visitLevel } from "./useBbcVisits";
+import { useBbcHearts } from "./useBbcHearts";
+import { aContacter, type AContacter } from "./contacter";
 import { DEFAULT_CLUB_SETTINGS } from "./useClubSettings";
-import { useBbcFormationProgress } from "./useBbcFormationProgress";
-import { BBC_FORMATION_MODULES } from "./data/bbcFormation";
+import { Feuille, Toast } from "./ui";
 
-type BbcView =
-  | "cockpit"
+export type BbcView =
+  | "matin"
   | "agenda"
+  | "contacter"
   | "crm"
-  | "boites"
+  | "plus"
   | "club"
+  | "boites"
   | "coeurs"
   | "messages"
   | "scripts"
@@ -68,8 +74,6 @@ type BbcView =
   | "prelancement"
   | "club100"
   | "reglages";
-
-type SectionKey = "club" | "membres" | "coeurs" | "ressources" | "monclub";
 
 interface BbcAppProps {
   coachName?: string;
@@ -89,77 +93,34 @@ interface BbcAppProps {
   onRenameClub?: (clubId: string, name: string, city: string) => Promise<boolean>;
 }
 
-// 5 entrées, pas une de plus. Le quotidien du coach — les visites, les fiches
-// membres, les cœurs, les scripts — tient au premier niveau ; le reste vit en
-// onglet DANS sa section. Le menu à 13 entrées d'avant était illisible et
-// obligeait à un tiroir « Plus » sur mobile, où la moitié du club se cachait.
-type Section = { k: SectionKey; label: string; icon: string; tabs: { k: BbcView; label: string }[] };
-const SECTIONS: Section[] = [
-  {
-    k: "club",
-    label: "Le club",
-    icon: "☕",
-    tabs: [
-      { k: "cockpit", label: "Ce matin" },
-      // L'agenda partagé (17/09). Il a REMPLACÉ « La semaine » le 18/09, une
-      // fois les permanences, rituels, heures du jour et fermetures passés
-      // dedans — Thomas : « j'ai toujours la vue La semaine, qui fait doublon ».
-      // (`BbcSemaine` vit encore pour l'atelier et prête sa feuille « Qui tient
-      // le bar ? » à L'agenda.)
-      { k: "agenda", label: "L'agenda" },
-      { k: "club", label: "Les visites" },
-      { k: "appels", label: "Les appels" },
-    ],
-  },
-  {
-    k: "membres",
-    label: "Membres",
-    icon: "👥",
-    tabs: [
-      { k: "crm", label: "Mes membres" },
-      // Les boîtes de contact vivent ICI et pas en 6e entrée de menu : la nav
-      // BBC tient à 5 sections, et une boîte ne sert qu'à faire entrer des gens.
-      { k: "boites", label: "Les boîtes" },
-      { k: "messages", label: "Messages" },
-    ],
-  },
-  { k: "coeurs", label: "Cœurs", icon: "❤️", tabs: [{ k: "coeurs", label: "Les cœurs" }] },
-  {
-    k: "ressources",
-    label: "Ressources",
-    icon: "🎓",
-    tabs: [
-      // 15/09 — « Scripts & liens » devient « Scripts » : les liens ont leur
-      // bouton dédié au bout de ces onglets (tiroir `BbcLiensTiroir`).
-      { k: "scripts", label: "Scripts" },
-      { k: "formation", label: "Formation" },
-      // Le lexique était empilé en pied de la page Formation : 25 définitions
-      // sous 10 modules, que personne ne scrollait. Il devient un onglet ICI
-      // (et pas une 6e entrée de menu — la nav BBC tient à 5 sections).
-      { k: "lexique", label: "Lexique" },
-      { k: "prelancement", label: "Pré-lancement" },
-    ],
-  },
-  {
-    k: "monclub",
-    label: "Mon club",
-    icon: "⚙️",
-    tabs: [
-      // Plus d'onglet « La carte » (retiré le 2026-07-28) : l'app n'encaisse
-      // nulle part au comptoir, donc les prix de vente à l'unité ne pilotaient
-      // rien. La carte est physique, au club, sous les yeux des membres. Seul
-      // le COÛT d'une visite restait utile — il vit dans « Rentabilité ».
-      { k: "club100", label: "Rentabilité" },
-      { k: "clubs", label: "Mes clubs" },
-      { k: "reglages", label: "Réglages" },
-    ],
-  },
+/** L'adresse parle encore de « cockpit » (`/co-pilote`) : c'est « Le matin ». */
+function vueDe(v: VueBbcParAdresse): BbcView {
+  return v === "cockpit" ? "matin" : v;
+}
+
+/** La barre du bas — quatre onglets et le ＋ au milieu. Le ＋ n'est pas une vue. */
+const BARRE: { k: BbcView; icone: string; label: string }[] = [
+  { k: "matin", icone: "☀️", label: "Matin" },
+  { k: "agenda", icone: "📅", label: "Agenda" },
+  { k: "contacter", icone: "📞", label: "Contacter" },
+  { k: "crm", icone: "👥", label: "Membres" },
 ];
 
-/** Dans quelle section vit une vue — sert aux raccourcis du Cockpit. */
-function sectionDe(view: BbcView): SectionKey {
-  return SECTIONS.find((s) => s.tabs.some((t) => t.k === view))?.k ?? "club";
-}
+/** Les vues rangées derrière Plus — pour que la barre latérale (desktop) les garde à un clic. */
+const PLUS: { k: BbcView; label: string }[] = [
+  { k: "club", label: "Les visites" },
+  { k: "messages", label: "Messages" },
+  { k: "appels", label: "Les appels" },
+  { k: "coeurs", label: "Les cœurs" },
+  { k: "boites", label: "Les boîtes" },
+  { k: "scripts", label: "Scripts" },
+  { k: "formation", label: "Formation" },
+  { k: "lexique", label: "Lexique" },
+  { k: "prelancement", label: "Pré-lancement" },
+  { k: "club100", label: "Rentabilité" },
+  { k: "clubs", label: "Mes clubs" },
+  { k: "reglages", label: "Réglages" },
+];
 
 /**
  * La salutation suit l'heure. « Bon matin, Thomas » à 17 h sonnait faux (vu
@@ -171,10 +132,11 @@ function salutation(maintenant = new Date()): string {
 }
 
 const TITLES: Record<BbcView, { eye: string; title: string }> = {
-  // Le titre du cockpit est remplacé à l'affichage par `salutation()`.
-  cockpit: { eye: "co-pilote du club", title: "Bon matin" },
+  matin: { eye: "le club · ce matin", title: "Le matin" },
   agenda: { eye: "le club · toute l'équipe", title: "L'agenda" },
-  crm: { eye: "cobayes & membres", title: "Ton pipeline" },
+  contacter: { eye: "20 par jour · rangés par urgence", title: "Contacter" },
+  crm: { eye: "les membres du club", title: "Membres" },
+  plus: { eye: "tout le reste, rangé ici", title: "Plus" },
   boites: { eye: "le terrain · coupons papier", title: "Les boîtes" },
   club: { eye: "pointage en direct", title: "Le club ce matin" },
   coeurs: { eye: "réseau & paliers", title: "Les cœurs" },
@@ -190,6 +152,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
 };
 
 export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peutBasculer, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
+  const navigate = useNavigate();
   // Les réglages fraîchement enregistrés priment sur ceux chargés au montage :
   // `useBbcMode` ne les relit qu'au démarrage, et sans ça les appels, les cœurs
   // et les cartes restaient sur les anciennes valeurs jusqu'à un F5 — assez
@@ -197,300 +160,194 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const [reglagesFrais, setReglagesFrais] = useState<ClubSettings | null>(null);
   /** Le tiroir « 🔗 Mes liens » (15/09, variante B validée par Thomas). */
   const [liensOuverts, setLiensOuverts] = useState(false);
-  /**
-   * Le thème du mode BBC (Thomas, 18/08 : « faudrait aussi le toggle mode clair
-   * pour l'app coach, pas only sombre »).
-   *
-   * ⚠️ Ouvrir ce toggle rend visibles au coach les jetons du bloc
-   * `.bbc-mode.bbc-light`, corrigés le même jour — dont `--ls-bbc-lime-ink`
-   * passé au BLANC. Vérifié call site par call site avant d'ouvrir : les ~50
-   * usages de `lime-ink` du mode coach sont TOUS posés sur un fond sombre en
-   * clair (lime #5E7A09, ambre #9A631A ou teal #0F766E). L'encre blanche y
-   * passe partout.
-   *
-   * Pas de persistance : le thème client ne l'est pas non plus, et inventer un
-   * stockage ici ferait diverger les deux côtés pour rien.
-   */
-  const [clair, setClair] = useState(false);
 
   /**
+   * Le thème du mode BBC (Thomas, 18/08 : « faudrait aussi le toggle mode clair
+   * pour l'app coach, pas only sombre »). Pas de persistance : le thème client
+   * ne l'est pas non plus.
+   *
    * ⚠️ LE THÈME NE SE PROPAGE PAS TOUT SEUL. Le sélecteur est
    * `.bbc-mode.bbc-light` : les DEUX classes doivent être sur le MÊME élément.
-   * Or QUATORZE éléments redéclarent `bbc-mode` sur eux-mêmes — la barre du
-   * bas, et toutes les feuilles qui s'affichent en `position: fixed` hors du
-   * flux (pesée, carte, nouveau membre, scanner, appels, semaine…). Sans ça,
-   * l'app passerait en clair et ses feuilles resteraient noires.
-   *
-   * On synchronise donc TOUS les `.bbc-mode` du document — c'est déjà ce que
-   * fait l'atelier. Le `MutationObserver` est indispensable : une feuille
-   * montée APRÈS le basculement n'aurait jamais reçu la classe.
+   * Or les feuilles s'affichent en `position: fixed` hors du flux (pesée, carte,
+   * nouveau membre, scanner, appels, les nouvelles feuilles de `ui.tsx`…). On
+   * synchronise donc TOUS les `.bbc-mode` du document ; le `MutationObserver`
+   * est indispensable pour une feuille montée APRÈS le basculement.
    */
+  const [clair, setClair] = useState(false);
   useEffect(() => {
     const appliquer = () => {
-      document
-        .querySelectorAll(".bbc-mode")
-        .forEach((el) => el.classList.toggle("bbc-light", clair));
+      document.querySelectorAll(".bbc-mode").forEach((el) => el.classList.toggle("bbc-light", clair));
     };
     appliquer();
     const observateur = new MutationObserver(appliquer);
     observateur.observe(document.body, { childList: true, subtree: true });
     return () => {
       observateur.disconnect();
-      // On ne laisse JAMAIS le clair derrière soi : le mode coach classique et
-      // l'app membre ont leur propre thème, ils ne doivent pas hériter du nôtre.
       document.querySelectorAll(".bbc-mode").forEach((el) => el.classList.remove("bbc-light"));
     };
   }, [clair]);
-  const club = clubProp && reglagesFrais ? { ...clubProp, settings: reglagesFrais } : clubProp;
-  const [section, setSection] = useState<SectionKey>("club");
-  const [view, setViewState] = useState<BbcView>("cockpit");
 
-  // L'ADRESSE choisit l'onglet (17/09/2026). Avant, BBC ignorait l'URL : une
-  // notification « nouveau rendez-vous » (`/agenda`) ouvrait « Ce matin ». On
-  // suit `cleAdresse` et non `vueAdresse` : deux notifications de suite vers la
-  // même adresse doivent rouvrir l'onglet, même si on en est parti entre-temps.
+  const club = clubProp && reglagesFrais ? { ...clubProp, settings: reglagesFrais } : clubProp;
+  const [view, setView] = useState<BbcView>("matin");
+
+  // L'ADRESSE choisit l'onglet (17/09/2026). On suit `cleAdresse` et non
+  // `vueAdresse` : deux notifications de suite vers la même adresse doivent
+  // rouvrir l'onglet, même si on en est parti entre-temps.
   useEffect(() => {
     if (!vueAdresse) return;
-    setSection(sectionDe(vueAdresse));
-    setViewState(vueAdresse);
+    setView(vueDe(vueAdresse));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cleAdresse]);
 
-  const [sheet, setSheet] = useState(false);
+  // Chaque changement d'onglet remonte en haut : un onglet, c'est un écran.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [view]);
+
   // La feuille « Évaluation bien-être » vit ICI et pas dans une vue : elle
-  // s'ouvre depuis « Mes membres » ET depuis « Ce matin », qui ne sont pas
-  // montés en même temps. Une seule instance, un seul état.
+  // s'ouvre depuis « Mes membres », depuis le ＋ et depuis Plus. Une seule
+  // instance, un seul état.
   const [nouveauMembre, setNouveauMembre] = useState(false);
-  // Chaque vue monte sa PROPRE instance de useBbcMembers (il n'y a pas de
-  // cache partagé, et AppContext est sacré). Après une création, on bouge donc
-  // cette clé : la vue affichée se remonte et refait sa lecture. Sans ça, le
-  // membre qu'on vient de créer n'apparaît qu'au prochain changement d'onglet.
+  /** Le menu du ＋ : Pointer, Caler, Nouvelle évaluation. */
+  const [gestes, setGestes] = useState(false);
+  const [caler, setCaler] = useState(false);
+  // Chaque vue monte sa PROPRE instance des hooks (pas de cache partagé, et
+  // AppContext est sacré). Après une création, on bouge cette clé : la vue
+  // affichée se remonte et refait sa lecture.
   const [rafraichir, setRafraichir] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [toast]);
+
+  // ── « Contacter aujourd'hui » : une seule source pour Le matin et l'onglet ──
+  // Les leads viennent du hook du CRM standard (même liste que /crm) ; les
+  // membres et les cœurs des hooks BBC ; le compteur du jour et les « faits »
+  // de `outreach_messages` (ex-Cobayes du jour : même table, autre sens).
+  const leadsApi = useCrmLeads();
+  const membresApi = useBbcMembers(userId);
+  const heartsApi = useBbcHearts(userId);
   const cob = useBbcCobayes(userId);
+  const contacts = useMemo(
+    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members }),
+    [leadsApi.leads, membresApi.members, heartsApi.members],
+  );
+  const faits = useMemo(() => new Set(cob.faits), [cob.faits]);
+  const [contact, setContact] = useState<AContacter | null>(null);
+  const { coachs } = useCoachsDuClub(userId);
+
+  async function repondreLead(lead: CrmLead, r: Reponse): Promise<string | null> {
+    const err = await leadsApi.qualifier(lead, r);
+    if (err) return err;
+    await cob.logCobaye(`lead:${r.cle}`, lead.firstName);
+    setToast(`${lead.firstName} · ${r.resume} — ${cob.count + 1} / ${cob.target}`);
+    return null;
+  }
+  async function faitMembre(c: AContacter, libelle: string): Promise<void> {
+    await cob.logCobaye(c.raison, c.nom);
+    setToast(`${c.nom} · ${libelle.toLowerCase()} — ${cob.count + 1} / ${cob.target}`);
+  }
+
   const first = (coachName ?? "").split(/\s+/)[0] || "";
   const clubName = club?.name ?? "Mon club";
   const clubCity = club?.city ?? "Verdun";
   const t = TITLES[view];
-  const sectionCourante = SECTIONS.find((s) => s.k === section) ?? SECTIONS[0];
-
-  /** Va sur une vue en réalignant la section — les raccourcis du Cockpit
-   *  traversent les sections, la barre latérale doit suivre. */
-  function setView(v: BbcView) {
-    setSection(sectionDe(v));
-    setViewState(v);
-  }
-
-  /** Ouvre une section sur son premier onglet. */
-  function ouvrirSection(s: Section) {
-    setSection(s.k);
-    setViewState(s.tabs[0].k);
-  }
+  const restants = Math.max(0, cob.target - cob.count);
 
   return (
     <div className={clair ? "bbc-mode bbc-shell bbc-light" : "bbc-mode bbc-shell"}>
-      {/* ── Sidebar (desktop) ─────────────────────────────────────────── */}
+      {/* ── Barre latérale (desktop) : les quatre du quotidien, le ＋, puis Plus ── */}
       <aside className="bbc-sidebar">
         <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "4px 8px 14px" }}>
-          <span
-            style={{
-              fontFamily: "var(--ls-bbc-font-display)",
-              fontSize: 22,
-              color: "var(--ls-bbc-lime)",
-              lineHeight: 1,
-            }}
-          >
-            BBC
-          </span>
+          <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22, color: "var(--ls-bbc-orange)", lineHeight: 1, letterSpacing: ".02em" }}>BBC</span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 14, lineHeight: 1 }}>{clubName}</div>
-            <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, color: "var(--ls-bbc-hint)", letterSpacing: "0.06em", marginTop: 3 }}>
+            <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)", letterSpacing: "0.06em", marginTop: 3 }}>
               {clubCity} · {club?.settings?.open_hours || DEFAULT_CLUB_SETTINGS.open_hours}
             </div>
           </div>
         </div>
 
         <nav style={{ display: "flex", flexDirection: "column", gap: 3, flex: 1, overflowY: "auto", paddingTop: 4 }}>
-          {SECTIONS.map((s) => {
-            const active = s.k === section;
-            return (
-              <button
-                key={s.k}
-                type="button"
-                className="bbc-navitem"
-                onClick={() => ouvrirSection(s)}
-                aria-current={active ? "page" : undefined}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  width: "100%",
-                  border: 0,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  padding: "13px 12px",
-                  borderRadius: 12,
-                  background: active ? "var(--ls-bbc-s2)" : "transparent",
-                  // lime-text et pas lime : en thème clair l'aplat tombe à
-                  // 3,9:1 sur blanc, l'encre à 5,1:1. En sombre les deux jetons
-                  // valent le même #C5F82A — le change ne se voit que sur clair.
-                  color: active ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)",
-                  fontFamily: "var(--ls-bbc-font-body)",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  transition: "background 0.15s, color 0.15s",
-                }}
-              >
-                <span aria-hidden="true" style={{ fontSize: 17, width: 20, textAlign: "center" }}>
-                  {s.icon}
-                </span>
-                <span style={{ flex: 1 }}>{s.label}</span>
-              </button>
-            );
-          })}
+          {BARRE.map((s) => (
+            <NavItem key={s.k} active={view === s.k} icone={s.icone} label={s.k === "contacter" ? `${s.label} · ${cob.count}/${cob.target}` : s.label} onClick={() => setView(s.k)} />
+          ))}
+          <button type="button" className="bbc-pression" onClick={() => setGestes(true)} style={{ display: "flex", alignItems: "center", gap: 12, margin: "6px 0", padding: "11px 12px", borderRadius: 999, border: 0, cursor: "pointer", background: "var(--ls-bbc-grad)", color: "#fff", boxShadow: "var(--ls-bbc-grad-ombre)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 700 }}>
+            <span aria-hidden="true" style={{ fontSize: 18, width: 20, textAlign: "center" }}>＋</span>
+            Pointer · Caler · Évaluer
+          </button>
+          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)", padding: "10px 12px 4px" }}>Plus</div>
+          {PLUS.map((p) => (
+            <NavItem key={p.k} active={view === p.k} label={p.label} onClick={() => setView(p.k)} petit />
+          ))}
+          <NavItem active={false} label="Mes liens" onClick={() => setLiensOuverts(true)} petit />
         </nav>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)" }}>
-          {(isAdmin || peutBasculer) && onSetPreview ? (
-            <BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} compact />
-          ) : null}
+          {(isAdmin || peutBasculer) && onSetPreview ? <BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} compact /> : null}
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 4px" }}>
-            <div
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "var(--ls-bbc-s3)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "var(--ls-bbc-font-mono)",
-                fontSize: 12,
-                fontWeight: 700,
-                color: "var(--ls-bbc-teal)",
-                flex: "none",
-              }}
-            >
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--ls-bbc-s3)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, fontWeight: 700, color: "var(--ls-bbc-teal)", flex: "none" }}>
               {(first[0] ?? "?").toUpperCase()}
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 12.5, fontWeight: 700 }}>{first || "Coach"}</div>
-              <div style={{ fontSize: 10.5, color: "var(--ls-bbc-hint)" }}>{isAdmin ? "admin · propriétaire" : "coach"}</div>
+              <div style={{ fontSize: 11, color: "var(--ls-bbc-hint)" }}>{isAdmin ? "admin · propriétaire" : "coach"}</div>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* ── Main ──────────────────────────────────────────────────────── */}
+      {/* ── L'écran ─────────────────────────────────────────────────────── */}
       <main className="bbc-main">
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, marginBottom: 20 }}>
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontFamily: "var(--ls-bbc-font-mono)",
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.16em",
-                color: "var(--ls-bbc-muted)",
-                textTransform: "uppercase",
-              }}
-            >
-              <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />
+        <div className="bbc-entete">
+          <div style={{ minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.16em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
+              <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-orange)", boxShadow: "0 0 8px var(--ls-bbc-orange)" }} />
               {t.eye}
             </div>
-            <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 32, letterSpacing: "0.01em", lineHeight: 1.05, marginTop: 8 }}>
-              {view === "cockpit" ? (first ? `${salutation()}, ${first}` : salutation()) : t.title}
+            <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 30, letterSpacing: "0.02em", lineHeight: 1.05, marginTop: 6, textTransform: "uppercase" }}>
+              {view === "matin" ? (first ? `${salutation()}, ${first}` : salutation()) : t.title}
             </div>
           </div>
-          {(isAdmin || peutBasculer) && onSetPreview ? (
-            <BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} />
-          ) : null}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
+            {(isAdmin || peutBasculer) && onSetPreview ? <span className="bbc-seulement-large"><BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} /></span> : null}
+            {view !== "plus" ? (
+              <button type="button" className="bbc-plus-btn bbc-pression" onClick={() => setView("plus")} aria-label="Plus">⋯</button>
+            ) : (
+              <button type="button" className="bbc-plus-btn bbc-pression" onClick={() => setView("matin")} aria-label="Retour au matin">✕</button>
+            )}
+          </div>
         </div>
 
-        {/* Onglets de la section — masqués quand elle n'en a qu'un seul. */}
-        {sectionCourante.tabs.length > 1 ? (
-          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginBottom: 22, borderBottom: "1px solid var(--ls-bbc-line)", paddingBottom: 12 }}>
-          <div role="tablist" aria-label={sectionCourante.label} style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-            {sectionCourante.tabs.map((tab) => {
-              const on = tab.k === view;
-              return (
-                <button
-                  key={tab.k}
-                  type="button"
-                  role="tab"
-                  aria-selected={on}
-                  onClick={() => setViewState(tab.k)}
-                  style={{
-                    padding: "9px 15px",
-                    borderRadius: 11,
-                    cursor: "pointer",
-                    fontFamily: "var(--ls-bbc-font-body)",
-                    fontSize: 13.5,
-                    fontWeight: 700,
-                    border: on ? "1px solid var(--ls-bbc-lime)" : "1px solid var(--ls-bbc-line)",
-                    background: on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s1)",
-                    color: on ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)",
-                    transition: "background .15s, color .15s",
-                  }}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-          {/* Le bouton dédié des liens : au bout des onglets de Ressources, là
-              où Thomas l'a dessiné. Il ouvre les liens PAR-DESSUS l'onglet en
-              cours, sans le quitter. */}
-          {sectionCourante.k === "ressources" ? (
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              onClick={() => setLiensOuverts(true)}
-              style={{
-                marginLeft: "auto",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "9px 15px",
-                borderRadius: 11,
-                cursor: "pointer",
-                fontFamily: "var(--ls-bbc-font-body)",
-                fontSize: 13.5,
-                fontWeight: 700,
-                border: "1px solid var(--ls-bbc-teal)",
-                background: "color-mix(in srgb, var(--ls-bbc-teal) 10%, transparent)",
-                color: "var(--ls-bbc-teal)",
-              }}
-            >
-              <span aria-hidden="true">🔗</span>
-              Mes liens
-              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, padding: "1px 7px", borderRadius: 99, background: "color-mix(in srgb, var(--ls-bbc-teal) 18%, transparent)" }}>
-                {construireLiens(coachName, club?.settings ?? null, club?.name).filter((l) => !l.missing).length}
-              </span>
-            </button>
-          ) : null}
-          </div>
-        ) : null}
-
-        {view === "cockpit" && (
-          <Cockpit
+        {view === "matin" && (
+          <BbcMatin
             key={rafraichir}
-            cobayes={cob.count}
-            target={cob.target}
-            onSend={() => setSheet(true)}
-            onNouveauMembre={() => setNouveauMembre(true)}
             userId={userId}
             club={club ?? null}
+            contacts={contacts}
+            faits={faits}
+            count={cob.count}
+            target={cob.target}
             onGo={setView}
+            onContact={setContact}
+            onLiens={() => setLiensOuverts(true)}
+          />
+        )}
+        {view === "contacter" && <BbcContacter contacts={contacts} faits={faits} count={cob.count} target={cob.target} onContact={setContact} />}
+        {view === "plus" && (
+          <BbcPlus
+            onGo={setView}
+            onLiens={() => setLiensOuverts(true)}
+            onEval={() => setNouveauMembre(true)}
+            onClassic={(isAdmin || peutBasculer) && onSetPreview ? () => onSetPreview("classic") : undefined}
+            clair={clair}
+            onClair={() => setClair((v) => !v)}
           />
         )}
         {view === "scripts" && <BbcScripts settings={club?.settings ?? null} />}
-        {liensOuverts ? (
-          <BbcLiensTiroir coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} onFermer={() => setLiensOuverts(false)} />
-        ) : null}
-        {view === "agenda" && <BbcAgenda userId={userId} coachName={coachName} club={club ?? null} />}
+        {view === "agenda" && <BbcAgenda key={rafraichir} userId={userId} coachName={coachName} club={club ?? null} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
@@ -502,82 +359,64 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "club100" && <BbcClub100 userId={userId} clubId={club?.id ?? null} />}
-        {view === "reglages" && (
-          <>
-            {/* L'APPARENCE, en tête des réglages. Le club ouvre à 7 h dans une
-                salle très éclairée : le sombre y est illisible, et c'est
-                justement l'heure où le coach pointe les visites. */}
-            <button
-              type="button"
-              onClick={() => setClair((v) => !v)}
-              aria-pressed={clair}
-              style={{
-                display: "flex", alignItems: "center", gap: 12, width: "100%",
-                minHeight: 54, padding: "12px 15px", marginBottom: 14,
-                borderRadius: 14, background: "var(--ls-bbc-s1)",
-                border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-text)",
-                fontFamily: "var(--ls-bbc-font-body)", fontSize: 14.5,
-                textAlign: "left", cursor: "pointer",
-              }}
-            >
-              <span aria-hidden="true" style={{ fontSize: 19 }}>{clair ? "☀️" : "🌙"}</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ display: "block", fontWeight: 600 }}>Apparence</span>
-                <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 2 }}>
-                  {clair ? "clair — pour le comptoir du matin" : "sombre — le réglage d'origine"}
-                </span>
-              </span>
-              <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-muted)", flex: "none" }}>
-                {clair ? "clair" : "sombre"}
-              </span>
-            </button>
-            <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />
-          </>
-        )}
+        {view === "reglages" && <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />}
       </main>
 
-      {/* ── Bottom nav (mobile) : les 5 sections, rien de caché ───────── */}
-      <nav className="bbc-bottomnav bbc-mode">
-        {SECTIONS.map((s) => {
-          const active = s.k === section;
-          return (
-            <button
-              key={s.k}
-              type="button"
-              onClick={() => ouvrirSection(s)}
-              aria-current={active ? "page" : undefined}
-              style={{
-                flex: 1,
-                background: "transparent",
-                border: 0,
-                cursor: "pointer",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 3,
-                padding: "4px 2px",
-                // Idem : 10 px, c'est le texte le plus petit de l'app — il a
-                // besoin de l'encre, pas de l'aplat. Sans effet en sombre.
-                color: active ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)",
-                fontFamily: "var(--ls-bbc-font-body)",
-                fontSize: 10,
-                fontWeight: 600,
-              }}
-            >
-              <span aria-hidden="true" style={{ fontSize: 18 }}>
-                {s.icon}
-              </span>
-              {s.label}
-            </button>
-          );
-        })}
+      {/* ── La barre du bas (mobile) : Matin · Agenda · ＋ · Contacter · Membres ── */}
+      <nav className="bbc-bottomnav bbc-mode" aria-label="Navigation">
+        {BARRE.slice(0, 2).map((s) => (
+          <BarreItem key={s.k} active={view === s.k} icone={s.icone} label={s.label} onClick={() => setView(s.k)} />
+        ))}
+        <button type="button" onClick={() => setGestes(true)} aria-label="Pointer, caler ou évaluer" style={barreBouton}>
+          <span className="bbc-plus-rond" aria-hidden="true">＋</span>
+          <span>Ajouter</span>
+        </button>
+        <BarreItem active={view === "contacter"} label="Contacter" onClick={() => setView("contacter")} icone={<Anneau fait={cob.count} sur={cob.target} />} badge={restants > 0 ? restants : undefined} />
+        <BarreItem active={view === "crm"} icone="👥" label="Membres" onClick={() => setView("crm")} />
       </nav>
 
-      {sheet ? (
-        <BbcCobayeSheet
-          onClose={() => setSheet(false)}
-          onSent={(templateKey, contactLabel) => void cob.logCobaye(templateKey, contactLabel)}
+      {/* ── Feuilles ────────────────────────────────────────────────────── */}
+      {gestes ? (
+        <Feuille titre="Ajouter" sous="Les trois gestes du comptoir." onClose={() => setGestes(false)}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            <Geste icone="🔍" label="Pointer une visite" fort onClick={() => { setGestes(false); setView("club"); }} />
+            <Geste icone="📅" label="Caler un RDV" onClick={() => { setGestes(false); setCaler(true); }} />
+            <Geste icone="📝" label="Nouvelle évaluation" onClick={() => { setGestes(false); setNouveauMembre(true); }} />
+          </div>
+        </Feuille>
+      ) : null}
+
+      {caler ? (
+        <CalerRdvSheet
+          userId={userId}
+          coachs={coachs}
+          couleur={(id) => couleurCoach(id, coachs)}
+          jourInitial={cleJour(new Date())}
+          coachInitial={userId ?? null}
+          onClose={() => setCaler(false)}
+          onFait={() => {
+            setCaler(false);
+            setRafraichir((n) => n + 1);
+            setView("agenda");
+            setToast("Rendez-vous calé ✓");
+          }}
         />
+      ) : null}
+
+      {contact ? (
+        <BbcContactSheet
+          c={contact}
+          coachPrenom={first}
+          fait={faits.has(contact.nom)}
+          onClose={() => setContact(null)}
+          onReponseLead={repondreLead}
+          onFaitMembre={faitMembre}
+          onOuvrirLead={(lead) => { setContact(null); navigate(`/crm/leads/${lead.key}`); }}
+        />
+      ) : null}
+
+      {liensOuverts ? (
+        <BbcLiensTiroir coachName={coachName} settings={club?.settings ?? null} clubName={club?.name} onFermer={() => setLiensOuverts(false)} />
       ) : null}
 
       {nouveauMembre ? (
@@ -586,297 +425,80 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           coachName={coachName}
           club={club ?? null}
           onClose={() => setNouveauMembre(false)}
-          onCreated={() => setRafraichir((n) => n + 1)}
+          onCreated={() => { setRafraichir((n) => n + 1); void membresApi.refetch(); }}
         />
       ) : null}
+
+      <Toast message={toast} />
     </div>
   );
 }
 
-// ── Cockpit (fidèle au design, données d'exemple front-only) ──────────────
-function Cockpit({ cobayes, target, onSend, onNouveauMembre, userId, club, onGo }: { cobayes: number; target: number; onSend: () => void; onNouveauMembre: () => void; userId?: string; club: Club | null; onGo: (v: BbcView) => void }) {
-  const ringOffset = Math.max(0, Math.round(578 * (1 - Math.min(cobayes / target, 1))));
-  const left = Math.max(0, target - cobayes);
-  const { members, loading } = useBbcMembers(userId);
+// ── Les petites pièces de la coquille ─────────────────────────────────────
 
-  // Le club ce matin : qui a pointé aujourd'hui + qui est à faire.
-  const pointes = members.filter((m) => m.visitedToday);
-  // Bilan = carte consommée, pas le cumul de visites à vie.
-  const bilans = members.filter((m) => m.card && m.card.used >= m.card.type);
-  // Cœurs : MÊME source que l'onglet Cœurs (sinon les deux écrans affichent
-  // des compteurs différents — l'un limité aux membres BBC, l'autre non).
-  const heartsData = useBbcHearts(userId);
-  // Progression de formation réelle — sert le bandeau ci-dessous, qui ne
-  // s'affiche pas du tout si la base ne sait rien dire (`available` false).
-  const formation = useBbcFormationProgress(userId);
-  // Sur `m.key` (slug stable), pas sur `m.n` : le numéro affiché change à
-  // chaque réorganisation du parcours, la clé de progression non.
-  const modulesFaits = BBC_FORMATION_MODULES.filter((m) => formation.done[m.key]).length;
-  const aUnCoeur = heartsData.members.filter((m) => {
-    const next = nextPalier(m.hearts);
-    return next !== null && next - m.hearts === 1;
-  });
-  const aValider = heartsData.pending.length;
-  // Rituels : prochaine occurrence + inscrits réels + suivis en attente.
-  const calls = useBbcCalls(userId, club?.settings);
-  const nextCall = calls.nextCalls[0];
-  const inscrits = nextCall ? calls.forOccurrence(nextCall.key, nextCall.at).length : 0;
-
+function NavItem({ active, icone, label, onClick, petit }: { active: boolean; icone?: string; label: string; onClick: () => void; petit?: boolean }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 720 }}>
-      {/* Formation : progression RÉELLE, ou rien.
-          Avant, ce bandeau affichait « reprendre le chapitre 3 » et une barre
-          figée à 60 % — pour tout le monde, à vie, quoi qu'on ait lu. Un
-          indicateur qui ne bouge jamais apprend à ignorer l'écran. On ne le
-          montre donc que si la progression est réellement lisible en base, et
-          on ne le montre plus du tout une fois les 9 modules déroulés. */}
-      {formation.available && modulesFaits < BBC_FORMATION_MODULES.length ? (
-        <button
-          type="button"
-          onClick={() => onGo("formation")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            width: "100%",
-            textAlign: "left",
-            cursor: "pointer",
-            background: "var(--ls-bbc-s1)",
-            border: "1px solid var(--ls-bbc-line)",
-            borderRadius: 16,
-            padding: "14px 18px",
-            color: "var(--ls-bbc-text)",
-            fontFamily: "var(--ls-bbc-font-body)",
-          }}
-        >
-          <span aria-hidden="true" style={{ fontSize: 20 }}>📚</span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700 }}>
-              {modulesFaits === 0 ? "Formation BBC — commencer" : "Formation BBC — continuer"}
-            </div>
-            <div style={{ height: 5, borderRadius: 3, background: "var(--ls-bbc-s2)", marginTop: 8, maxWidth: 340, overflow: "hidden" }}>
-              <div
-                style={{
-                  width: `${Math.round((modulesFaits / BBC_FORMATION_MODULES.length) * 100)}%`,
-                  height: "100%",
-                  background: "var(--ls-bbc-lime)",
-                  borderRadius: 3,
-                  transition: "width .3s",
-                }}
-              />
-            </div>
-          </div>
-          <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11.5, color: "var(--ls-bbc-muted)", flex: "none" }}>
-            {modulesFaits} / {BBC_FORMATION_MODULES.length}
-          </span>
-        </button>
-      ) : null}
-
-      {/* Hero cobayes */}
-      <div
-        style={{
-          position: "relative",
-          background: "var(--ls-bbc-s1)",
-          border: "1px solid var(--ls-bbc-line)",
-          borderRadius: 22,
-          padding: "24px 20px",
-          textAlign: "center",
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ position: "absolute", top: -30, left: "50%", transform: "translateX(-50%)", width: 320, height: 320, background: "radial-gradient(circle, rgba(197,248,42,.15), transparent 66%)" }} />
-        <div style={{ position: "relative" }}>
-          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.16em", color: "var(--ls-bbc-muted)", textTransform: "uppercase", marginBottom: 14 }}>
-            cobayes du jour
-          </div>
-          <div style={{ position: "relative", width: 200, height: 200, margin: "0 auto" }}>
-            <svg width="200" height="200" viewBox="0 0 220 220" aria-hidden="true">
-              <circle cx="110" cy="110" r="92" fill="none" stroke="var(--ls-bbc-s2)" strokeWidth="15" />
-              <circle cx="110" cy="110" r="92" fill="none" stroke="var(--ls-bbc-lime)" strokeWidth="15" strokeLinecap="round" strokeDasharray="578" strokeDashoffset={ringOffset} transform="rotate(-90 110 110)" style={{ transition: "stroke-dashoffset .5s ease" }} />
-            </svg>
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 64, color: "var(--ls-bbc-lime-text)", lineHeight: 0.85 }}>{cobayes}</div>
-              <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 18, color: "var(--ls-bbc-muted)", marginTop: 4 }}>/ {target}</div>
-            </div>
-          </div>
-          <div style={{ marginTop: 12, fontSize: 12, color: "var(--ls-bbc-muted)" }}>
-            cobayes envoyés aujourd'hui · <span style={{ color: "var(--ls-bbc-lime-text)" }}>{left > 0 ? `encore ${left} ce matin` : "objectif atteint 🔥"}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onSend}
-            style={{
-              marginTop: 16,
-              width: "100%",
-              maxWidth: 360,
-              height: 52,
-              border: 0,
-              borderRadius: 14,
-              background: "var(--ls-bbc-lime)",
-              color: "var(--ls-bbc-lime-ink)",
-              fontFamily: "var(--ls-bbc-font-body)",
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
-            ＋ envoyer un cobaye
-          </button>
-        </div>
-      </div>
-
-      {/* ＋ Nouvelle évaluation — le second point d'entrée de la feuille EBE.
-          Il est ici, sous le hero, parce que la fiche papier se saisit le
-          matin, au comptoir, juste après la pesée. Même bouton que sur
-          « Mes membres » : une seule feuille, deux portes. */}
-      <BbcNewMemberButton
-        onClick={onNouveauMembre}
-        aide="La fiche papier se saisit ici, dans l'ordre où elle est remplie."
-      />
-
-      {/* 📅 aujourd'hui — les rendez-vous de toute l'équipe (agenda partagé, 17/09).
-          Si le premier écran du matin ne dit pas qui vient, on rouvre TimeTree. */}
-      <RdvDuJour userId={userId} onVoir={() => onGo("agenda")} />
-
-      {/* ☕ le club ce matin — réel */}
-      <SectionCard eye="☕ le club ce matin" right={members.length ? `${pointes.length} / ${members.length} pointés` : ""}>
-        {loading ? (
-          <Empty>chargement…</Empty>
-        ) : members.length === 0 ? (
-          // Même correction que dans BbcCrm : « sa fiche → Actions » n'est pas
-          // atteignable en mode BBC. Le chemin réel est la feuille ci-dessus.
-          <Empty>Aucun membre BBC. Saisis ta première fiche papier avec « ＋ Nouvelle évaluation ».</Empty>
-        ) : (
-          <>
-            {members.slice(0, 4).map((m) => {
-              const lvl = visitLevel(m.card?.used ?? 0, m.card?.type);
-              const solde = m.card ? `${m.card.used}/${m.card.type}` : `${m.visits} au total`;
-              return (
-                <MemberRow
-                  key={m.id}
-                  name={m.name}
-                  note={m.visitedToday ? `pointé aujourd'hui · ${solde}` : lvl === "bilan" ? "carte finie · bilan à faire" : `${solde}${m.card ? "" : " · pas de carte"}`}
-                  tone={m.visitedToday ? "teal" : lvl === "bilan" ? "coral" : "muted"}
-                  action={m.visitedToday ? "pointé" : lvl === "bilan" ? "bilan" : "pointer"}
-                  onClick={() => onGo("club")}
-                />
-              );
-            })}
-            {bilans.length ? <Empty>🎯 {bilans.map((b) => b.name).join(", ")} → carte finie, bilan à faire.</Empty> : null}
-          </>
-        )}
-      </SectionCard>
-
-      {/* ❤️ à un cœur du palier — réel */}
-      <SectionCard eye="❤️ à un cœur du palier" right={aValider ? `${aValider} à valider` : "qui relancer"}>
-        {loading ? (
-          <Empty>chargement…</Empty>
-        ) : aUnCoeur.length === 0 ? (
-          <Empty>{aValider ? "Des recos attendent ta validation dans l'onglet Cœurs." : "Personne à un cœur d'un palier pour l'instant."}</Empty>
-        ) : (
-          aUnCoeur.slice(0, 4).map((m) => {
-            const next = nextPalier(m.hearts);
-            return (
-              <MemberRow
-                key={m.key}
-                name={m.name}
-                note={`${m.hearts}♥ · à 1 cœur du palier ${next}`}
-                tone="lime"
-                action="relancer"
-                filled
-                onClick={() => onGo("coeurs")}
-              />
-            );
-          })
-        )}
-      </SectionCard>
-
-      {/* 📞 prochain appel — depuis la config du club */}
-      <SectionCard eye="📞 prochain appel" right={inscrits ? `${inscrits} inscrit${inscrits > 1 ? "s" : ""}` : ""}>
-        {nextCall ? (
-          <>
-            <MemberRow
-              name={nextCall.label}
-              note={`${nextCall.when} · ${inscrits} inscrit${inscrits > 1 ? "s" : ""}`}
-              tone={nextCall.isToday ? "lime" : "teal"}
-              action={nextCall.isToday ? "aujourd'hui" : "inscrire"}
-              filled={nextCall.isToday}
-              onClick={() => onGo("appels")}
-            />
-            {calls.toProcess.length ? (
-              <Empty>📞 {calls.toProcess.length} suivi{calls.toProcess.length > 1 ? "s" : ""} à faire après le dernier appel.</Empty>
-            ) : null}
-          </>
-        ) : (
-          <Empty>Aucun rituel configuré pour ce club.</Empty>
-        )}
-      </SectionCard>
-    </div>
+    <button
+      type="button"
+      className="bbc-navitem"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      style={{
+        display: "flex", alignItems: "center", gap: 12, width: "100%", border: 0, cursor: "pointer", textAlign: "left",
+        padding: petit ? "8px 12px" : "12px 12px", borderRadius: 12,
+        background: active ? "var(--ls-bbc-s2)" : "transparent",
+        color: active ? "var(--ls-bbc-orange-text)" : "var(--ls-bbc-muted)",
+        fontFamily: "var(--ls-bbc-font-body)", fontSize: petit ? 13 : 14, fontWeight: 600, transition: "background 0.15s, color 0.15s",
+      }}
+    >
+      {icone ? <span aria-hidden="true" style={{ fontSize: 17, width: 20, textAlign: "center" }}>{icone}</span> : null}
+      <span style={{ flex: 1 }}>{label}</span>
+    </button>
   );
 }
 
-function SectionCard({ eye, right, children }: { eye: string; right: string; children: ReactNode }) {
+const barreBouton = {
+  flex: 1, background: "transparent", border: 0, cursor: "pointer", display: "flex", flexDirection: "column" as const, alignItems: "center", gap: 3,
+  padding: "4px 2px", color: "var(--ls-bbc-hint)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 11, fontWeight: 600, position: "relative" as const,
+};
+
+function BarreItem({ active, icone, label, onClick, badge }: { active: boolean; icone: React.ReactNode; label: string; onClick: () => void; badge?: number }) {
   return (
-    <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "18px 20px 8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.14em", color: "var(--ls-bbc-muted)", textTransform: "uppercase", flex: 1 }}>
-          {eye}
-        </span>
-        {right ? (
-          <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-hint)" }}>{right}</span>
-        ) : null}
-      </div>
-      {children}
-    </div>
+    <button type="button" onClick={onClick} aria-current={active ? "page" : undefined} style={{ ...barreBouton, color: active ? "var(--ls-bbc-orange-text)" : "var(--ls-bbc-hint)" }}>
+      <span aria-hidden="true" style={{ fontSize: 18, height: 24, display: "grid", placeItems: "center" }}>{icone}</span>
+      {label}
+      {badge ? <span style={{ position: "absolute", top: 0, right: 12, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, background: "var(--ls-bbc-orange)", color: "#fff", borderRadius: 999, padding: "1px 5px" }}>{badge}</span> : null}
+    </button>
   );
 }
 
-function Empty({ children }: { children: ReactNode }) {
+/** L'anneau des 20 contacts, dans la barre. */
+function Anneau({ fait, sur }: { fait: number; sur: number }) {
+  const C = 2 * Math.PI * 9;
   return (
-    <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", padding: "12px 0", borderTop: "1px solid var(--ls-bbc-line)", lineHeight: 1.5 }}>
-      {children}
-    </div>
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r="9" fill="none" stroke="var(--ls-bbc-s3)" strokeWidth="3" />
+      <circle cx="11" cy="11" r="9" fill="none" stroke="var(--ls-bbc-orange)" strokeWidth="3" strokeLinecap="round" strokeDasharray={`${(C * Math.min(1, fait / sur)).toFixed(1)} ${C.toFixed(1)}`} transform="rotate(-90 11 11)" style={{ transition: "stroke-dasharray .5s cubic-bezier(.32,.72,0,1)" }} />
+      <text x="11" y="13.5" textAnchor="middle" fontFamily="var(--ls-bbc-font-mono)" fontSize="7" fontWeight="700" fill="currentColor">{fait}</text>
+    </svg>
   );
 }
 
-function MemberRow({
-  name,
-  note,
-  tone,
-  action,
-  filled,
-  onClick,
-}: {
-  name: string;
-  note: string;
-  tone: "teal" | "coral" | "lime" | "muted";
-  action: string;
-  filled?: boolean;
-  onClick?: () => void;
-}) {
-  const color =
-    tone === "teal" ? "var(--ls-bbc-teal)" : tone === "coral" ? "var(--ls-bbc-coral)" : tone === "lime" ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)";
+function Geste({ icone, label, fort, onClick }: { icone: string; label: string; fort?: boolean; onClick: () => void }) {
   return (
-    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 0", borderTop: "1px solid var(--ls-bbc-line)", cursor: onClick ? "pointer" : "default" }}>
-      <span style={{ width: 8, height: 8, borderRadius: 999, flex: "none", background: color }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{name}</div>
-        <div style={{ fontSize: 11.5, color: tone === "coral" ? "var(--ls-bbc-coral)" : "var(--ls-bbc-muted)" }}>{note}</div>
-      </div>
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          padding: "6px 12px",
-          borderRadius: 10,
-          whiteSpace: "nowrap",
-          background: filled ? "var(--ls-bbc-lime)" : "transparent",
-          color: filled ? "var(--ls-bbc-lime-ink)" : color,
-          border: filled ? "0" : `1px solid ${tone === "muted" ? "var(--ls-bbc-line)" : color}`,
-        }}
-      >
-        {action}
-      </span>
-    </div>
+    <button
+      type="button"
+      className="bbc-pression"
+      onClick={onClick}
+      style={{
+        display: "grid", gap: 6, justifyItems: "center", padding: "16px 8px 12px", borderRadius: 16, cursor: "pointer",
+        border: fort ? "1px solid transparent" : "1px solid var(--ls-bbc-line2)", background: fort ? "var(--ls-bbc-grad)" : "var(--ls-bbc-s1)",
+        color: fort ? "#fff" : "var(--ls-bbc-text)", boxShadow: fort ? "var(--ls-bbc-grad-ombre)" : undefined,
+        fontFamily: "var(--ls-bbc-font-body)", fontSize: 12.5, fontWeight: 600, textAlign: "center",
+      }}
+    >
+      <span aria-hidden="true" style={{ fontSize: 26 }}>{icone}</span>
+      {label}
+    </button>
   );
 }
