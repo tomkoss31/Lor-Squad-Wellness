@@ -95,21 +95,10 @@ const TOOLS: { section: string; items: ToolCard[] }[] = [
         icon: "🎯",
         iconBg: "color-mix(in srgb, var(--ls-teal) 16%, transparent)",
         name: "Prospecter",
-        desc: "Ta machine à prospects : la méthode, ton bilan online, tes liens marketing et l'international — tout au même endroit.",
-        path: "/outils-prospection",
+        desc: "Le kit prospection : la méthode et les scripts prêts à copier, 4 profils × 6 marchés. Les anciennes pages (5 emplacements, présentations) sont dans Mes liens.",
+        path: "/prospection",
         infoTerm: "prospect",
         feature: "business.prospecter",
-      },
-      {
-        // Raccroché ici (2026-06-13) : la carte Liste 100 du Co-pilote a été
-        // retirée par le Plan du jour → on garde l'accès rapide via Mon business.
-        id: "liste-100",
-        icon: "📒",
-        iconBg: "color-mix(in srgb, var(--ls-purple) 16%, transparent)",
-        name: "Ma Liste 100",
-        desc: "Ta liste de connaissances (méthode FRANK) : ajoute, qualifie et transforme tes contacts en prospects.",
-        path: "/cahier-de-bord?tab=liste",
-        feature: "business.liste-100",
       },
     ],
   },

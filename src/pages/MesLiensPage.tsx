@@ -9,6 +9,8 @@
 
 import { useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { Link } from "react-router-dom";
+import { useAppLevel } from "../hooks/useAppLevel";
 import { useAppContext } from "../context/AppContext";
 import { useToast } from "../context/ToastContext";
 import { RdvAvailabilityCard } from "../components/settings/RdvAvailabilityCard";
@@ -36,6 +38,8 @@ function coachSlug(name: string | undefined): string {
 
 export function MesLiensPage() {
   const { currentUser } = useAppContext();
+  const { can } = useAppLevel();
+  const peutKit = can("business.prospecter");
   const { push } = useToast();
   const [qr, setQr] = useState<LinkDef | null>(null);
 
@@ -233,6 +237,18 @@ export function MesLiensPage() {
       </p>
       <RdvAvailabilityCard />
 
+      {/* Aller plus loin (lot 3, 18/09/2026) : « Prospecter » de Mon business ouvre
+          désormais le kit en direct ; les anciennes pages restent joignables d'ici. */}
+      <div style={{ marginTop: 22, padding: "14px 16px", borderRadius: 14, border: "0.5px solid var(--ls-border)", background: "var(--ls-surface)" }}>
+        <div style={{ fontFamily: "Syne, sans-serif", fontWeight: 700, fontSize: 14, color: "var(--ls-text)", marginBottom: 8 }}>Aller plus loin</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <Link to="/outils-prospection/bilan-online" style={lienPlus}>📍 Où mettre ton lien bilan (les 5 emplacements)</Link>
+          <Link to="/outils-prospection" style={lienPlus}>🧭 Comment marche la prospection</Link>
+          <Link to="/outils-prospection/liens" style={lienPlus}>🖥️ Présentations (bientôt)</Link>
+          {peutKit ? <Link to="/prospection" style={lienPlus}>🎯 Le kit prospection</Link> : null}
+        </div>
+      </div>
+
       {/* Modale QR */}
       {qr ? (
         <div
@@ -260,6 +276,12 @@ export function MesLiensPage() {
     </div>
   );
 }
+
+const lienPlus: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 12px", borderRadius: 10,
+  border: "0.5px solid var(--ls-border2, var(--ls-border))", background: "var(--ls-surface2)",
+  color: "var(--ls-text)", fontSize: 12.5, fontWeight: 600, textDecoration: "none", fontFamily: "DM Sans, sans-serif",
+};
 
 function ActionBtn({ children, onClick, grow }: { children: React.ReactNode; onClick: () => void; grow?: boolean }) {
   return (

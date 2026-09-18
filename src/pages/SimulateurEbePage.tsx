@@ -8,9 +8,6 @@
 // =============================================================================
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAppContext } from "../context/AppContext";
-import { useCahierDeBord } from "../hooks/useCahierDeBord";
 import {
   EBE_SCENARIOS,
   getScenarioById,
@@ -29,16 +26,12 @@ interface ChoiceLog {
 }
 
 export function SimulateurEbePage() {
-  const navigate = useNavigate();
-  const { currentUser } = useAppContext();
-  const { addEbeEntry } = useCahierDeBord(currentUser?.id ?? null);
 
   const [scenarioId, setScenarioId] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [log, setLog] = useState<ChoiceLog[]>([]);
   const [pendingChoice, setPendingChoice] = useState<EbeChoice | null>(null);
   const [finished, setFinished] = useState(false);
-  const [savedToJournal, setSavedToJournal] = useState(false);
 
   const scenario = scenarioId ? getScenarioById(scenarioId) : null;
 
@@ -48,7 +41,6 @@ export function SimulateurEbePage() {
     setLog([]);
     setPendingChoice(null);
     setFinished(false);
-    setSavedToJournal(false);
   };
 
   const handleChoice = (choice: EbeChoice, scenario: EbeScenario) => {
@@ -76,29 +68,6 @@ export function SimulateurEbePage() {
 
   const totalScore = log.reduce((acc, c) => acc + c.points, 0);
 
-  const handleSaveToJournal = async () => {
-    if (!scenario) return;
-    const goods = log
-      .filter((c) => c.quality === "excellent")
-      .map((c) => scenario.steps.find((s) => s.id === c.stepId)?.title)
-      .filter(Boolean)
-      .join(", ");
-    const errs = log
-      .filter((c) => c.quality === "faux")
-      .map((c) => scenario.steps.find((s) => s.id === c.stepId)?.title)
-      .filter(Boolean)
-      .join(", ");
-    await addEbeEntry({
-      ebe_date: new Date().toISOString().slice(0, 10),
-      prospect_name: `[Simulation] ${scenario.name}`,
-      self_score: Math.round((totalScore / 60) * 10),
-      what_went_well: goods || "—",
-      what_to_improve: errs || "—",
-      outcome: "pending",
-      recos_count: 0,
-    });
-    setSavedToJournal(true);
-  };
 
   // ── Écran 3 : Debrief ──────────────────────────────────────────────────
   if (finished && scenario) {
@@ -157,17 +126,6 @@ export function SimulateurEbePage() {
         <div style={{ display: "flex", gap: 10, marginTop: 24, flexWrap: "wrap" }}>
           <button type="button" onClick={reset} style={btnPrimary}>
             🔁 Refaire un EBE
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveToJournal}
-            disabled={savedToJournal}
-            style={savedToJournal ? btnGhostDisabled : btnGhost}
-          >
-            {savedToJournal ? "✅ Sauvegardé dans le journal" : "💾 Sauvegarder dans mon journal EBE"}
-          </button>
-          <button type="button" onClick={() => navigate("/cahier-de-bord")} style={btnGhost}>
-            📔 Voir mon cahier de bord
           </button>
         </div>
       </div>
@@ -530,24 +488,7 @@ const btnPrimary: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const btnGhost: React.CSSProperties = {
-  marginTop: 18,
-  padding: "12px 18px",
-  borderRadius: 12,
-  border: "0.5px solid var(--ls-border)",
-  background: "transparent",
-  color: "var(--ls-text)",
-  fontFamily: "DM Sans, sans-serif",
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: "pointer",
-};
 
-const btnGhostDisabled: React.CSSProperties = {
-  ...btnGhost,
-  opacity: 0.6,
-  cursor: "default",
-};
 
 const btnGhostSmall: React.CSSProperties = {
   padding: "6px 12px",

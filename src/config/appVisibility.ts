@@ -49,7 +49,6 @@ export type FeatureKey =
   | "business.boutique"
   | "business.prospecter"
   | "business.plan-marketing"
-  | "business.liste-100"
   | "business.pv-equipe"
   // ── Pages d'administration ─────────────────────────────────────────────
   | "admin.newsletters"
@@ -58,7 +57,6 @@ export type FeatureKey =
   | "dev.hub"
   | "dev.formation"
   | "dev.academy"
-  | "dev.cahier-de-bord"
   | "dev.simulateur-ebe";
 
 /**
@@ -92,7 +90,6 @@ export const FEATURE_LEVEL: Record<FeatureKey, AppLevel> = {
   "business.boutique": "essentiel",
   "business.plan-marketing": "essentiel", // gardée : « utile, c'est juste du visuel »
   // ── … sauf celles-ci, retirées des menus ───────────────────────────────
-  "business.liste-100": "complet", // 13 contacts, 100 % Thomas
   // Ménage du 12/08 : 87 jours sans une tentative, 2 en tout depuis le
   // lancement — pour 4 profils × 6 marchés × 10 sections. Cette clé couvre
   // « Prospecter » (/outils-prospection) ET la prospection froide (/prospection),
@@ -114,7 +111,6 @@ export const FEATURE_LEVEL: Record<FeatureKey, AppLevel> = {
   // depuis 35 jours. Une seule porte pour apprendre.
   "dev.academy": "complet",
   "dev.formation": "essentiel", // rattachée au cockpit Académie (LOT 4)
-  "dev.cahier-de-bord": "complet",
   "dev.simulateur-ebe": "complet",
 };
 

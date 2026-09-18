@@ -1469,28 +1469,6 @@ export function NewAssessmentPage() {
             clearAssessmentDraft();
             clearCoachNotesDraft(prospectId);
 
-            // Chantier Auto-journal EBE post-bilan (2026-05-04) : à chaque
-            // bilan validé, on pré-crée silencieusement une entrée dans
-            // ebe_journal_entries avec assessment_id lié et prospect_name
-            // pré-rempli. Le distri pourra venir compléter son ressenti
-            // (self_score, what_went_well, what_to_improve) plus tard depuis
-            // /cahier-de-bord onglet EBE. Insert best-effort : si ça plante
-            // (RLS, réseau, table absente), on continue le flow normal sans
-            // bloquer la navigation post-bilan.
-            try {
-              if (currentUser?.id) {
-                await sb.from("ebe_journal_entries").insert({
-                  user_id: currentUser.id,
-                  ebe_date: new Date().toISOString().slice(0, 10),
-                  assessment_id: assessment.id,
-                  prospect_name: `${form.firstName?.trim() ?? ""} ${form.lastName?.trim() ?? ""}`.trim() || null,
-                  recos_count: 0,
-                });
-              }
-            } catch (ebeJournalErr) {
-              // Best-effort : on log mais on bloque pas la nav
-              console.warn("Auto-journal EBE skip:", ebeJournalErr);
-            }
 
             // Chantier simplification fin de bilan (2026-07-30, demande Thomas) :
             // avant, on naviguait vers /bilan-termine (écran QR plein écran).

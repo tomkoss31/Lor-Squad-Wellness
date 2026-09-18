@@ -558,11 +558,6 @@ const AdminCharterThumbsPage = lazy(() =>
   })),
 );
 // Cahier de bord du distri (2026-05-04) — 21j cobaye + liste 100 + journal EBE.
-const CahierDeBordPage = lazy(() =>
-  import("./pages/CahierDeBordPage").then((module) => ({
-    default: module.CahierDeBordPage,
-  })),
-);
 // Simulateur EBE (2026-05-04) — entraînement face à un faux prospect scripté.
 const SimulateurEbePage = lazy(() =>
   import("./pages/SimulateurEbePage").then((module) => ({
@@ -887,7 +882,6 @@ export default function App() {
               <Route path="admin/charter-thumbs" element={<AdminCharterThumbsPage />} />
               {/* Cahier de bord du distri (2026-05-04) — 21j cobaye, liste 100,
                   journal EBE perso. Strictement perso (RLS own + admin). */}
-              <Route path="cahier-de-bord" element={<CahierDeBordPage />} />
               {/* Simulateur EBE (2026-05-04) — entraînement scripté. */}
               <Route path="simulateur-ebe" element={<SimulateurEbePage />} />
               {/* Hub Développement (2026-05-04) — regroupe academy/formation/

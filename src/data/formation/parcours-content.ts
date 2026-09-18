@@ -1119,7 +1119,7 @@ Tu as fait un super EBE, présenté le programme, la personne a dit oui, elle es
     ancrage:
       "« Je ne pars pas de zéro. Je connais déjà 100 personnes qui peuvent transformer ma vie — j'ai juste besoin de m'en souvenir et de leur en parler. »",
     action:
-      "Bloque 30 minutes ce week-end. Ouvre /cahier-de-bord onglet Liste 100. Liste 100 prénoms en suivant FRANK — sans filtrer, sans juger « il dirait non ». Juste tous les noms qui te viennent. Tu jugeras après.",
+      "Bloque 30 minutes ce week-end. Ouvre ton CRM (Tes contacts). Liste 100 prénoms en suivant FRANK — sans filtrer, sans juger « il dirait non ». Juste tous les noms qui te viennent. Tu jugeras après.",
     relatedToolkitSlugs: ["script-prospection-chaud", "tk-prospection-01"],
     lessons: [
       {
@@ -1207,7 +1207,7 @@ Une fois ta liste 100 faite, tu attribues une **température** à chaque nom.
         durationMin: 2,
         contentMarkdown: `## Faire vivre ta liste comme un funnel
 
-Chaque contact a un **statut** qui évolue dans le temps. La Base 360 gère 6 statuts dans /cahier-de-bord onglet Liste 100 :
+Chaque contact a un **statut** qui évolue dans le temps. La Base 360 gère 6 statuts dans le CRM :
 
 | Statut | Emoji | Quand passer dessus |
 |---|---|---|
@@ -1280,7 +1280,7 @@ Tu réponds à son message, tu poses des questions. Tu RÉAPPRENDS qui il est au
           ],
           correctIndex: 1,
           explanation:
-            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel La Base 360 pour ne rien oublier dans ta liste 100. Disponible dans /cahier-de-bord onglet Liste 100 au moment d'ajouter un contact.",
+            "FRANK = Family / Relations / Amis / Network / Kids' parents. Mnémonique officiel La Base 360 pour ne rien oublier dans ta liste 100. Disponible dans le CRM au moment d'ajouter un contact.",
         },
         {
           kind: "qcm",
