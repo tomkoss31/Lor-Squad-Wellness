@@ -124,7 +124,7 @@ export function gabarit(p: { prenom: string; expediteur: string; coachs: CoachDu
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0;background:#F4EEE1;border-radius:12px;"><tr><td style="padding:14px 16px;font-size:13.5px;line-height:1.6;color:#55605A;${POLICE}">
           <b style="color:#17201C;">Où le trouver&nbsp;?</b><br>
           Dans le mode Breakfast Club&nbsp;: <b style="color:#17201C;">Le club &rsaquo; L'agenda</b>.<br>
-          Dans l'app classique&nbsp;: menu <b style="color:#17201C;">Agenda &rsaquo; Agenda du club</b>.
+          Dans l'app classique&nbsp;: menu <b style="color:#17201C;">Agenda</b> &mdash; c'est le m&ecirc;me agenda, pour tout le monde.
         </td></tr></table>
 
         ${titreBloc(1, "Tout le club, d'un coup d'œil")}
