@@ -6,9 +6,11 @@
 // drill-down équipe, Paramètres > Équipe, saisie manuelle).
 //
 // ⚠️ 100 % PRÉSENTATION : ce composant ne fait QUE réassembler des briques
-// existantes — `PvOverrideBlock`, `PvBizworksBlock` (distri de l'app) et
-// `ManualPvEntriesSection` (distri hors-app). AUCUNE logique de calcul PV /
-// paliers / qualification n'est touchée (formules Herbalife inchangées).
+// existantes — `PvOverrideBlock`, `PvBizworksBlock` (distri de l'app). Les PV
+// des distri hors-app (`manual_pv_entries`) sont lus par `useManualPvEntries`
+// (RentabilitePage) ; l'écran de saisie `ManualPvEntriesSection` n'était plus
+// importé nulle part et a été supprimé le 18/09/2026. AUCUNE logique de calcul
+// PV / paliers / qualification n'est touchée (formules Herbalife inchangées).
 // =============================================================================
 
 import { useEffect, useMemo, useState } from "react";
