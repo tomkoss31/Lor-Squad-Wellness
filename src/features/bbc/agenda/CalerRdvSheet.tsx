@@ -232,7 +232,8 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
       telephone: qui.telephone || null,
       email: qui.email || null,
       note: note.trim() || null,
-      rdvId: deplace?.source === "prospect" ? deplace.id : null,
+      rdvId: deplace && (deplace.source === "prospect" || deplace.source === "suivi") ? deplace.id : null,
+      table: deplace?.source === "suivi" ? "suivi" : "prospect",
     });
     setEnvoi(false);
     if (!res.ok) {
@@ -320,7 +321,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </div>
             )}
 
-            {plusTot && type !== "indispo" && decalage === 0 ? (
+            {plusTot && type !== "indispo" && decalage === 0 && deplace?.source !== "suivi" ? (
               <button
                 type="button"
                 onClick={() => {
@@ -453,6 +454,8 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
             ) : null}
             <div style={etiquette}>avec qui ?</div>
             {[...coachs]
+              // Un suivi reste avec sa coach : on ne propose qu'elle.
+              .filter((c) => deplace?.source !== "suivi" || c.id === deplace.coachId)
               .sort((a, b) => Number(b.id === coachInitial) - Number(a.id === coachInitial))
               .map((c) => {
                 const l = libresDe(occupesDe(c.id), jour);

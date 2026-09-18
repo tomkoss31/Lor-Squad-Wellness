@@ -30,6 +30,8 @@ export interface RdvClub {
   statut: string;
   /** « bilan » · « decouverte » · « suivi » · … */
   nature: string;
+  /** Pour un suivi : la cliente (18/09, agenda unique). */
+  clientId?: string | null;
 }
 
 /** Une ligne de `agenda_du_club()` telle que la rend Supabase. */
@@ -49,6 +51,7 @@ export function versRdvClub(r: Record<string, unknown>): RdvClub | null {
     nom: typeof r.nom === "string" && r.nom.trim() ? r.nom.trim() : null,
     telephone: typeof r.telephone === "string" && r.telephone.trim() ? r.telephone.trim() : null,
     statut: String(r.statut ?? ""),
+    clientId: typeof r.client_id === "string" && r.client_id ? r.client_id : null,
     nature: String(r.nature ?? "") || (source === "indispo" ? "indispo" : source === "suivi" ? "suivi" : source === "reservation" ? "decouverte" : "bilan"),
   };
 }
@@ -167,6 +170,24 @@ export function contactDe(r: RdvClub): { tel: string | null; mail: string | null
   if (brut.includes("@")) return { tel: null, mail: brut };
   const chiffres = brut.replace(/\D/g, "");
   return { tel: chiffres.length >= 6 ? chiffres : null, mail: null };
+}
+
+/**
+ * PASSERELLE vers le bilan standard (18/09, agenda unique). Un rendez-vous de
+ * l'agenda (table `prospects`) pré-remplit par sa fiche ; une réservation du
+ * site n'a pas de fiche — on passe ce que le rendez-vous sait : prénom, nom,
+ * téléphone ou email. `NewAssessmentPage` lit les deux.
+ */
+export function urlBilanStandard(r: RdvClub): string {
+  if (r.source === "prospect") return `/assessments/new?prospectId=${r.id}`;
+  const q = new URLSearchParams();
+  if (r.prenom) q.set("prenom", r.prenom);
+  if (r.nom) q.set("nom", r.nom);
+  const { tel, mail } = contactDe(r);
+  if (tel) q.set("tel", tel);
+  if (mail) q.set("email", mail);
+  const s = q.toString();
+  return s ? `/assessments/new?${s}` : "/assessments/new";
 }
 
 /** Une plage « pas dispo » — elle occupe la coach, mais ce n'est pas un rendez-vous. */

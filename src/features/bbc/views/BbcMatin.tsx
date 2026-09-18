@@ -93,19 +93,9 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
           </div>
           <div style={{ fontSize: 13, opacity: 0.8 }}>{libelleNature(prochain)} · avec {prenom(prochain.coachId)}</div>
           <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
-            {prochain.source === "suivi" ? (
-              // Un suivi (une membre) ne se « qualifie » pas : elle se pointe.
-              <>
-                <button type="button" className="bbc-pression" onClick={() => onGo("club")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Pointer</button>
-                <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
-              </>
-            ) : (
-              <>
-                <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "choix")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Venue</button>
-                <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "pasvenue")} style={heroBtn}>Pas venue</button>
-                <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
-              </>
-            )}
+            <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "choix")} style={{ ...heroBtn, background: "var(--ls-bbc-grad)", boxShadow: "var(--ls-bbc-grad-ombre)", border: 0, color: "#fff" }}>Venue</button>
+            <button type="button" className="bbc-pression" onClick={() => onQualifier(prochain, "pasvenue")} style={heroBtn}>Pas venue</button>
+            <button type="button" className="bbc-pression" onClick={() => onGo("agenda")} style={heroBtn}>La journée</button>
           </div>
         </div>
       ) : null}

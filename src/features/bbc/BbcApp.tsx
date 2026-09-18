@@ -50,7 +50,8 @@ import { CalerRdvSheet } from "./agenda/CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./agenda/QualifierRdvClubSheet";
 import { qualifierRdvClub } from "./agenda/qualifierRdvClub";
 import { ApresCreation } from "./ApresCreation";
-import { cleJour, couleurCoach, type RdvClub } from "./agenda/agendaClub";
+import { BbcBilan10 } from "./BbcBilan10";
+import { cleJour, contactDe, couleurCoach, urlBilanStandard, type RdvClub } from "./agenda/agendaClub";
 import { useCoachsDuClub } from "./useCoachsDuClub";
 import { useContactsDuJour } from "./useContactsDuJour";
 import { useBbcSignaux } from "./useBbcSignaux";
@@ -225,6 +226,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const [apres, setApres] = useState<{ clientId: string; prenom?: string } | null>(null);
   /** La fiche à ouvrir en arrivant sur « Membres » (depuis Le matin ou « Et ensuite ? »). */
   const [membreOuvert, setMembreOuvert] = useState<string | null>(null);
+  /** Le bilan des 10 d'une cliente en fin de carte, depuis la question du matin (18/09). */
+  const [bilan10, setBilan10] = useState<{ clientId: string; nom: string } | null>(null);
   // Chaque vue monte sa PROPRE instance des hooks (pas de cache partagé, et
   // AppContext est sacré). Après une création, on bouge cette clé : la vue
   // affichée se remonte et refait sa lecture.
@@ -274,7 +277,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
    *  rendez-vous quand il vient de l'agenda (table prospects). L'app standard s'ouvre
    *  avec « ← Retour au club » (bbcRoutes). */
   function versSuiviClassique(rdv: RdvClub) {
-    navigate(rdv.source === "prospect" ? `/assessments/new?prospectId=${rdv.id}` : "/assessments/new");
+    navigate(urlBilanStandard(rdv));
   }
   function ouvrirMembre(id: string) {
     setMembreOuvert(id);
@@ -500,11 +503,13 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
               setQualif(null);
               setRafraichir((n) => n + 1);
               setToast(q.issue === "fait" ? "Rangé ✓ — son bilan s'ouvre" : "Rangé ✓");
-              if (q.issue === "fait") versSuiviClassique(qualif.rdv);
+              if (q.issue === "fait" && qualif.rdv.source !== "suivi") versSuiviClassique(qualif.rdv);
             }
             return res;
           }}
-          onDeplacer={qualif.rdv.source === "prospect" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
+          onBilan={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => { const r = qualif.rdv; setQualif(null); if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: `${r.prenom} ${r.nom ?? ""}`.trim() }); else navigate(`/clients/${r.clientId}/follow-up/new`); } : null}
+          onFiche={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => navigate(`/clients/${qualif.rdv.clientId}`) : null}
+          onDeplacer={qualif.rdv.source === "prospect" || qualif.rdv.source === "suivi" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
         />
       ) : null}
 
@@ -513,7 +518,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           userId={userId}
           coachName={coachName}
           club={club ?? null}
-          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: membrePour.telephone, email: null }}
+          prefill={{ prenom: membrePour.prenom, nom: membrePour.nom ?? "", tel: contactDe(membrePour).tel, email: contactDe(membrePour).mail }}
           onClose={() => setMembrePour(null)}
           onCreated={(clientId) => {
             const r = membrePour;
@@ -523,6 +528,10 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             setApres({ clientId, prenom: r?.prenom });
           }}
         />
+      ) : null}
+
+      {bilan10 && userId ? (
+        <BbcBilan10 clientId={bilan10.clientId} clientName={bilan10.nom} coachUserId={userId} onClose={() => setBilan10(null)} onDone={() => setRafraichir((n) => n + 1)} />
       ) : null}
 
       {apres ? (

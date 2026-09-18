@@ -38,7 +38,8 @@ const MESSAGES: Record<string, string> = {
 };
 
 export async function qualifierRdvClub(rdv: RdvClub, q: Qualification): Promise<ResultatQualif> {
-  if (rdv.source === "suivi") return { ok: false, message: "Un suivi se règle depuis la fiche du membre." };
+  // Un suivi de cliente se qualifie aussi depuis le 18/09 (agenda unique) :
+  // fait, ou replanifié. Pas de mail d'après-rendez-vous pour une cliente.
   try {
     const sb = await getSupabaseClient();
     if (!sb) return { ok: false, message: "Pas de connexion." };
@@ -56,11 +57,11 @@ export async function qualifierRdvClub(rdv: RdvClub, q: Qualification): Promise<
     }
 
     // Les mots qui suivent — best-effort, comme dans l'agenda standard.
-    if (q.issue === "pas_venue" && q.mailPasVenue) {
+    if (rdv.source !== "suivi" && q.issue === "pas_venue" && q.mailPasVenue) {
       if (rdv.source === "prospect") void envoyerMailApresRdvProspect(rdv.id, "pas_venue");
       else void envoyerMailApresRdv(rdv.id, "pas_venue");
     }
-    if (q.issue === "membre") {
+    if (rdv.source !== "suivi" && q.issue === "membre") {
       if (rdv.source === "prospect") void envoyerMailApresRdvProspect(rdv.id, "demarre");
       else {
         void envoyerMailApresRdv(rdv.id, "demarre");

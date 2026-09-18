@@ -675,6 +675,25 @@ export function NewAssessmentPage() {
       if (currentUser?.role === 'admin') {
         setAssignedUserId(sourceProspect.distributorId);
       }
+    } else {
+      // Sans fiche (réservation du site du club, 18/09) : l'agenda passe ce
+      // qu'il sait dans l'adresse — prénom, nom, téléphone ou email.
+      const qp = {
+        firstName: (searchParams.get("prenom") ?? "").trim(),
+        lastName: (searchParams.get("nom") ?? "").trim(),
+        phone: (searchParams.get("tel") ?? "").trim(),
+        email: (searchParams.get("email") ?? "").trim(),
+      };
+      if (qp.firstName || qp.phone || qp.email) {
+        setForm((prev) => ({
+          ...prev,
+          firstName: qp.firstName || prev.firstName,
+          lastName: qp.lastName || prev.lastName,
+          phone: qp.phone || prev.phone,
+          email: qp.email || prev.email,
+        }));
+        setPrefilledFields({ firstName: !!qp.firstName, lastName: !!qp.lastName, phone: !!qp.phone, email: !!qp.email });
+      }
     }
 
     setDraftReady(true);
