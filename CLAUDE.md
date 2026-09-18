@@ -161,7 +161,9 @@ webhooks Vercel + numéro SMS).
 > équipe, Paramètres > Équipe, saisie manuelle Rentabilité). Désormais **source
 > unique = onglet « PV équipe » de `/rentabilite`** (`RentabilityPvTeamTab`) :
 > override Bizworks par distri de l'app (`PvOverrideBlock`/`PvBizworksBlock`) +
-> saisie distri hors-app avec remise (`ManualPvEntriesSection`). Deep-link
+> PV des distri hors-app lus depuis `manual_pv_entries` (`useManualPvEntries` ;
+> l'écran de saisie `ManualPvEntriesSection` n'était plus importé, supprimé le
+> 18/09/2026). Deep-link
 > `?tab=pv-equipe`. Les 3 autres endroits sont devenus des **raccourcis** vers
 > cet onglet (zéro double-saisie, cf. règle B9). ⚠️ **Aucune logique de calcul
 > PV / paliers / qualification touchée** (formules `herbalifeFormulas.ts` +

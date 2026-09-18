@@ -2,7 +2,7 @@
 // FormField — champ de formulaire partagé (chantier design system 2026-07-03).
 //
 // Remplace les 3+ wrappers label+input réinventés localement (LabeledField dans
-// ProfilTab, Field dans PaymentSettingsCard + ManualPvEntriesSection), qui
+// ProfilTab, Field dans PaymentSettingsCard…), qui
 // avaient chacun des tailles/espacements différents.
 //
 // Label par défaut en JetBrains Mono capitales (cockpit). `hint` optionnel sous

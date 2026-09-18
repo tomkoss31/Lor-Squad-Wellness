@@ -962,8 +962,10 @@ export function AppLayout() {
       {/* Spotlight nouveautés (2026-05-04) : popup auto-affiché à la 1ère
           ouverture après publication d'une annonce non lue. Skippable. */}
       <AnnouncementSpotlight />
-      {/* Noaly (2026-06-10) : FAB ✨ assistante IA, sur toutes les pages coach. */}
-      <NoalyFab />
+      {/* Noaly (2026-06-10) : FAB ✨ assistante IA. Pas sur le CRM : en bas à
+          droite, elle recouvrait le « ⋯ » de la dernière ligne visible de la
+          liste (audit du 17/09). Noaly : 0 usage depuis le 18/08. */}
+      {location.pathname.startsWith("/crm") ? null : <NoalyFab />}
       {/* Popup d'activation des notifications (2026-06-30) : à l'ouverture pour
           toute personne connectée pas encore abonnée (mobile + PC). */}
       <NotificationOptInPopup />
