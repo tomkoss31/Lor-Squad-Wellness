@@ -823,7 +823,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 82 (au 18/09/2026)
+## ⚡ Edge Functions — les 80 (au 18/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -833,8 +833,6 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `client-app-confirm-calendar` | ⚠️ aucun appelant trouvé le 18/09 | Confirmation RDV client — à trancher (lot 3) |
 | `client-app-mark-onboarded` | fetch front (app client) | Marque PWA onboardé |
 | `client-anniversary-check` | cron 0 7 * * * | Notifs anniv client / programme |
-| `create-public-share-token` | ⚠️ le bouton a été retiré en juin | Gen token `/partage/:token` (3 jetons, tous d'avril) — à trancher (lot 3) |
-| `resolve-public-share` | fetch front (anon) | Résolution token anonymisé |
 | `generate-auto-login-token` | fetch front (coach) | Lien magique app client |
 | `consume-auto-login-token` | fetch front (app client) | Auto-login PWA |
 | `generate-distributor-invite-token` | fetch front (coach) | Invite distri |
@@ -910,9 +908,9 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `pv-month-end-reminder` | plus de cron depuis le 18/09 (supprimé) | Rappel PV de fin de mois — feature masquée (niveau complet), fonction gardée |
 | `rank-threshold-notifier` | plus de cron depuis le 18/09 (supprimé) | Notif « seuil de rang approché / atteint » — masquée, fonction gardée |
 
-> **82 fonctions au 18/09/2026** — la table ci-dessus les liste toutes (`ls supabase/functions`
-> fait foi ; toute nouvelle fonction = une ligne ici). Six ne sont citées nulle part dans le
+> **80 fonctions au 18/09/2026** (le partage public `/partage/:token` et ses 2 fonctions ont été
+> supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
+> fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
 > front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
-> (appelée par `dispatch-newsletter`), `client-app-confirm-calendar`, `create-public-share-token`
-> (le bouton de partage a été retiré en juin) et `club-mail-relance-dormants` / `lead-relaunch-send`
-> (jamais branchées) — les quatre dernières sont à trancher avec Thomas (lot 3 de l'audit).
+> (appelée par `dispatch-newsletter`), `client-app-confirm-calendar` et `club-mail-relance-dormants` /
+> `lead-relaunch-send` (jamais branchées) — les trois dernières sont à trancher avec Thomas (lot 3 de l'audit).

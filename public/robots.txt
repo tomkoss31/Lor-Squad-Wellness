@@ -17,7 +17,6 @@ Allow: /
 
 # Espaces privés ou techniques : aucun intérêt pour la recherche.
 Disallow: /client/
-Disallow: /partage/
 Disallow: /auto-login
 Disallow: /reset-password
 Disallow: /forgot-password

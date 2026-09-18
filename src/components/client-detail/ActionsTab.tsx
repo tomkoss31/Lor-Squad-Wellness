@@ -70,7 +70,6 @@ function formatPhone(p?: string): string {
 interface Props {
   client: Client;
   onEditRdv: () => void;
-  onOpenSharePublic?: () => void;
   onGoToVueComplete?: () => void;
   onGoToClubVip?: () => void;
 }
@@ -337,7 +336,7 @@ function RdvHeroTile({
   );
 }
 
-export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComplete, onGoToClubVip }: Props) {
+export function ActionsTab({ client, onEditRdv, onGoToVueComplete, onGoToClubVip }: Props) {
   const navigate = useNavigate();
   const {
     currentUser,
@@ -491,14 +490,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
           .getElementById("follow-up-protocol-anchor")
           ?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    } else if (priority.type === "request_share_consent") {
-      onOpenSharePublic?.();
-      pushToast({
-        tone: "info",
-        title: "Accord à demander au client",
-        message:
-          "Envoie un message au client depuis l'onglet Messagerie pour lui proposer le partage public.",
-      });
     } else {
       onGoToVueComplete?.();
     }
@@ -1018,14 +1009,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 
           {activePanel === "access" ? (
             <>
-            <div style={{ fontFamily: "'JetBrains Mono',ui-monospace,monospace", fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--ls-text-muted)", marginBottom: 10 }}>Partage public de la fiche</div>
-            <button type="button" onClick={onOpenSharePublic} disabled={!onOpenSharePublic} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 16px", borderRadius: 12, border: "1px solid var(--ls-border)", background: "var(--ls-surface2)", width: "100%", textAlign: "left", cursor: onOpenSharePublic ? "pointer" : "default" }}>
-              <span>
-                <span style={{ display: "block", fontSize: 14, fontWeight: 600, color: "var(--ls-text)" }}>Lien vitrine anonymisé</span>
-                <span style={{ display: "block", fontSize: 12, color: "var(--ls-text-muted)", marginTop: 2 }}>Partage une version publique sans données sensibles.</span>
-              </span>
-              <SharePublicPill client={client} />
-            </button>
             <p style={{ margin: "12px 0 0", fontSize: 12, lineHeight: 1.5, color: "var(--ls-text-hint)" }}>L&apos;accès à l&apos;app client se gère depuis le hero de la fiche + la page d&apos;accueil client — pas ici.</p>
           </>
           ) : null}
@@ -1136,39 +1119,6 @@ export function ActionsTab({ client, onEditRdv, onOpenSharePublic, onGoToVueComp
 // PriorityCard supprimé (2026-04-26) : la priorité est maintenant rendue
 // par ActionsRdvBlock (fusion intelligente priorités + état RDV).
 
-function SharePublicPill({ client }: { client: Client }) {
-  if (!client.publicShareConsent || client.publicShareRevokedAt) {
-    return (
-      <span
-        style={{
-          fontSize: 10,
-          padding: "2px 8px",
-          borderRadius: 999,
-          background: "var(--ls-actions-red-bg)",
-          color: "var(--ls-actions-red-text)",
-        }}
-      >
-        En attente du client
-      </span>
-    );
-  }
-  // Note : compteur vues live via RPC serait idéal. On affiche un placeholder
-  // neutre tant qu'on n'a pas cette RPC. Le vrai compteur existe dans
-  // SharePublicButton via client_public_share_tokens.view_count.
-  return (
-    <span
-      style={{
-        fontSize: 10,
-        padding: "2px 8px",
-        borderRadius: 999,
-        background: "var(--ls-actions-teal-bg)",
-        color: "var(--ls-actions-teal-text)",
-      }}
-    >
-      Prêt à partager
-    </span>
-  );
-}
 
 function EditCoordinatesModal({
   client,
