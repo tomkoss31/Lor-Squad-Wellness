@@ -33,7 +33,7 @@ est dans `docs/CLAUDE_ARCHIVE_2026-09-18.md` — elle ne fait pas foi sur l'éta
 ### Un mot de Thomas = deux écrans possibles (BBC ou standard). Déterminer lequel AVANT d'ouvrir un fichier.
 | Il dit… | BBC | Standard |
 |---|---|---|
-| « l'agenda » | `features/bbc/agenda/BbcAgenda.tsx` (+ `agendaClub.ts` = la logique) | `pages/AgendaPage.tsx`, qui affiche AUSSI `BbcAgenda` derrière « Agenda du club » |
+| « l'agenda » | `features/bbc/agenda/BbcAgenda.tsx` (+ `agendaClub.ts` = la logique) | **le même** : `pages/AgendaPage.tsx` (30 l.) monte `AgendaDuClubStandard` → `BbcAgenda`. « Mon agenda » (3 725 l.) a disparu le 18/09 |
 | « le CRM », « mes leads » | n'existe PAS en BBC (cède la place au standard) | `pages/CrmPage.tsx` + `hooks/useCrmLeads.ts` + `components/crm/` |
 | « mes membres » | `features/bbc/views/BbcCrm.tsx` (oui, le fichier s'appelle Crm) | — |
 | « la fiche client » | la fiche dépliée dans `BbcCrm` : 3 volets Visites & carte · Son corps · Prochaine étape (`prochaineEtape.ts`) | `pages/ClientDetailPage.tsx` (5 onglets) |
@@ -68,6 +68,37 @@ est dans `docs/CLAUDE_ARCHIVE_2026-09-18.md` — elle ne fait pas foi sur l'éta
 - Le sort des fonctionnalités jamais servies (prospection froide, `/qualif`, appels BBC, partage public,
   Noaly…) : voir l'audit du 17/09 (mémoire `carte_app_02`), lot 3.
 - i18n 6 langues : aucun code amorcé.
+
+---
+
+## 📅 L'agenda unique — un seul agenda pour les deux apps (18/09/2026)
+
+Audit (artifact RmsMFUAFHGDKWq5ShuHEXC) puis maquette validée par Thomas (R5zURMgduTWUSKKQzrpYuY) :
+« Mon agenda » (3 725 l. + 2 763 l. de briques, 9 doublons avec le club) s'est fondu dans
+**l'agenda du club**, `BbcAgenda`, qui sert maintenant les deux apps et toute l'équipe.
+- **Jour · Semaine · Mois** — les trois métiers (je cale · je lis · la charge). La « Liste » du
+  standard était un fil CRM de 139 entrées, pas un agenda ; la Semaine du club EST une liste.
+- **Un suivi de cliente se qualifie** comme un prospect (`QualifierRdvClubSheet`, source `suivi`) :
+  Venue → son bilan (`/clients/:id/follow-up/new`, ou `BbcBilan10` pour une fin de carte) ·
+  Venue c'est fait (`completed`) · Déplacer (chez SA coach, `caler_rdv_club(p_table='suivi')`) ·
+  Pas venue (replanifiée 3/7/15 j, même heure, pas de SMS) · Sa fiche complète.
+  Base : `agenda_du_club()` rend `client_id` (migration `20261215540000`).
+- **Passerelles vers le bilan standard** : `urlBilanStandard(rdv)` — `?prospectId=` pour un
+  rendez-vous de l'agenda, `?prenom=&nom=&tel=&email=` pour une réservation du site
+  (`NewAssessmentPage` lit les deux). Branchées en BBC (`BbcApp`) ET côté standard
+  (`AgendaDuClubStandard`).
+- **Sans club**, une coach voit les siens : `coachs_du_club()` la rend seule, et
+  `est_coach_de_mon_club(soi)` est vrai. Ne pas « corriger » ce cas.
+- **Supprimés** : `features/agenda/{AgendaDayList,AgendaWeekGrid,AgendaMonthGrid,
+  AgendaJourPleinEcran,CalerChezUnCoach,ClientRdvSheet,useClubShifts,visibiliteRdvClub,
+  creneauxLibres}`, `components/agenda/QualifierRdvProspect`, `services/sb/creneauxCoach`,
+  `BasculeAgenda`. Restent : `features/agenda/calendarEvents.ts` (palette, durées, couleur de
+  repli — importé par le club et Paramètres) et `components/agenda/QualifierRdvSheet` (CRM,
+  atelier). Le filtre « Protocole » (29 lignes / 60 j) et les statistiques du haut n'ont pas
+  été repris : ce sont des informations de fiche et de CRM.
+- Les liens `/agenda?tab=…` des notifications ouvrent l'agenda ; les paramètres sont ignorés.
+- Le mode d'emploi (`mail-agenda-club`, `GuideAgendaSheet`) dit « menu Agenda » et décrit la
+  question d'un suivi. **Thomas veut le renvoyer aux coachs** pour le nouvel agenda.
 
 ---
 

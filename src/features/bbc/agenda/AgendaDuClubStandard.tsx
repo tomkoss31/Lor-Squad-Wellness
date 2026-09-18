@@ -15,9 +15,9 @@
 //     ce qui colle dans l'agenda se cale dessous ;
 //   · le bouton Noaly occupe le coin bas-droit : le ＋ passe au-dessus.
 //
-// Chargé À LA DEMANDE par la page Agenda (`lazy`) : il n'apparaît que pour une
-// coach rattachée à un club, les autres ne le téléchargent même pas.
-// L'interrupteur, lui, vit dans `BasculeAgenda.tsx`.
+// Depuis le lot 4 de l'agenda unique (18/09/2026), c'est L'agenda de tout le
+// monde : « Mon agenda » et la bascule ont disparu. Une coach sans club voit ses
+// propres rendez-vous (le club vaut `null`, `coachs_du_club()` la rend seule).
 // =============================================================================
 
 import { useEffect, useState, type CSSProperties } from "react";
