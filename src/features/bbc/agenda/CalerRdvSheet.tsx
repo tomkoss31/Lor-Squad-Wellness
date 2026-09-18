@@ -124,7 +124,12 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   // (urgence du 18/09 : Sandrine Miltgen au 7 octobre était hors des 7 jours
   // fixes — aucun moyen d'y aller). `decalage` est un multiple de 7, jamais
   // négatif : on ne recule pas avant aujourd'hui.
-  const [decalage, setDecalage] = useState(0);
+  // Ouverte depuis l'agenda posé sur une autre semaine (« caler le 7 octobre »),
+  // la bande doit commencer LÀ — sinon elle propose les 7 prochains jours et on
+  // croit que la date demandée est interdite (vu le 18/09).
+  const [decalage, setDecalage] = useState(() =>
+    Math.max(0, Math.round((jourDe(jourInitial).getTime() - jourDe(aujourdhui).getTime()) / 86_400_000)),
+  );
   const semaine = useMemo(() => Array.from({ length: 7 }, (_, i) => decalerJour(aujourdhui, decalage + i)), [aujourdhui, decalage]);
   const fenetre = useMemo(() => ({ du: jourDe(decalerJour(aujourdhui, decalage)), au: jourDe(decalerJour(aujourdhui, decalage + 7)) }), [aujourdhui, decalage]);
   const { rdvs: rdvsSemaine } = useAgendaDuClub(fenetre.du, fenetre.au, userId);

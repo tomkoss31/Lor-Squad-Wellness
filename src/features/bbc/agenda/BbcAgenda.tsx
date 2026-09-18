@@ -35,6 +35,7 @@ import { useClubShifts, equipeAffectable, equipeParClub } from "../useClubShifts
 import { getCallsForWeek } from "../data/bbcCalls";
 import { FeuilleAffectation } from "../views/BbcSemaine";
 import { useAgendaDuClub } from "./useAgendaDuClub";
+import { useMaintenant } from "./useMaintenant";
 import { CalerRdvSheet } from "./CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
 import { JourDuClubSheet, type RituelDuJour } from "./JourDuClubSheet";
@@ -101,10 +102,23 @@ interface Props {
 }
 
 export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas, onMembreCree, onSuiviClassique }: Props) {
-  const cleAuj = cleJour(new Date());
+  // L'heure est VIVANTE (18/09) : la tablette du comptoir ne se ferme jamais.
+  // Sans ça, « Auj. » et le liseré du jour restaient sur le jour du montage —
+  // au petit-déjeuner suivant, l'agenda s'ouvrait encore sur la veille.
+  const maintenant = useMaintenant();
+  const cleAuj = cleJour(new Date(maintenant));
   const [vue, setVue] = useState<Vue>("semaine");
   /** Le jour autour duquel on regarde — la clé d'un jour, quelle que soit la vue. */
   const [ancre, setAncre] = useState<string>(cleAuj);
+  // On passe minuit avec l'app ouverte : si on regardait « aujourd'hui », on
+  // suit le vrai aujourd'hui. Si la coach s'était déplacée à une autre semaine
+  // (caler un rendez-vous en octobre), on ne lui reprend pas la main.
+  const dernierAuj = useRef(cleAuj);
+  useEffect(() => {
+    if (dernierAuj.current === cleAuj) return;
+    setAncre((a) => (a === dernierAuj.current ? cleAuj : a));
+    dernierAuj.current = cleAuj;
+  }, [cleAuj]);
   const [filtre, setFiltre] = useState<string>("tous");
   const [jourOuvert, setJourOuvert] = useState<string | null>(null);
   const [rdvOuvert, setRdvOuvert] = useState<RdvClub | null>(null);
@@ -252,7 +266,6 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
     [rdvs, filtre],
   );
   const parJourMap = useMemo(() => parJour(visibles), [visibles]);
-  const maintenant = Date.now();
   const couleur = (id: string | null) => couleurCoach(id, coachs);
   const prenomCoach = (id: string | null) => coachs.find((c) => c.id === id)?.prenom ?? "le club";
 

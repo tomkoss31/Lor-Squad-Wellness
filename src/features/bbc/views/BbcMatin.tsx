@@ -16,7 +16,8 @@ import type { Club } from "../../../types/domain";
 import { useAppContext } from "../../../context/AppContext";
 import { useCoachsDuClub } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "../agenda/useAgendaDuClub";
-import { couleurCoach, estIndispo, heureDe, libelleNature, nomComplet, parJour, cleJour, sansIndispos, type RdvClub } from "../agenda/agendaClub";
+import { couleurCoach, estIndispo, heureDe, jourDe, libelleNature, nomComplet, parJour, cleJour, sansIndispos, type RdvClub } from "../agenda/agendaClub";
+import { useMaintenant } from "../agenda/useMaintenant";
 import { useBbcVisits, visitLevel } from "../useBbcVisits";
 import type { AContacter } from "../contacter";
 import { Carte, Ligne, Rond, Vide } from "../ui";
@@ -41,21 +42,34 @@ interface Props {
 
 export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, onContact, onLiens, onQualifier, onMembre }: Props) {
   const { unreadMessageCount } = useAppContext();
-  const aujourdhui = new Date();
-  const debut = useMemo(() => new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), aujourdhui.getDate()), [cleJour(aujourdhui)]);
+  // L'heure est VIVANTE : l'app reste ouverte au comptoir, parfois toute la
+  // nuit. Sans ça, « aujourd'hui » restait figé sur le jour du montage.
+  const now = useMaintenant();
+  const cleAuj = cleJour(new Date(now));
+  const debut = useMemo(() => jourDe(cleAuj), [cleAuj]);
   const fin = useMemo(() => { const d = new Date(debut); d.setDate(d.getDate() + 2); return d; }, [debut]);
   const { rdvs, loading } = useAgendaDuClub(debut, fin, userId);
   const { coachs } = useCoachsDuClub(userId);
   const prenom = (id: string | null) => coachs.find((c) => c.id === id)?.prenom ?? "le club";
   const parJ = parJour(rdvs);
-  const jour = sansIndispos(parJ.get(cleJour(aujourdhui)) ?? []);
+  const jour = sansIndispos(parJ.get(cleAuj) ?? []);
   const demain = new Date(debut); demain.setDate(demain.getDate() + 1);
   const nbDemain = sansIndispos(parJ.get(cleJour(demain)) ?? []).length;
-  const now = Date.now();
   const miens = jour.filter((r) => r.coachId === userId);
-  const prochain: RdvClub | undefined = miens.find((r) => new Date(r.fin).getTime() > now) ?? miens[miens.length - 1] ?? jour.find((r) => new Date(r.fin).getTime() > now);
+  // Un rendez-vous terminé reste en tête UNE HEURE — le temps de dire comment
+  // ça s'est passé (Thomas, 18/09 : « le rdv passé, tu le laisses max 1 h après
+  // pour la qualif »). Passé ce délai il redescend dans la journée, et on
+  // remonte le suivant : celui de 14 h 30 ne devait plus trôner à 16 h 51.
+  const FENETRE_QUALIF = 60 * 60 * 1000;
+  const aVenirAMoi = miens.find((r) => new Date(r.fin).getTime() > now);
+  const finiRecent = [...miens].reverse().find((r) => {
+    const f = new Date(r.fin).getTime();
+    return f <= now && now - f <= FENETRE_QUALIF;
+  });
+  const prochain: RdvClub | undefined = aVenirAMoi ?? finiRecent ?? jour.find((r) => new Date(r.fin).getTime() > now);
   const autres = jour.filter((r) => r !== prochain);
   const dans = prochain ? Math.round((new Date(prochain.debut).getTime() - now) / 60000) : 0;
+  const fini = prochain ? new Date(prochain.fin).getTime() <= now : false;
 
   const visites = useBbcVisits(userId, club?.id ?? null);
   const aPointer = [...visites.members].sort((a, b) => Number(a.visitedToday) - Number(b.visitedToday) || (b.card?.used ?? 0) - (a.card?.used ?? 0)).slice(0, 8);
@@ -72,7 +86,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
       {loading ? null : prochain ? (
         <div className="bbc-carte" style={hero}>
           <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-orange2)" }}>
-            {miens.includes(prochain) ? "Ton prochain rendez-vous" : "Prochain rendez-vous du club"} · {dans > 0 ? `dans ${dans >= 60 ? `${Math.floor(dans / 60)} h${dans % 60 ? ` ${dans % 60} min` : ""}` : `${dans} min`}` : dans > -60 ? "maintenant" : "passé"}
+            {fini ? "À qualifier" : miens.includes(prochain) ? "Ton prochain rendez-vous" : "Prochain rendez-vous du club"} · {fini ? "vient de se terminer" : dans > 0 ? `dans ${dans >= 60 ? `${Math.floor(dans / 60)} h${dans % 60 ? ` ${dans % 60} min` : ""}` : `${dans} min`}` : "en cours"}
           </div>
           <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 30, lineHeight: 1, letterSpacing: ".01em", textTransform: "uppercase" }}>
             {heureDe(prochain.debut)} · {nomComplet(prochain)}
@@ -94,15 +108,14 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
             )}
           </div>
         </div>
-      ) : (
-        <Carte eye="Aujourd'hui" right="toute l'équipe"><Vide>Aucun rendez-vous aujourd'hui. Le ＋ en bas en cale un.</Vide></Carte>
-      )}
+      ) : null}
 
-      {/* 2 · Aujourd'hui · toute l'équipe */}
-      {!loading && prochain ? (
+      {/* 2 · Aujourd'hui · toute l'équipe — TOUJOURS là, même sans rendez-vous
+          en tête : c'est la carte qui remplace TimeTree le matin. */}
+      {!loading ? (
         <Carte eye="Aujourd'hui · toute l'équipe" right={`${jour.length} RDV · ${miens.length} à toi`}>
           {autres.length === 0 ? (
-            <Vide>Rien d'autre aujourd'hui.</Vide>
+            <Vide>{jour.length ? "Rien d'autre aujourd'hui." : "Aucun rendez-vous aujourd'hui. Le ＋ en bas en cale un."}</Vide>
           ) : (
             autres.map((r) => (
               <Ligne

@@ -214,6 +214,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const [nouveauMembre, setNouveauMembre] = useState(false);
   /** Le menu du ＋ : Pointer, Caler, Nouvelle évaluation. */
   const [gestes, setGestes] = useState(false);
+  /** La barre latérale (ordinateur) : « Plus » est replié par défaut. */
+  const [plusOuvert, setPlusOuvert] = useState(false);
   const [caler, setCaler] = useState<{ deplace?: RdvClub } | null>(null);
   /** Livraison C — le prochain rendez-vous se qualifie depuis Le matin, sans changer d'écran. */
   const [qualif, setQualif] = useState<{ rdv: RdvClub; etape: "choix" | "pasvenue" } | null>(null);
@@ -282,6 +284,9 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const clubCity = club?.city ?? "Verdun";
   const t = TITLES[view];
   const restants = Math.max(0, cdj.target - cdj.count);
+  /** On est sur une vue rangée dans « Plus » : le tiroir reste ouvert, sinon on ne
+   *  verrait pas où l'on se trouve. */
+  const dansPlus = PLUS.some((p) => p.k === view);
 
   return (
     <div className={clair ? "bbc-mode bbc-shell bbc-light" : "bbc-mode bbc-shell"}>
@@ -305,11 +310,30 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             <span aria-hidden="true" style={{ fontSize: 18, width: 20, textAlign: "center" }}>＋</span>
             Pointer · Caler · Évaluer
           </button>
-          <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-hint)", padding: "10px 12px 4px" }}>Plus</div>
-          {PLUS.map((p) => (
-            <NavItem key={p.k} active={view === p.k} label={p.label} onClick={() => setView(p.k)} petit />
-          ))}
-          <NavItem active={false} label="Mes liens" onClick={() => setLiensOuverts(true)} petit />
+          {/* « Plus » se déroule (Thomas, 18/09) : douze entrées dépliées en
+              permanence, c'était le menu à rallonge que la barre du bas venait
+              justement supprimer. Il s'ouvre tout seul si on est dedans. */}
+          <button
+            type="button"
+            onClick={() => setPlusOuvert((o) => !o)}
+            aria-expanded={plusOuvert || dansPlus}
+            style={{
+              display: "flex", alignItems: "center", gap: 8, width: "100%", border: 0, cursor: "pointer", background: "transparent",
+              padding: "12px 12px 6px", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase",
+              color: "var(--ls-bbc-hint)", minHeight: 44,
+            }}
+          >
+            <span style={{ flex: 1, textAlign: "left" }}>Plus</span>
+            <span aria-hidden="true" style={{ fontSize: 11, transform: plusOuvert || dansPlus ? "rotate(180deg)" : "none", transition: "transform .15s" }}>▾</span>
+          </button>
+          {plusOuvert || dansPlus ? (
+            <>
+              {PLUS.map((p) => (
+                <NavItem key={p.k} active={view === p.k} label={p.label} onClick={() => setView(p.k)} petit />
+              ))}
+              <NavItem active={false} label="Mes liens" onClick={() => setLiensOuverts(true)} petit />
+            </>
+          ) : null}
         </nav>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10, paddingTop: 12, borderTop: "1px solid var(--ls-bbc-line)" }}>
