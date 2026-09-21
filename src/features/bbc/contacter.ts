@@ -12,6 +12,10 @@
 // Livraison B : les 6 règles, avec la dernière visite de chaque membre lue en
 // base (`bbc_dernieres_visites`, hook useBbcSignaux) pour « absente depuis
 // 6 jours » et « contente depuis 3 semaines ».
+// 7e règle (journal, bloc B, 8 — Thomas le 21/09 : « ok pour 3 jours ») : elle
+// notait son journal au moins 5 jours sur 7, puis plus rien depuis 3 à 14 jours.
+// Même rang que « absente », qui passe devant ; relancée une fois, elle ne revient
+// pas tant qu'elle n'a pas repris (`journal_signaux_club`, `deja_relancee`).
 // =============================================================================
 
 import type { CrmLead } from "../../hooks/useCrmLeads";
@@ -26,6 +30,7 @@ export type RaisonContact =
   | "carte_finie"
   | "absente"
   | "contente"
+  | "journal"
   | "coeur";
 
 export interface AContacter {
@@ -50,6 +55,15 @@ export function attente(minutes: number): string {
   if (minutes < 60) return `attend depuis ${Math.max(1, Math.round(minutes))} min`;
   if (minutes < 48 * 60) return `attend depuis ${Math.round(minutes / 60)} h`;
   return `attend depuis ${Math.round(minutes / (60 * 24))} jours`;
+}
+
+/** « Elle a lâché son journal » : une habitude (5 jours sur 7), puis un silence de 3 à 14 jours. */
+export const JOURNAL_LACHE = { joursNotes: 5, silenceMin: 3, silenceMax: 14 } as const;
+
+/** Les jours entre une date (AAAA-MM-JJ) et aujourd'hui, à l'heure de Paris. */
+function joursDepuis(jour: string, maintenant: Date): number {
+  const auj = new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(maintenant);
+  return Math.round((Date.parse(`${auj}T00:00:00Z`) - Date.parse(`${jour}T00:00:00Z`)) / 86_400_000);
 }
 
 const SOURCE_TEXTE: Partial<Record<CrmLead["source"], string>> = {
@@ -110,12 +124,18 @@ export function aContacter(args: {
     const sig = args.signaux?.get(m.id);
     const joursSans = sig?.derniereVisite ? (now.getTime() - new Date(sig.derniereVisite).getTime()) / JOUR : null;
     const joursDepuisDebut = m.startDate ? (now.getTime() - new Date(m.startDate).getTime()) / JOUR : null;
+    const journal = sig?.journal;
+    const silence = journal ? joursDepuis(journal.derniereLigne, now) : null;
+    const journalLache = !!journal && !journal.dejaRelancee && journal.joursNotes >= JOURNAL_LACHE.joursNotes
+      && silence != null && silence >= JOURNAL_LACHE.silenceMin && silence <= JOURNAL_LACHE.silenceMax;
     if (m.card.used >= m.card.type) {
       out.push({ key: `membre:${m.id}:carte`, nom: m.name, raison: "carte_finie", texte: `Carte ${m.card.type} finie : proposer le bilan et la carte suivante`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.card.used === m.card.type - 1) {
       out.push({ key: `membre:${m.id}:neuf`, nom: m.name, raison: "neuvieme_visite", texte: `${m.card.used}e visite : lui proposer le bilan de la ${m.card.type}e`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (!m.visitedToday && joursSans !== null && joursSans >= 6) {
       out.push({ key: `membre:${m.id}:absente`, nom: m.name, raison: "absente", texte: `Pas venue depuis ${Math.round(joursSans)} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+    } else if (journalLache && journal) {
+      out.push({ key: `membre:${m.id}:journal`, nom: m.name, raison: "journal", texte: `Notait son journal ${journal.joursNotes} jours sur 7, plus rien depuis ${silence} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.hearts === 0 && joursDepuisDebut !== null && joursDepuisDebut >= 21 && (sig?.visites30j ?? 0) >= 6) {
       out.push({ key: `membre:${m.id}:contente`, nom: m.name, raison: "contente", texte: `Vient depuis ${Math.floor(joursDepuisDebut / 7)} semaines, ${sig?.visites30j} visites ce mois : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: m.phone ?? null, membreId: m.id });
     }
@@ -146,6 +166,8 @@ export function messagePour(c: AContacter, coachPrenom: string): string {
       return `${c.nom}, ta carte est finie, bravo ! On fait ton bilan et on parle de la suite au prochain passage ?`;
     case "absente":
       return `Salut ${c.nom} ! On ne t'a pas vue depuis quelques jours, tout va bien ? Le club t'attend demain matin, je te garde ton shake 🙂`;
+    case "journal":
+      return `Coucou ${c.nom} ! Ton journal est tout calme depuis quelques jours, tout va bien ? Pas besoin de tout noter : ton petit-déj et ton déjeuner, ça me suffit pour te guider 🙂`;
     case "contente":
       return `${c.nom}, ça fait plaisir de te voir aussi régulière 💪 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
     case "coeur":
