@@ -1,0 +1,170 @@
+import { describe, expect, it } from "vitest";
+import {
+  aRetenir,
+  chercher,
+  defisDuJour,
+  eauAtteinte,
+  litres,
+  niveauDe,
+  normaliser,
+  planFinDeJournee,
+  protAliment,
+  resume,
+  suggestions,
+  verresObjectif,
+  type Aliment,
+  type EtatJour,
+  type SemaineCoach,
+} from "../journalCalculs";
+
+// Un extrait fidèle du catalogue en base (valeurs CIQUAL / étiquettes Herbalife FR).
+const A = (x: Partial<Aliment> & { cle: string; nom: string }): Aliment => ({
+  famille: null, herbalife: false, prot_portion: null, prot_100g: null, portions: null, unite: null, indice: null, rangs: {}, ...x,
+});
+const CATALOGUE: Aliment[] = [
+  A({ cle: "f1demi", nom: "Shake F1 + ½ sachet PDM", famille: "f1", herbalife: true, prot_portion: 18, rangs: { pdj: 1, enc: 5 } }),
+  A({ cle: "f1plein", nom: "Shake F1 + 1 sachet PDM (28 g)", famille: "f1", herbalife: true, prot_portion: 25.5, rangs: { pdj: 2 } }),
+  A({ cle: "barre", nom: "Barre aux protéines", herbalife: true, prot_portion: 10, rangs: { enc: 1 } }),
+  A({ cle: "achieve", nom: "Barre Achieve (sport)", herbalife: true, prot_portion: 21, rangs: { enc: 2 } }),
+  A({ cle: "pdmdemi", nom: "PDM · ½ sachet en shake", famille: "pdm", herbalife: true, prot_portion: 7.5, rangs: { enc: 3 } }),
+  A({ cle: "pdmplein", nom: "PDM · 1 sachet en shake (28 g)", famille: "pdm", herbalife: true, prot_portion: 15, rangs: { enc: 4 } }),
+  A({ cle: "fromage_blanc0", nom: "Fromage blanc 0 %", prot_100g: 7.95, portions: [100, 150, 200], rangs: { pdj: 20, enc: 20 } }),
+  A({ cle: "skyr", nom: "Skyr nature", prot_100g: 10, portions: [100, 150], rangs: { pdj: 21, enc: 21 } }),
+  A({ cle: "oeuf", nom: "Œuf", prot_100g: 13.5, portions: [50, 100, 150], rangs: { pdj: 23, repas: 5 } }),
+  A({ cle: "poulet", nom: "Poulet (blanc), cuit", prot_100g: 30.1, portions: [100, 150, 200], rangs: { repas: 1 } }),
+  A({ cle: "poisson_blanc", nom: "Poisson blanc (cabillaud), cuit", prot_100g: 23.1, portions: [100, 130, 160], rangs: { repas: 2 } }),
+  A({ cle: "pates", nom: "Pâtes, cuites", prot_100g: 3.99, portions: [100, 150, 200], rangs: { repas: 9 } }),
+];
+
+const jour = (x: Partial<EtatJour> = {}): EtatJour => ({
+  jour: "2026-09-22", aujourdhui: "2026-09-22",
+  objectifs: { poids: 69, coef: 1.2, proteines: 83, eau_l: 2.3 },
+  lignes: [], veille: [], verres: 0, boisson_club: false, activite: null, humeur: null, remarque: null, xp_total: 0,
+  ...x,
+});
+const L = (creneau: EtatJour["lignes"][number]["creneau"], prot_g: number, origine: "membre" | "club" = "membre", libelle = "x") =>
+  ({ id: `${creneau}-${prot_g}`, creneau, aliment: "x", libelle, grammes: null, quantite: 1, prot_g, origine });
+
+describe("l'eau (1 L par 30 kg, la boisson du club comptée)", () => {
+  it("69 kg : 9 verres sans club, 8 avec la boisson du club", () => {
+    expect(verresObjectif(2.3, false)).toBe(9);
+    expect(verresObjectif(2.3, true)).toBe(8);
+  });
+  it("9 verres de 25 cl valent l'objectif de 2,3 L", () => {
+    expect(eauAtteinte(2.3, 9, false)).toBe(true);
+    expect(eauAtteinte(2.3, 8, false)).toBe(false);
+    expect(eauAtteinte(2.3, 8, true)).toBe(true);
+    expect(eauAtteinte(2.3, 7, true)).toBe(false);
+  });
+  it("compte les litres au centilitre près", () => {
+    expect(litres(4, true)).toBe(1.4);
+    expect(litres(6, false)).toBe(1.5);
+  });
+});
+
+describe("les protéines", () => {
+  it("portion fixe × quantité, ou grammes × valeur pour 100 g", () => {
+    expect(protAliment(CATALOGUE[2], null, 2)).toBe(20);
+    expect(protAliment(CATALOGUE[9], 150)).toBe(45.2);
+  });
+});
+
+describe("les défis du jour", () => {
+  it("le shake pré-rempli par le club ne compte pas comme « journée notée »", () => {
+    const d = defisDuJour(jour({ lignes: [L("pdj", 18, "club")] }));
+    expect(d.find((x) => x.cle === "journal_note")?.atteint).toBe(false);
+  });
+  it("journée complète = petit-déj + déjeuner + dîner + au moins un encas", () => {
+    const sansEncas = defisDuJour(jour({ lignes: [L("pdj", 18), L("dej", 40), L("din", 30)] }));
+    expect(sansEncas.find((x) => x.cle === "journal_complete")?.atteint).toBe(false);
+    const avec = defisDuJour(jour({ lignes: [L("pdj", 18), L("enc2", 10), L("dej", 40), L("din", 30)] }));
+    expect(avec.find((x) => x.cle === "journal_complete")?.atteint).toBe(true);
+    expect(avec.find((x) => x.cle === "journal_proteines")?.atteint).toBe(true);
+    expect(avec.find((x) => x.cle === "journal_proteines")?.libelle).toBe("83 g de prot");
+  });
+  it("sans bilan pesé, pas d'objectif protéines (donc pas de défi atteint par erreur)", () => {
+    const d = defisDuJour(jour({ objectifs: { poids: null, coef: 1.2, proteines: null, eau_l: 2 }, lignes: [L("dej", 200)] }));
+    expect(d.find((x) => x.cle === "journal_proteines")?.atteint).toBe(false);
+  });
+});
+
+describe("chercher un aliment", () => {
+  it("sans accents : « oeuf » trouve Œuf, « pates » trouve Pâtes", () => {
+    expect(normaliser("Œuf")).toBe("oeuf");
+    expect(chercher(CATALOGUE, "oeuf").map((a) => a.cle)).toEqual(["oeuf"]);
+    expect(chercher(CATALOGUE, "pates").map((a) => a.cle)).toEqual(["pates"]);
+  });
+  it("Herbalife d'abord dans les résultats", () => {
+    expect(chercher(CATALOGUE, "barre")[0].herbalife).toBe(true);
+    expect(chercher(CATALOGUE, "").length).toBe(0);
+  });
+});
+
+describe("les idées proposées selon le créneau", () => {
+  it("encas : barre, Achieve, PDM, shake — puis fromage blanc, skyr en dernier", () => {
+    const s = suggestions(CATALOGUE, "enc2");
+    expect(s.herbalife.map((a) => a.cle)).toEqual(["barre", "achieve", "pdmdemi", "pdmplein", "f1demi"]);
+    expect(s.autres.map((a) => a.cle)).toEqual(["fromage_blanc0", "skyr"]);
+  });
+  it("jamais de poulet au petit-déj", () => {
+    const s = suggestions(CATALOGUE, "pdj");
+    expect([...s.herbalife, ...s.autres].some((a) => a.cle === "poulet")).toBe(false);
+    expect(s.herbalife[0].cle).toBe("f1demi");
+  });
+  it("aucun shake « F1 seul » : le shake n'existe qu'en combo", () => {
+    expect(CATALOGUE.filter((a) => a.famille === "f1").every((a) => /\+/.test(a.nom))).toBe(true);
+  });
+});
+
+describe("le plan de fin de journée", () => {
+  it("une idée par créneau vide, Herbalife aux encas, jusqu'à l'objectif", () => {
+    const p = planFinDeJournee(jour({ lignes: [L("pdj", 18, "club")] }), CATALOGUE);
+    expect(p.manque).toBe(65);
+    // 18 + barre 10 + poulet 150 g (45,2) + PDM 15 = 88,2 : le poisson n'est plus utile.
+    expect(p.lignes.map((l) => l.aliment.cle)).toEqual(["barre", "poulet", "pdmplein"]);
+    expect(p.total).toBeGreaterThanOrEqual(83);
+  });
+  it("s'arrête dès que l'objectif est atteint", () => {
+    const p = planFinDeJournee(jour({ lignes: [L("pdj", 18), L("dej", 60)] }), CATALOGUE);
+    expect(p.lignes.map((l) => l.aliment.cle)).toEqual(["barre"]);
+  });
+});
+
+describe("les niveaux (ceux de l'app)", () => {
+  it("680 XP : niveau 3, 20 avant le 4", () => {
+    const n = niveauDe(680);
+    expect(n.courant.level).toBe(3);
+    expect(n.suivant?.level).toBe(4);
+    expect(n.suivant!.threshold - 680).toBe(20);
+  });
+});
+
+describe("résumé d'un repas", () => {
+  it("se lit comme une phrase, sans parenthèses de cuisson", () => {
+    expect(resume([{ libelle: "Poulet (blanc), cuit", quantite: 1 }, { libelle: "Pâtes, cuites", quantite: 1 }])).toBe("Poulet, pâtes");
+    expect(resume([{ libelle: "Barre aux protéines", quantite: 2 }])).toBe("Barre aux protéines × 2");
+  });
+});
+
+describe("« À retenir » (coach)", () => {
+  const vide = { verres: 0, boisson_club: false, activite: null, humeur: null, lignes: [] };
+  const s: SemaineCoach = {
+    aujourdhui: "2026-09-22",
+    objectifs: { poids: 69, coef: 1.2, proteines: 83, eau_l: 2.3 },
+    remarque: null,
+    jours: [
+      { ...vide, jour: "2026-09-16", verres: 6, lignes: [{ creneau: "pdj", libelle: "a", grammes: null, quantite: 1, prot_g: 18, origine: "club" }, { creneau: "dej", libelle: "b", grammes: 100, quantite: 1, prot_g: 45, origine: "membre" }] },
+      { ...vide, jour: "2026-09-17", verres: 9, lignes: [{ creneau: "dej", libelle: "b", grammes: 100, quantite: 1, prot_g: 90, origine: "membre" }] },
+      { ...vide, jour: "2026-09-18" }, { ...vide, jour: "2026-09-19" }, { ...vide, jour: "2026-09-20" }, { ...vide, jour: "2026-09-21" },
+      { ...vide, jour: "2026-09-22", lignes: [{ creneau: "pdj", libelle: "a", grammes: null, quantite: 1, prot_g: 18, origine: "club" }] },
+    ],
+  };
+  it("ne compte pas aujourd'hui, repère le point faible et les jours vides", () => {
+    const r = aRetenir(s, "Camille");
+    expect(r[0].gras).toBe("Protéines : 77 g en moyenne");
+    expect(r[0].texte).toBe("objectif atteint 1 jour sur 2");
+    expect(r[1].texte).toBe("objectif atteint 1 jour sur 2");
+    expect(r[2]).toMatchObject({ faible: true, gras: "Encas de l'après-midi : jamais noté" });
+    expect(r[3].texte).toBe("Rien de noté vendredi, samedi, dimanche et lundi");
+  });
+});

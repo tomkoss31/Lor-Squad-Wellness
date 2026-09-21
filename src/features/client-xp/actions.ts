@@ -34,6 +34,12 @@ export type ClientXpActionKey =
   | "message_sent"          // V2 lifetime (avant : 1x/jour)
   // 1x/jour (mood reste daily — c est un check-in volontaire)
   | "mood_checkin"
+  // Journal nutritionnel (21/09/2026) — les défis du jour, 1x/jour chacun
+  | "journal_note"
+  | "journal_proteines"
+  | "journal_eau"
+  | "journal_complete"
+  | "journal_actif"
   // 1x/semaine
   | "measurement_added"     // V2 weekly (avant : 1x/jour)
   // no cap
@@ -161,6 +167,13 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
     cap: "daily",
     category: "daily",
   },
+  // Journal nutritionnel (21/09/2026) — les 4 défis du jour + « très active ».
+  // Montants et plafonds : record_client_xp (migration 20261215560000).
+  { key: "journal_note", emoji: "📝", label: "Noter ta journée", hint: "Un repas noté dans ton journal", xp: 5, cap: "daily", category: "daily" },
+  { key: "journal_proteines", emoji: "🥩", label: "Atteindre ton objectif protéines", hint: "Dans ton journal", xp: 5, cap: "daily", category: "daily" },
+  { key: "journal_eau", emoji: "💧", label: "Boire ton eau du jour", hint: "1 L par 30 kg", xp: 5, cap: "daily", category: "daily" },
+  { key: "journal_complete", emoji: "⭐", label: "Une journée complète", hint: "Petit-déj, déjeuner, dîner et un encas", xp: 5, cap: "daily", category: "daily" },
+  { key: "journal_actif", emoji: "🏃", label: "1 h de sport ou plus", hint: "Noté dans ta journée", xp: 5, cap: "daily", category: "daily" },
 
   // ─── Engage (lifetime / weekly) ───────────────────────────────────────────
   {

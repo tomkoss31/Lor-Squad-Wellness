@@ -41,6 +41,7 @@ import {
 } from "../lib/calculations";
 import type { LifecycleStatus } from "../types/domain";
 import { LIFECYCLE_LABELS, LIFECYCLE_TONES } from "../types/domain";
+import { JournalCoach } from "../features/journal/JournalCoach";
 
 export function ClientDetailPage() {
   const navigate = useNavigate();
@@ -100,6 +101,8 @@ export function ClientDetailPage() {
   });
   // Onglet Mesures V2 : le panneau mensurations est replié par défaut.
   const [measurementsOpen, setMeasurementsOpen] = useState(false);
+  // Journal nutritionnel (21/09/2026) : replié aussi, chargé seulement à l'ouverture.
+  const [journalOpen, setJournalOpen] = useState(false);
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.
@@ -679,6 +682,33 @@ export function ClientDetailPage() {
           previousAssessment={previousAssessment}
           firstAssessment={firstAssessment}
         />
+      )}
+
+      {/* Journal nutritionnel (21/09/2026) — ce que la cliente note dans son
+          espace (onglet « Journal ») : 7 derniers jours, ce qu'il faut en
+          retenir, son coefficient protéines, une remarque. Rangé dans
+          « Mesures » : la fiche a déjà ses 5 onglets (règle B9). */}
+      {activeTab === 1 && (
+        <Card>
+          <button
+            type="button"
+            className="bs-fold"
+            aria-expanded={journalOpen}
+            onClick={() => setJournalOpen((open) => !open)}
+          >
+            <span className="bs-fold-ico" aria-hidden="true">🥗</span>
+            <span>
+              Journal nutritionnel
+              <span className="bs-fold-sub">Ce qu'elle mange et boit · 7 derniers jours</span>
+            </span>
+            <span className="bs-fold-chev" aria-hidden="true">{journalOpen ? "▾" : "▸"}</span>
+          </button>
+          {journalOpen && (
+            <div className="mt-3">
+              <JournalCoach clientId={client.id} prenom={client.firstName || "elle"} format="coach" />
+            </div>
+          )}
+        </Card>
       )}
 
       {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté

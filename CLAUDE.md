@@ -159,6 +159,33 @@ Un rendez-vous terminé reste en tête du « Matin » **une heure** (fenêtre de
 
 ---
 
+## 🥗 Le journal nutritionnel (lot 1, 21/09/2026)
+
+Maquette v7 validée par Thomas (artifact 6yR2eSaMs5BNZ1uRwfT7kf). L'onglet **« Journal »
+remplace « Conseils »** dans les DEUX espaces membre (`BbcClientApp` format `bbc`,
+`PwaClientApp` format `std`) ; `?tab=conseils` mène au journal. Côté coach : 4e volet de la
+fiche BBC (`BbcCrm`) et section repliable de l'onglet « Mesures » de `ClientDetailPage` (pas de
+6e onglet). Code : `src/features/journal/` (calculs purs + tests, feuilles, volet coach).
+- **Règles de Thomas, dans le code** : protéines = poids du DERNIER bilan pesé × coefficient
+  réglé par la coach (1,2 · 1,4 · 1,5 · 2 — `journal_reglages`) ; eau = 1 L / 30 kg ; la
+  boisson du club (40 cl) et le shake du club sont pré-remplis au pointage (une fois) ; le shake
+  n'existe qu'en COMBO (jamais « F1 seul ») ; encas : Herbalife d'abord puis fromage blanc, skyr.
+- **Catalogue** `journal_aliments` : 95 aliments CIQUAL 2020 (source par ligne) + skyr
+  (étiquettes) + 18 Herbalife FR + chiffres du club. Les protéines d'une ligne sont calculées
+  par le SERVEUR puis figées. Ordre des suggestions : colonne `rangs` par créneau.
+- **Sécurité** : la membre passe par des fonctions à jeton (`journal_jour`, `journal_ajouter`…,
+  security definer) ; la coach par SON RLS (`journal_semaine_coach` invoker, policies =
+  sous-requête sur `clients`). Les `_journal_*` internes sont fermées à anon/authenticated.
+- **XP** : 4 défis du jour +5 (+5 « très active »), plafond 1×/jour dans `record_client_xp`
+  (miroir UI : `client-xp/actions.ts`). Jamais de gros montants : Légende en 2 semaines sinon.
+- **L'humeur** : `client_mood_log` avait été supprimée alors que l'Accueil standard l'appelait
+  (l'humeur n'était plus enregistrée). `record_client_mood` / `get_client_mood_today` écrivent
+  maintenant dans `journal_jours` : l'humeur de l'Accueil ET du journal = la même donnée.
+- Reste à faire (lots 2-3) : Noaly (texte libre → aliments, conseils rédigés), photo, push 20 h
+  si rien n'est noté, et le mail de lancement (`docs/campagnes/journal-nutritionnel/`).
+
+---
+
 ## 🔀 Workflow dev / prod
 
 Voir « Repères » en tête de fichier : `main` = prod, `dev/thomas-test` = dev, `feat/x` depuis dev,

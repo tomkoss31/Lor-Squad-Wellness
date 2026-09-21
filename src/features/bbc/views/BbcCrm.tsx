@@ -1,7 +1,7 @@
 // =============================================================================
 // BbcCrm — « Membres » : la liste RÉELLE des membres BBC du coach, cliquable.
-// La fiche dépliée a TROIS VOLETS (livraison C, 18/09, maquette v7) :
-//   Visites & carte · Son corps · Prochaine étape
+// La fiche dépliée a QUATRE VOLETS (livraison C, 18/09, maquette v7 ; Journal le 21/09) :
+//   Visites & carte · Son corps · Journal · Prochaine étape
 // « Prochaine étape » est calculée (prochaineEtape.ts) : bilan des 10 dès la
 // 9e visite, carte, recos, cœurs, appels. Deux passerelles vers l'app
 // standard : « Sa fiche complète » (/clients/:id) et « Les appels / cœurs ».
@@ -14,6 +14,7 @@ import { RattacherMembre } from "../RattacherMembre";
 import { visitLevel } from "../useBbcVisits";
 import { BbcNewMemberButton } from "../BbcNewMemberButton";
 import { BbcMemberCorps } from "./BbcMemberCorps";
+import { JournalCoach } from "../../journal/JournalCoach";
 import { objectifAffichable } from "../bilan10Pesee";
 import { BbcPeseeSheet } from "../BbcPeseeSheet";
 import { BbcCardSheet } from "../BbcCardSheet";
@@ -347,8 +348,8 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
   };
 }
 
-type Volet = "visites" | "corps" | "etape";
-const VOLETS: [Volet, string][] = [["visites", "Visites & carte"], ["corps", "Son corps"], ["etape", "Prochaine étape"]];
+type Volet = "visites" | "corps" | "journal" | "etape";
+const VOLETS: [Volet, string][] = [["visites", "Visites & carte"], ["corps", "Son corps"], ["journal", "Journal"], ["etape", "Prochaine étape"]];
 const ICONE_ETAPE: Record<ActionEtape, string> = { bilan: "📋", carte: "🎟️", coeurs: "❤️", appels: "📞" };
 
 function MemberRow({
@@ -418,10 +419,10 @@ function MemberRow({
             );
           })()}
 
-          {/* ── TROIS VOLETS (livraison C, maquette v7) ─────────────────────
-              Visites & carte · Son corps · Prochaine étape. La fiche dépliée
+          {/* ── QUATRE VOLETS (livraison C, maquette v7 ; Journal le 21/09) ─
+              Visites & carte · Son corps · Journal · Prochaine étape. La fiche dépliée
               empilait tout ; au comptoir on cherche UNE chose à la fois. */}
-          <div role="tablist" aria-label="La fiche" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4, padding: 4, borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
+          <div role="tablist" aria-label="La fiche" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 4, padding: 4, borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
             {VOLETS.map(([k, l]) => (
               <button
                 key={k}
@@ -500,6 +501,9 @@ function MemberRow({
                 <Line k="Email" v={m.email || "—"} />
               </div>
             </>
+          ) : volet === "journal" ? (
+            /* ── SON JOURNAL ── ce qu'elle mange, boit, ressent (journal nutritionnel, 21/09). */
+            <JournalCoach clientId={m.id} prenom={(m.name || "").trim().split(/\s+/)[0] || "elle"} format="bbc" />
           ) : volet === "corps" ? (
             /* ── SON CORPS ── chargé paresseusement, seulement à l'ouverture. */
             <BbcMemberCorps
