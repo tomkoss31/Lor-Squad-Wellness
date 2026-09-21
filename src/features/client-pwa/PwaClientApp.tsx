@@ -25,6 +25,7 @@ import { useClientXp, recordClientXp } from '../../features/client-xp/useClientX
 import { EvolutionTab, type EvolutionMetricPoint, type EvolutionMeasurement } from './tabs/EvolutionTab'
 import { ProduitsTab, type PwaProduct } from './tabs/ProduitsTab'
 import { JournalMembre } from '../journal/JournalMembre'
+import { JournalAccueil } from '../journal/JournalAccueil'
 import { TRACE_ONGLET_JOURNAL } from '../journal/JournalIcone'
 import type { AlerteSport as PwaSportAlert } from '../journal/JournalFeuilles'
 import { MessagesTab } from './tabs/MessagesTab'
@@ -323,7 +324,7 @@ export function PwaClientApp({
   const deltaTxt =
     weightDeltaKg == null
       ? null
-      : `${weightDeltaKg <= 0 ? '−' : '+'} ${Math.abs(weightDeltaKg).toFixed(1)}`
+      : `${weightDeltaKg < 0 ? '−' : weightDeltaKg > 0 ? '+' : ''}${Math.abs(weightDeltaKg).toFixed(1).replace('.', ',')}`
 
   // ── Styles réutilisés ────────────────────────────────────────────────────
   const eyebrow = (color = 'var(--teal)'): CSSProperties => ({
@@ -412,7 +413,11 @@ export function PwaClientApp({
       {/* Contenu */}
       <div className="pwa2-content" style={{ position: 'relative', padding: '14px 18px 100px' }}>
         {tab === 'accueil' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'lbRise .4s ease both' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'lbRise .4s ease backwards' }}>
+            {/* ⚠️ 21/09 : `backwards`, pas `both`. Gardé après l'animation, le
+                `translateY(0)` final fait de ce bloc le repère des `position: fixed`
+                qu'il contient : les feuilles du journal ouvertes depuis l'Accueil
+                se posaient en bas de la page au lieu du bas de l'écran. */}
             <PwaEngage token={token} />
             {/* 1. Ta régularité (XP) */}
             <div style={card}>
@@ -485,13 +490,24 @@ export function PwaClientApp({
               )}
             </div>
 
-            {/* 3. Transformation */}
-            <div style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, padding: 20, textAlign: 'center', background: 'linear-gradient(120deg,var(--teal-d),var(--teal))', boxShadow: '0 14px 34px -18px var(--teal)' }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(4,32,27,0.7)', fontWeight: 600, marginBottom: 4 }}>Ta transformation</div>
-              <div style={{ fontFamily: ANTON, fontSize: 46, lineHeight: 1, color: '#04201b' }}>{deltaTxt ?? '—'}</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(4,32,27,0.75)', marginTop: 4 }}>KG {weightDeltaKg != null && weightDeltaKg > 0 ? 'PRIS' : 'PERDUS'}</div>
-              <button onClick={() => setTab('evolution')} style={{ marginTop: 14, background: 'rgba(4,32,27,0.12)', border: 'none', borderRadius: 10, padding: '9px 16px', color: '#04201b', fontSize: 12.5, fontWeight: 700, cursor: 'pointer' }}>Voir toute mon évolution →</button>
-            </div>
+            {/* 3. Le journal du jour, à la place du gros bloc du poids (maquette v8,
+                21/09) : c'est l'écran qu'elles ouvrent tous les jours. */}
+            <JournalAccueil token={token} format="std" coachPrenom={coachName} onOuvrirJournal={() => setTab('journal')} alertesSport={sportAlerts} />
+
+            {/* 3 bis. Le poids, en une ligne : la victoire reste visible (lime = victoires). */}
+            <button onClick={() => setTab('evolution')} style={{ width: '100%', minHeight: 62, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', textAlign: 'left', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)', cursor: 'pointer' }}>
+              <span style={{ fontFamily: ANTON, fontSize: 30, lineHeight: 1, color: weightDeltaKg != null && weightDeltaKg < 0 ? 'var(--lime)' : 'var(--text)', whiteSpace: 'nowrap' }}>
+                {deltaTxt ?? '—'}
+                <small style={{ fontFamily: MONO, fontSize: 11, color: 'var(--muted)', marginLeft: 3 }}>kg</small>
+              </span>
+              <span style={{ flex: 1, minWidth: 0, fontFamily: SORA, fontSize: 13.5, fontWeight: 600 }}>
+                {weightDeltaKg == null ? 'Ta transformation' : weightDeltaKg > 0 ? 'pris depuis le départ' : weightDeltaKg < 0 ? 'perdus depuis le départ' : 'depuis le départ'}
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 12, fontWeight: 600, color: 'var(--teal)', whiteSpace: 'nowrap' }}>
+                Mon évolution
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+              </span>
+            </button>
 
             {/* 4. Prochain RDV */}
             <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: '3px solid var(--teal)', borderRadius: 16, padding: 16, display: 'flex', alignItems: 'center', gap: 13 }}>

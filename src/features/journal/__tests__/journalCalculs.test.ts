@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   aRetenir,
   chercher,
+  creneauANoter,
+  creneauDeLHeure,
   defisDuJour,
   eauAtteinte,
   litres,
@@ -127,6 +129,37 @@ describe("le plan de fin de journée", () => {
   it("s'arrête dès que l'objectif est atteint", () => {
     const p = planFinDeJournee(jour({ lignes: [L("pdj", 18), L("dej", 60)] }), CATALOGUE);
     expect(p.lignes.map((l) => l.aliment.cle)).toEqual(["barre"]);
+  });
+  it("selon l'heure : à 16 h, plus d'encas du matin ni de déjeuner (maquette v8)", () => {
+    const seize = new Date(2026, 8, 22, 16, 0);
+    const p = planFinDeJournee(jour({ lignes: [L("pdj", 18, "club")] }), CATALOGUE, seize);
+    expect(p.lignes.map((l) => l.creneau)).toEqual(["enc2", "din"]);
+    // 18 + PDM 15 + cabillaud 100 g (23,1) : on n'atteint pas 83, et le plan ne le cache pas.
+    expect(Math.round(p.total)).toBe(56);
+  });
+  it("un jour passé garde le plan complet (on ne lit pas l'heure)", () => {
+    const p = planFinDeJournee(jour({ jour: "2026-09-21", lignes: [L("pdj", 18)] }), CATALOGUE, new Date(2026, 8, 22, 21, 0));
+    expect(p.lignes[0].creneau).toBe("enc1");
+  });
+});
+
+describe("le repas que propose l'accueil", () => {
+  const a = (h: number, m = 0) => new Date(2026, 8, 22, h, m);
+  it("les heures des repas", () => {
+    expect(creneauDeLHeure(a(8))).toBe("pdj");
+    expect(creneauDeLHeure(a(10, 30))).toBe("enc1");
+    expect(creneauDeLHeure(a(12))).toBe("dej");
+    expect(creneauDeLHeure(a(16))).toBe("enc2");
+    expect(creneauDeLHeure(a(20))).toBe("din");
+  });
+  it("le repas de l'heure s'il est vide, sinon le suivant vide", () => {
+    expect(creneauANoter([], a(12))).toBe("dej");
+    expect(creneauANoter([L("dej", 45)], a(12))).toBe("enc2");
+    // BBC : le shake du club remplit le petit-déj, on propose l'encas.
+    expect(creneauANoter([L("pdj", 18, "club")], a(8))).toBe("enc1");
+  });
+  it("tout est noté jusqu'au dîner : plus rien à proposer (place aux conseils)", () => {
+    expect(creneauANoter([L("din", 30)], a(21))).toBeNull();
   });
 });
 

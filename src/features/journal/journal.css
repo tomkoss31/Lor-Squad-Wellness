@@ -41,6 +41,13 @@
   --jr-m3: var(--ls-bbc-amber);
   --jr-m4: var(--ls-bbc-violet);
   --jr-m5: var(--ls-bbc-coral);
+  /* Noaly = le rose du site (bbc-tokens.css, 21/09) */
+  --jr-nly-tx: var(--ls-bbc-noaly-text);
+  --jr-nly-soft: var(--ls-bbc-noaly-soft);
+  --jr-nly-line: var(--ls-bbc-noaly-line);
+  --jr-nly-btn: var(--ls-bbc-noaly-btn);
+  --jr-nly-ink: #fff;
+  --jr-nly-ombre: var(--ls-bbc-noaly-ombre);
   --jr-fb: var(--ls-bbc-font-body);
   --jr-ft: var(--ls-bbc-font-body);
   --jr-fd: var(--ls-bbc-font-display);
@@ -77,6 +84,13 @@
   --jr-m3: var(--gold);
   --jr-m4: var(--violet);
   --jr-m5: var(--coral);
+  /* Noaly garde ses couleurs La Base 360 (le rose est celui du club) */
+  --jr-nly-tx: var(--teal);
+  --jr-nly-soft: color-mix(in srgb, var(--teal) 12%, transparent);
+  --jr-nly-line: color-mix(in srgb, var(--teal) 42%, transparent);
+  --jr-nly-btn: linear-gradient(140deg, var(--teal), var(--teal-d));
+  --jr-nly-ink: #04201b;
+  --jr-nly-ombre: 0 14px 28px -16px rgba(0, 0, 0, 0.6);
   --jr-fb: "Inter", system-ui, sans-serif;
   --jr-ft: "Sora", "Inter", system-ui, sans-serif;
   --jr-fd: "Anton", Impact, sans-serif;
@@ -113,6 +127,12 @@
   --jr-m3: var(--ls-amber);
   --jr-m4: var(--ls-purple);
   --jr-m5: var(--ls-coral);
+  --jr-nly-tx: var(--ls-teal);
+  --jr-nly-soft: color-mix(in srgb, var(--ls-teal) 12%, transparent);
+  --jr-nly-line: color-mix(in srgb, var(--ls-teal) 42%, transparent);
+  --jr-nly-btn: linear-gradient(140deg, var(--ls-teal), var(--ls-teal-dark));
+  --jr-nly-ink: #04201b;
+  --jr-nly-ombre: none;
   --jr-fb: var(--ls-font-sans);
   --jr-ft: var(--ls-font-sans);
   --jr-fd: "Anton", Impact, sans-serif;
@@ -358,6 +378,77 @@
 .jr-alerte b { display: block; }
 .jr-alerte span { display: block; color: var(--jr-mut); margin-top: 3px; }
 
+/* Noaly : sa couleur dit « c'est Noaly qui parle ou qui calcule » (le rose du
+   site en BBC, le teal en standard) ; l'orange reste celle des gestes de la membre. */
+.jr-eye.nly { color: var(--jr-nly-tx); }
+.jr-nly-lien {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-height: 52px; border: 1px dashed var(--jr-nly-line);
+  background: var(--jr-nly-soft); border-radius: 14px; padding: 8px 13px; text-align: left; font-size: 13px; font-weight: 600; color: var(--jr-tx);
+}
+.jr-nly-lien svg { color: var(--jr-nly-tx); }
+.jr-nly-lien small { display: block; font-size: 11.5px; font-weight: 500; color: var(--jr-mut); margin-top: 1px; }
+.jr-nly-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border: 0; border-radius: 999px;
+  background: var(--jr-nly-btn); color: var(--jr-nly-ink); font-weight: 700; font-size: 14.5px; padding: 0 18px; width: 100%;
+  box-shadow: var(--jr-nly-ombre);
+}
+.jr-nly-btn:disabled { opacity: 0.55; }
+.jr-mot {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--jr-nly-soft); border: 1px solid var(--jr-nly-line);
+  border-radius: 14px; padding: 12px; font-size: 13.5px; line-height: 1.55;
+}
+.jr-mot > svg { color: var(--jr-nly-tx); margin-top: 2px; }
+.jr-qui {
+  display: flex; align-items: center; gap: 5px; font-family: var(--jr-fm); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--jr-nly-tx); margin-bottom: 3px;
+}
+.jr-prop { display: block; padding: 4px 12px; }
+.jr-prop .jr-qui { padding-top: 8px; margin-bottom: 4px; }
+.jr-prop-l { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--jr-ln); min-height: 52px; font-size: 13.5px; }
+.jr-prop-l b { font-weight: 600; }
+.jr-prop-l small { display: block; font-size: 11px; color: var(--jr-hint); }
+.jr-rm {
+  width: 44px; height: 44px; border: 0; background: none; color: var(--jr-hint);
+  display: flex; align-items: center; justify-content: center; flex: none;
+}
+.jr-attente { display: inline-flex; gap: 4px; padding: 4px 0; }
+.jr-attente i { width: 6px; height: 6px; border-radius: 50%; background: var(--jr-nly-tx); animation: jr-tape 1s infinite; }
+.jr-attente i:nth-child(2) { animation-delay: 0.15s; }
+.jr-attente i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes jr-tape { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+.jr-tag.nly { background: var(--jr-nly-soft); color: var(--jr-nly-tx); }
+
+/* La carte « Mon journal » de l'accueil (maquette v8) : l'anneau, l'eau en un
+   geste, le repas de l'heure à noter. */
+.jr-acc-carte { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 18px; }
+.jr-acc-tete {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin: -8px 0 -4px;
+  border: 0; background: none; padding: 0; text-align: left;
+}
+.jr-acc-point { width: 7px; height: 7px; border-radius: 50%; background: var(--jr-acc); box-shadow: 0 0 8px var(--jr-acc); }
+.jr-acc-corps { display: flex; align-items: center; gap: 14px; }
+.jr-acc-anneau { position: relative; width: 90px; height: 90px; flex: none; border: 0; background: none; padding: 0; }
+.jr-acc-anneau svg { display: block; }
+.jr-acc-anneau .jr-ring-t b { font-size: 27px; }
+.jr-acc-eau {
+  flex: 1; min-width: 0; min-height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  gap: 6px; border: 0; background: none; padding: 0; text-align: left;
+}
+.jr-acc-eau .jr-eau-n { margin-top: 0; }
+.jr-acc-verres { display: flex; gap: 4px; width: 100%; }
+.jr-acc-verres i {
+  flex: 1 1 0; min-width: 11px; max-width: 18px; height: 25px; border: 1.5px solid var(--jr-ln2);
+  border-radius: 3px 3px 7px 7px; position: relative; overflow: hidden;
+}
+.jr-acc-verres i.plein { border-color: var(--jr-eau); }
+.jr-acc-verres i.plein::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 78%;
+  background: color-mix(in srgb, var(--jr-eau) 55%, transparent);
+}
+.jr-acc-verres i.gobelet { max-width: 22px; flex-grow: 1.2; border-radius: 3px 3px 8px 8px; }
+.jr-acc-verres i.neuf::after { animation: jr-remplit 0.45s var(--jr-ease); }
+@keyframes jr-remplit { from { height: 0; } to { height: 78%; } }
+
 /* Petit message du haut */
 .jr-toast {
   position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -120px); z-index: 70;
@@ -412,5 +503,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .jr-ring .jr-arc, .jr-xpbar i, .jr-toast, .jr-defi { transition: none; }
-  .jr-defi.juste, .jr-montee, .jr-feuille { animation: none; }
+  .jr-defi.juste, .jr-montee, .jr-feuille, .jr-attente i, .jr-acc-verres i.neuf::after { animation: none; }
 }

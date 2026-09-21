@@ -104,8 +104,8 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId, barem
     <>
       {/* statut */}
       {cur >= 2 ? (
-        <div style={{ position: "relative", overflow: "hidden", background: "var(--ls-bbc-s2)", border: "1px solid rgba(197,248,42,.34)", borderRadius: 20, padding: 20 }}>
-          <div style={{ position: "absolute", top: -40, right: -30, width: 180, height: 180, background: "radial-gradient(circle, rgba(197,248,42,.16), transparent 65%)" }} />
+        <div style={{ position: "relative", overflow: "hidden", background: "var(--ls-bbc-s2)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 34%, transparent)", borderRadius: 20, padding: 20 }}>
+          <div style={{ position: "absolute", top: -40, right: -30, width: 180, height: 180, background: "radial-gradient(circle, color-mix(in srgb, var(--ls-bbc-lime) 16%, transparent), transparent 65%)" }} />
           <div style={{ position: "relative" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", color: "var(--ls-bbc-lime-text)", textTransform: "uppercase" }}>
               <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />tu as {cur} cœurs · ambassadeur
@@ -155,7 +155,7 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId, barem
             const done = cur >= r.n;
             const next = !done && PALIERS.find((p) => p > cur) === r.n;
             return (
-              <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderRadius: 13, background: done ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${done ? "rgba(197,248,42,.3)" : "var(--ls-bbc-line)"}` }}>
+              <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 11, padding: "11px 13px", borderRadius: 13, background: done ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${done ? "color-mix(in srgb, var(--ls-bbc-lime) 30%, transparent)" : "var(--ls-bbc-line)"}` }}>
                 <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 15, color: done ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-hint)", width: 26, flex: "none" }}>{r.n}♥</span>
                 <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: done || next ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)" }}>{r.reward}</span>
                 <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, textTransform: "uppercase", color: done ? "var(--ls-bbc-lime-text)" : next ? "var(--ls-bbc-teal)" : "var(--ls-bbc-hint)" }}>{done ? "obtenu ✓" : next ? "à 1 cœur" : "à venir"}</span>
@@ -174,7 +174,7 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId, barem
         <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", lineHeight: 1.5, marginBottom: 14 }}>Les cœurs te donnent tes <strong style={{ color: "var(--ls-bbc-text)" }}>25 %</strong>. Ensuite ça monte avec ce que tu consommes <strong style={{ color: "var(--ls-bbc-text)" }}>à la maison</strong> (compté en points, les PV).</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {REMISES.map((r, i) => (
-            <div key={r.pct} onClick={() => r.edu && setModal(r.edu)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 13, background: i === 0 ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${i === 0 ? "rgba(197,248,42,.32)" : "var(--ls-bbc-line)"}`, cursor: r.edu ? "pointer" : "default" }}>
+            <div key={r.pct} onClick={() => r.edu && setModal(r.edu)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 13, background: i === 0 ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${i === 0 ? "color-mix(in srgb, var(--ls-bbc-lime) 32%, transparent)" : "var(--ls-bbc-line)"}`, cursor: r.edu ? "pointer" : "default" }}>
               <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22, color: i === 0 ? "var(--ls-bbc-lime-text)" : i < 2 ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)", width: 56, flex: "none" }}>{r.pct}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 600 }}>{r.cond}</div>
@@ -211,7 +211,7 @@ export function MemberCoeurs({ heartsCount, clientName, clientId, coachId, barem
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {EDU[modal].rows.map((row, i) => (
-                <div key={row.k} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, background: i === EDU[modal].rows.length - 1 ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${i === EDU[modal].rows.length - 1 ? "rgba(197,248,42,.3)" : "var(--ls-bbc-line)"}` }}>
+                <div key={row.k} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, background: i === EDU[modal].rows.length - 1 ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${i === EDU[modal].rows.length - 1 ? "color-mix(in srgb, var(--ls-bbc-lime) 30%, transparent)" : "var(--ls-bbc-line)"}` }}>
                   <span style={{ flex: 1, fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>{row.k}</span>
                   <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 13, fontWeight: 700, color: i === EDU[modal].rows.length - 1 ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)", whiteSpace: "nowrap" }}>{row.v}</span>
                 </div>

@@ -2,10 +2,14 @@
 // Journal nutritionnel — les feuilles du bas (maquette v7).
 // Ajouter · voir/corriger un repas · modifier un aliment · sport et humeur ·
 // conseils du jour. Chaque feuille se ferme au fond, à la croix ou à Échap.
+// Lot 2 (21/09, maquette v8) : « Écris ton repas, Noaly calcule » dans l'ajout,
+// les lignes estimées par Noaly (hors catalogue) se corrigent au poids, et
+// « Le mot de Noaly » ouvre les conseils du jour.
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { JournalIcone } from "./JournalIcone";
+import type { LigneProposee, PropositionNoaly } from "./journalApi";
 import {
   ACTIVITES,
   HUMEURS,
@@ -26,6 +30,7 @@ import {
   type EtatJour,
   type Humeur,
   type Ligne,
+  type LignePlan,
 } from "./journalCalculs";
 
 export interface AlerteSport {
@@ -36,7 +41,9 @@ export interface AlerteSport {
 }
 
 // ─── Le cadre commun ──────────────────────────────────────────────────────────
-function Feuille({ titre, surTitre, onFermer, children }: { titre: string; surTitre?: string; onFermer: () => void; children: ReactNode }) {
+function Feuille({ titre, surTitre, surTitreNoaly, onFermer, children }: {
+  titre: string; surTitre?: string; surTitreNoaly?: boolean; onFermer: () => void; children: ReactNode;
+}) {
   useEffect(() => {
     const avant = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -52,7 +59,12 @@ function Feuille({ titre, surTitre, onFermer, children }: { titre: string; surTi
       <div className="jr-feuille" role="dialog" aria-modal="true" aria-label={titre}>
         <div className="jr-fhead">
           <div className="jr-grow">
-            {surTitre ? <div className="jr-eye">{surTitre}</div> : null}
+            {surTitre ? (
+              <div className={`jr-eye${surTitreNoaly ? " nly" : ""}`}>
+                {surTitreNoaly ? <JournalIcone nom="etincelle" taille={13} /> : null}
+                {surTitre}
+              </div>
+            ) : null}
             <h3>{titre}</h3>
           </div>
           <button type="button" className="jr-fermer" onClick={onFermer} aria-label="Fermer">
@@ -133,21 +145,33 @@ function Quantite({ a, grammes, quantite, onGrammes, onQuantite }: {
 }
 
 // ─── Ajouter ──────────────────────────────────────────────────────────────────
-export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onReprendreVeille }: {
+const fmtProt = (g: number) => (g >= 10 ? String(Math.round(g)) : String(Math.round(g * 10) / 10).replace(".", ","));
+
+export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onReprendreVeille, onLireRepas, onAjouterLot }: {
   creneau: Creneau; etat: EtatJour; aliments: Aliment[]; occupe: boolean;
   onFermer: () => void;
   onAjouter: (a: Aliment, grammes: number | null, quantite: number) => void;
   onReprendreVeille: () => void;
+  /** Noaly lit un repas écrit (edge journal-noaly) — absent : pas d'écriture libre. */
+  onLireRepas?: (texte: string) => Promise<PropositionNoaly>;
+  onAjouterLot?: (lignes: LigneProposee[]) => void;
 }) {
   const [q, setQ] = useState("");
   const [choisi, setChoisi] = useState<Aliment | null>(null);
   const [grammes, setGrammes] = useState<number | null>(null);
   const [quantite, setQuantite] = useState(1);
+  // « Écris ton repas, Noaly calcule »
+  const [ecrire, setEcrire] = useState(false);
+  const [texte, setTexte] = useState("");
+  const [attente, setAttente] = useState(false);
+  const [proposition, setProposition] = useState<PropositionNoaly | null>(null);
+  const [erreurNoaly, setErreurNoaly] = useState<string | null>(null);
   const champ = useRef<HTMLInputElement>(null);
   const veille = etat.jour === etat.aujourdhui && !etat.lignes.some((l) => l.creneau === creneau)
     ? etat.veille.filter((l) => l.creneau === creneau) : [];
   const idees = useMemo(() => suggestions(aliments, creneau), [aliments, creneau]);
   const trouves = useMemo(() => chercher(aliments, q), [aliments, q]);
+  const titre = `Ajouter : ${NOM_CRENEAU[creneau].toLowerCase()}`;
 
   function choisir(a: Aliment) {
     if (a.prot_portion != null && !a.famille) {
@@ -160,12 +184,33 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
     setGrammes(a.prot_portion != null ? null : (a.portions?.[1] ?? a.portions?.[0] ?? 100));
   }
 
+  function ouvrirEcriture(depart = "") {
+    setEcrire(true);
+    setTexte(depart);
+    setProposition(null);
+    setErreurNoaly(null);
+  }
+
+  async function calculer() {
+    if (!onLireRepas || !texte.trim()) return;
+    setAttente(true);
+    setErreurNoaly(null);
+    setProposition(null);
+    try {
+      setProposition(await onLireRepas(texte.trim()));
+    } catch (e) {
+      setErreurNoaly((e as Error).message);
+    } finally {
+      setAttente(false);
+    }
+  }
+
   if (choisi) {
     const prot = protAliment(choisi, grammes, quantite);
     const pret = choisi.prot_portion != null || (grammes != null && grammes >= 1);
     const vars = variantes(aliments, choisi);
     return (
-      <Feuille titre={choisi.nom} surTitre={`Ajouter : ${NOM_CRENEAU[creneau].toLowerCase()}`} onFermer={onFermer}>
+      <Feuille titre={choisi.nom} surTitre={titre} onFermer={onFermer}>
         {vars.length > 1 ? (
           <div className="jr-puces" role="group" aria-label="Quelle version ?">
             {vars.map((v) => (
@@ -187,8 +232,85 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
     );
   }
 
+  if (ecrire && onLireRepas) {
+    const lignes = proposition?.lignes ?? [];
+    const total = lignes.reduce((s, l) => s + l.prot_g, 0);
+    return (
+      <Feuille titre={titre} onFermer={onFermer}>
+        <div className="jr-tiny" style={{ fontSize: 12.5, color: "var(--jr-mut)" }}>
+          Écris comme tu parles, avec les quantités si tu les connais. Un plat préparé ? Dis ce qu'il y a dedans.
+        </div>
+        <textarea
+          className="jr-texte"
+          value={texte}
+          maxLength={400}
+          placeholder="ex. une demi-pizza au thon, une salade verte"
+          onChange={(e) => { setTexte(e.target.value); setProposition(null); }}
+          aria-label="Ton repas en quelques mots"
+        />
+        {!proposition && !attente ? (
+          <button type="button" className="jr-nly-btn" disabled={!texte.trim()} onClick={() => void calculer()}>
+            <JournalIcone nom="etincelle" taille={18} />Calculer avec Noaly
+          </button>
+        ) : null}
+        {attente ? (
+          <div className="jr-mot" role="status">
+            <JournalIcone nom="etincelle" taille={18} />
+            <span><span className="jr-qui">Noaly calcule</span><span className="jr-attente" aria-hidden="true"><i /><i /><i /></span></span>
+          </div>
+        ) : null}
+        {erreurNoaly ? <div className="jr-vide">{erreurNoaly}</div> : null}
+        {proposition ? (
+          <>
+            <div className="jr-mot jr-prop">
+              <span className="jr-qui"><JournalIcone nom="etincelle" taille={13} />Noaly a compris</span>
+              {lignes.map((l, i) => (
+                <div key={`${l.nom}-${i}`} className="jr-prop-l">
+                  <span className="jr-grow">
+                    <b>{l.nom}</b>
+                    {l.grammes ? ` · ${l.grammes} g` : l.quantite > 1 ? ` · × ${l.quantite}` : ""}
+                    {l.aliment == null ? (
+                      <small>estimé par Noaly{l.estime ? " · quantité à corriger si besoin" : ""}</small>
+                    ) : l.estime ? (
+                      <small>quantité estimée : tu pourras la corriger</small>
+                    ) : null}
+                  </span>
+                  <span className="jr-g">{fmtProt(l.prot_g)} g</span>
+                  <button type="button" className="jr-rm" aria-label={`Retirer ${l.nom}`}
+                    onClick={() => setProposition({ ...proposition, lignes: lignes.filter((_, j) => j !== i) })}>
+                    <JournalIcone nom="croix" taille={18} />
+                  </button>
+                </div>
+              ))}
+              {!lignes.length ? <div className="jr-vide">Plus rien à ajouter.</div> : null}
+              {proposition.non_reconnus.length ? (
+                <div className="jr-tiny" style={{ padding: "6px 0 8px" }}>
+                  Pas compris : {proposition.non_reconnus.map((x) => `« ${x} »`).join(", ")}. Précise-le, ou choisis-le dans la liste.
+                </div>
+              ) : null}
+            </div>
+            {lignes.length && onAjouterLot ? (
+              <button type="button" className="jr-cta" disabled={occupe} onClick={() => onAjouterLot(lignes)}>
+                Ajouter {lignes.length > 1 ? `les ${lignes.length} ` : ""}· {Math.round(total)} g de prot
+              </button>
+            ) : null}
+          </>
+        ) : null}
+        <button type="button" className="jr-lien" onClick={() => setEcrire(false)}>Choisir dans la liste</button>
+      </Feuille>
+    );
+  }
+
+  const lienNoaly = onLireRepas ? (
+    <button type="button" className="jr-nly-lien" onClick={() => ouvrirEcriture(q.trim())}>
+      <JournalIcone nom="etincelle" taille={20} />
+      <span className="jr-grow">Pas dans la liste ? Écris ton repas<small>Noaly calcule les protéines pour toi</small></span>
+      <JournalIcone nom="droite" taille={18} />
+    </button>
+  ) : null;
+
   return (
-    <Feuille titre={`Ajouter : ${NOM_CRENEAU[creneau].toLowerCase()}`} onFermer={onFermer}>
+    <Feuille titre={titre} onFermer={onFermer}>
       {veille.length ? (
         <button type="button" className="jr-hier" disabled={occupe} onClick={onReprendreVeille}>
           <JournalIcone nom="refaire" taille={20} />
@@ -214,7 +336,9 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
           trouves.length ? (
             trouves.slice(0, 30).map((a) => <BoutonAliment key={a.cle} a={a} onClick={() => choisir(a)} />)
           ) : (
-            <div className="jr-vide">Pas dans la liste : choisis l'aliment le plus proche, ou demande à ta coach de l'ajouter.</div>
+            <div className="jr-vide">
+              {onLireRepas ? "Pas dans la liste : écris-le à Noaly, elle le calcule." : "Pas dans la liste : choisis l'aliment le plus proche, ou demande à ta coach de l'ajouter."}
+            </div>
           )
         ) : (
           <>
@@ -225,6 +349,7 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
           </>
         )}
       </div>
+      {lienNoaly}
     </Feuille>
   );
 }
@@ -244,6 +369,7 @@ export function FeuilleRepas({ creneau, etat, onFermer, onModifier, onAjouter }:
               {l.grammes ? ` · ${Math.round(l.grammes)} g` : ""}
               {l.quantite > 1 ? ` · × ${l.quantite}` : ""}
               {l.origine === "club" ? <span className="jr-tag">pris au club</span> : null}
+              {l.aliment == null ? <span className="jr-tag nly">estimé par Noaly</span> : null}
             </span>
             <small>{Math.round(l.prot_g)} g</small>
           </button>
@@ -259,20 +385,34 @@ export function FeuilleRepas({ creneau, etat, onFermer, onModifier, onAjouter }:
 }
 
 // ─── Modifier / retirer ───────────────────────────────────────────────────────
+/** Des poids autour de celui noté : la moitié, le même, une fois et demie. */
+function portionsAutour(g: number | null): number[] {
+  if (!g) return [100];
+  return [...new Set([Math.round(g / 2), Math.round(g), Math.round(g * 1.5)])].filter((x) => x >= 1 && x <= 2000);
+}
+
 export function FeuilleModifier({ ligne, aliments, occupe, onFermer, onEnregistrer, onRetirer }: {
   ligne: Ligne; aliments: Aliment[]; occupe: boolean; onFermer: () => void;
-  onEnregistrer: (cle: string, grammes: number | null, quantite: number) => void;
+  /** cle null = une ligne estimée par Noaly : seul son poids change. */
+  onEnregistrer: (cle: string | null, grammes: number | null, quantite: number) => void;
   onRetirer: () => void;
 }) {
-  const depart = aliments.find((a) => a.cle === ligne.aliment) ?? null;
+  const estimee = ligne.aliment == null && ligne.prot_100g != null;
+  const depart = ligne.aliment ? aliments.find((a) => a.cle === ligne.aliment) ?? null : null;
   const [a, setA] = useState<Aliment | null>(depart);
   const [grammes, setGrammes] = useState<number | null>(ligne.grammes);
   const [quantite, setQuantite] = useState(ligne.quantite);
+  // Une ligne estimée garde sa base pour 100 g : elle se corrige comme un aliment pesé.
+  const base: Aliment | null = estimee
+    ? { cle: "", nom: ligne.libelle, famille: null, herbalife: false, prot_portion: null, prot_100g: Number(ligne.prot_100g),
+        portions: portionsAutour(ligne.grammes), unite: null, indice: null, rangs: {} }
+    : null;
+  const mesure = a ?? base;
   const vars = a ? variantes(aliments, a) : [];
-  const prot = a ? protAliment(a, grammes, quantite) : ligne.prot_g;
-  const pret = !!a && (a.prot_portion != null || (grammes != null && grammes >= 1));
+  const prot = mesure ? protAliment(mesure, grammes, quantite) : ligne.prot_g;
+  const pret = !!mesure && (mesure.prot_portion != null || (grammes != null && grammes >= 1));
   return (
-    <Feuille titre={a?.nom ?? ligne.libelle} surTitre="Modifier" onFermer={onFermer}>
+    <Feuille titre={a?.nom ?? ligne.libelle} surTitre={estimee ? "Modifier · estimé par Noaly" : "Modifier"} onFermer={onFermer}>
       {a && vars.length > 1 ? (
         <div className="jr-puces" role="group" aria-label="Quelle version ?">
           {vars.map((v) => (
@@ -281,15 +421,19 @@ export function FeuilleModifier({ ligne, aliments, occupe, onFermer, onEnregistr
             </button>
           ))}
         </div>
-      ) : a ? (
-        <Quantite a={a} grammes={grammes} quantite={quantite} onGrammes={setGrammes} onQuantite={setQuantite} />
+      ) : mesure ? (
+        <Quantite a={mesure} grammes={grammes} quantite={quantite} onGrammes={setGrammes} onQuantite={setQuantite} />
       ) : (
         <div className="jr-tiny">Cet aliment n'est plus dans la liste : tu peux seulement le retirer.</div>
       )}
+      {estimee ? (
+        <div className="jr-tiny">Noaly l'estime à {String(Number(ligne.prot_100g)).replace(".", ",")} g de protéines pour 100 g.</div>
+      ) : null}
       <div className="jr-grand">{Math.round(prot)} g</div>
       <div className="jr-tiny" style={{ textAlign: "center", marginTop: -8 }}>de protéines</div>
-      {a ? (
-        <button type="button" className="jr-cta" disabled={!pret || occupe} onClick={() => onEnregistrer(a.cle, a.prot_portion != null ? null : grammes, quantite)}>
+      {mesure ? (
+        <button type="button" className="jr-cta" disabled={!pret || occupe}
+          onClick={() => onEnregistrer(a ? a.cle : null, mesure.prot_portion != null ? null : grammes, quantite)}>
           Enregistrer
         </button>
       ) : null}
@@ -345,11 +489,27 @@ const ASSIETTES: Record<"bbc" | "std", Array<[string, number, string]>> = {
   std: [["légumes", 50, "var(--jr-eau)"], ["protéines", 25, "var(--jr-coral)"], ["glucides complets", 25, "var(--jr-m3)"]],
 };
 
-export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, onFermer }: {
-  etat: EtatJour; aliments: Aliment[]; format: "bbc" | "std"; coachPrenom: string; alertes?: AlerteSport[]; onFermer: () => void;
+export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, maintenant, chargerMot, onFermer }: {
+  etat: EtatJour; aliments: Aliment[]; format: "bbc" | "std"; coachPrenom: string; alertes?: AlerteSport[];
+  /** L'heure : le plan d'aujourd'hui ne propose que des repas encore à venir. */
+  maintenant?: Date;
+  /** « Le mot de Noaly » (edge journal-noaly) — absent ou en panne : les conseils calculés. */
+  chargerMot?: (plan: LignePlan[]) => Promise<string>;
+  onFermer: () => void;
 }) {
   const p = protJour(etat.lignes);
-  const plan = planFinDeJournee(etat, aliments);
+  const plan = planFinDeJournee(etat, aliments, maintenant);
+  const [mot, setMot] = useState<{ etat: "attente" | "ok" | "rien"; texte?: string }>(chargerMot ? { etat: "attente" } : { etat: "rien" });
+  useEffect(() => {
+    if (!chargerMot) return;
+    let vivant = true;
+    chargerMot(plan.lignes)
+      .then((t) => { if (vivant) setMot(t ? { etat: "ok", texte: t } : { etat: "rien" }); })
+      .catch(() => { if (vivant) setMot({ etat: "rien" }); });
+    return () => { vivant = false; };
+    // Une fois à l'ouverture : le plan est celui qu'on affiche à ce moment-là.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const l = litres(etat.verres, etat.boisson_club);
   const resteL = Math.max(0, etat.objectifs.eau_l - 0.05 - l);
   const verresRestants = Math.ceil(resteL / 0.25 - 1e-9);
@@ -360,49 +520,77 @@ export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, 
   const phraseBravo = bravo.join(", ").replace(/, ([^,]*)$/, " et $1");
   const assiette = ASSIETTES[format];
   const obj = etat.objectifs.proteines;
+  // Avec le mot de Noaly, les phrases calculées (eau, bravo) seraient en double.
+  const avecNoaly = mot.etat !== "rien";
+
+  const listePlan = plan.lignes.length ? (
+    <div className="jr-plan">
+      {plan.lignes.map((x) => (
+        <div key={x.creneau}>
+          <span>
+            {x.aliment.nom}{x.grammes ? ` · ${x.grammes} g` : ""}
+            {x.aliment.herbalife ? <span className="jr-herb">Herbalife</span> : null}
+            <small>{NOM_CRENEAU[x.creneau]}</small>
+          </span>
+          <b className="jr-g">+{Math.round(x.prot)} g</b>
+        </div>
+      ))}
+      <div className="fin"><span>Tu arrives à</span><b className="jr-g">≈ {Math.round(plan.total)} g</b></div>
+    </div>
+  ) : null;
 
   return (
-    <Feuille titre={obj != null ? `Tu en es à ${Math.round(p)} g sur ${obj}` : `Tu en es à ${Math.round(p)} g`} surTitre="Tes conseils du jour" onFermer={onFermer}>
-      {obj == null ? (
+    <Feuille
+      titre={obj != null ? `Tu en es à ${Math.round(p)} g sur ${obj}` : `Tu en es à ${Math.round(p)} g`}
+      surTitre={chargerMot ? "Noaly · tes conseils du jour" : "Tes conseils du jour"}
+      surTitreNoaly={!!chargerMot}
+      onFermer={onFermer}
+    >
+      {mot.etat === "attente" ? (
+        <div className="jr-mot" role="status">
+          <JournalIcone nom="etincelle" taille={18} />
+          <span><span className="jr-qui">Le mot de Noaly</span><span className="jr-attente" aria-hidden="true"><i /><i /><i /></span></span>
+        </div>
+      ) : mot.etat === "ok" ? (
+        <div className="jr-mot">
+          <JournalIcone nom="etincelle" taille={18} />
+          <span><span className="jr-qui">Le mot de Noaly</span>{mot.texte}</span>
+        </div>
+      ) : null}
+      {avecNoaly ? (
+        obj != null && plan.manque > 0 ? listePlan : null
+      ) : obj == null ? (
         <div className="jr-bloc"><JournalIcone nom="viande" taille={18} /><span>Ton objectif protéines sera fixé à ton prochain bilan pesé, avec {coachPrenom}.</span></div>
       ) : plan.manque > 0 && plan.lignes.length ? (
         <>
           <div className="jr-bloc"><JournalIcone nom="viande" taille={18} /><span><b>Il te manque {plan.manque} g de protéines.</b> Voilà une journée simple pour les trouver :</span></div>
-          <div className="jr-plan">
-            {plan.lignes.map((x) => (
-              <div key={x.creneau}>
-                <span>
-                  {x.aliment.nom}{x.grammes ? ` · ${x.grammes} g` : ""}
-                  {x.aliment.herbalife ? <span className="jr-herb">Herbalife</span> : null}
-                  <small>{NOM_CRENEAU[x.creneau]}</small>
-                </span>
-                <b className="jr-g">+{Math.round(x.prot)} g</b>
-              </div>
-            ))}
-            <div className="fin"><span>Tu arrives à</span><b className="jr-g">≈ {Math.round(plan.total)} g</b></div>
-          </div>
+          {listePlan}
         </>
       ) : plan.manque > 0 ? (
         <div className="jr-bloc"><JournalIcone nom="viande" taille={18} /><span><b>Il te manque {plan.manque} g de protéines.</b> Un <b>shake PDM</b><span className="jr-herb">Herbalife</span> en fin de journée t'en apporte 15.</span></div>
       ) : (
         <div className="jr-bloc"><JournalIcone nom="coche" taille={18} /><span><b>Objectif protéines atteint.</b> Garde ce rythme demain.</span></div>
       )}
-      <div className="jr-bloc">
-        <JournalIcone nom="goutte" taille={18} />
-        {verresRestants > 0 ? (
-          <span><b>Tu es à {formatLitres(l)} L sur {formatLitres(etat.objectifs.eau_l)} L</b> : encore {verresRestants} verre{verresRestants > 1 ? "s" : ""} d'ici ce soir — un en rentrant, un au dîner, le reste en petites gorgées. Astuce : le <b>thé concentré</b><span className="jr-herb">Herbalife</span> dans ta bouteille rend l'eau plus facile à boire.</span>
-        ) : (
-          <span><b>Hydratation au top :</b> {formatLitres(l)} L, parfait.</span>
-        )}
-      </div>
-      <div className="jr-bloc">
-        <JournalIcone nom={bravo.length ? "coche" : "etoile"} taille={18} />
-        {bravo.length ? (
-          <span><b>Bien joué :</b> {phraseBravo}. Continue comme ça.</span>
-        ) : (
-          <span><b>On repart :</b> commence par noter ton petit-déj, le reste suit.</span>
-        )}
-      </div>
+      {!avecNoaly ? (
+        <>
+          <div className="jr-bloc">
+            <JournalIcone nom="goutte" taille={18} />
+            {verresRestants > 0 ? (
+              <span><b>Tu es à {formatLitres(l)} L sur {formatLitres(etat.objectifs.eau_l)} L</b> : encore {verresRestants} verre{verresRestants > 1 ? "s" : ""} d'ici ce soir — un en rentrant, un au dîner, le reste en petites gorgées. Astuce : le <b>thé concentré</b><span className="jr-herb">Herbalife</span> dans ta bouteille rend l'eau plus facile à boire.</span>
+            ) : (
+              <span><b>Hydratation au top :</b> {formatLitres(l)} L, parfait.</span>
+            )}
+          </div>
+          <div className="jr-bloc">
+            <JournalIcone nom={bravo.length ? "coche" : "etoile"} taille={18} />
+            {bravo.length ? (
+              <span><b>Bien joué :</b> {phraseBravo}. Continue comme ça.</span>
+            ) : (
+              <span><b>On repart :</b> commence par noter ton petit-déj, le reste suit.</span>
+            )}
+          </div>
+        </>
+      ) : null}
       {alertes && alertes.length ? (
         <>
           <div className="jr-eye">Tes points d'attention</div>
@@ -427,7 +615,7 @@ export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, 
         </div>
       </div>
       <div className="jr-tiny">Conseils d'alimentation, pas un avis médical. Une question sur ta santé ? Écris à {coachPrenom}.</div>
-      <button type="button" className="jr-cta" onClick={onFermer}>OK, merci</button>
+      <button type="button" className="jr-cta" onClick={onFermer}>{chargerMot ? "OK, merci Noaly" : "OK, merci"}</button>
     </Feuille>
   );
 }

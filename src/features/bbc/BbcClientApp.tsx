@@ -6,6 +6,10 @@
 // les commits suivants (déjà dessinés). Identité --ls-bbc-*.
 // 21/09/2026 : « Journal » (journal nutritionnel) remplace « Conseils » — le mot
 // du coach et l'assiette y sont repris ; ?tab=conseils mène au journal.
+// 21/09/2026, maquette v8 validée par Thomas : la carte « Mon journal » prend la
+// place du gros bloc du poids sur l'accueil (le poids reste, en une ligne) ;
+// Noaly passe au centre de la barre, rond, dans le rose du site ; la barre
+// garde 4 onglets (les Cœurs s'ouvrent depuis leur carte de l'accueil).
 // =============================================================================
 
 import "../../styles/bbc-tokens.css";
@@ -15,7 +19,8 @@ import { MemberEvolution, type Measurement, type Metric } from "./member/MemberE
 import { MemberReglages } from "./member/MemberReglages";
 import { MemberCoeurs } from "./member/MemberCoeurs";
 import { JournalMembre } from "../journal/JournalMembre";
-import { TRACE_ONGLET_JOURNAL } from "../journal/JournalIcone";
+import { JournalAccueil } from "../journal/JournalAccueil";
+import { JournalIcone, TRACE_ONGLET_JOURNAL } from "../journal/JournalIcone";
 import { MemberMessages } from "./member/MemberMessages";
 import { BbcMemberEntry } from "./BbcMemberEntry";
 import { MemberNoaly } from "./member/MemberNoaly";
@@ -109,11 +114,12 @@ export function BbcClientApp(props: BbcClientAppProps) {
   const isNew = visits === 0 && weightDeltaKg == null;
   const rdv = fmtRdv(nextRdvDate);
 
+  // 4 onglets pour que Noaly tienne le centre (maquette v8) ; les Cœurs
+  // s'ouvrent depuis leur carte de l'accueil (et ?tab=coeurs).
   const NAV: Array<{ k: MemberTab; label: string; d: string; badge?: boolean }> = [
     { k: "accueil", label: "Accueil", d: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" },
-    { k: "evolution", label: "Évolution", d: "M3 12h4l2-7 4 14 2-7h6" },
-    { k: "coeurs", label: "Cœurs", d: "M12 20.3S4.6 15.7 2.6 11.3C1.4 8.7 2.9 5.6 6 5.6c1.9 0 3.2 1.2 4 2.2.8-1 2.1-2.2 4-2.2 3.1 0 4.6 3.1 3.4 5.7C19.4 15.7 12 20.3 12 20.3z" },
     { k: "journal", label: "Journal", d: TRACE_ONGLET_JOURNAL },
+    { k: "evolution", label: "Évolution", d: "M3 12h4l2-7 4 14 2-7h6" },
     // Pas de `badge` : il n'était jamais rendu, et un vrai compteur de non-lus
     // suppose un `read_at` côté membre qui n'existe pas encore. Mieux vaut rien
     // qu'une promesse morte.
@@ -169,14 +175,14 @@ export function BbcClientApp(props: BbcClientAppProps) {
         {tab === "accueil" ? (
           <>
             {/* HERO carte membre + QR */}
-            <div style={{ position: "relative", background: "var(--ls-bbc-s2)", border: "1px solid rgba(197,248,42,.34)", borderRadius: 22, padding: 18, overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: -50, right: -40, width: 200, height: 200, background: "radial-gradient(circle, rgba(197,248,42,.16), transparent 65%)" }} />
+            <div style={{ position: "relative", background: "var(--ls-bbc-s2)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 34%, transparent)", borderRadius: 22, padding: 18, overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -50, right: -40, width: 200, height: 200, background: "radial-gradient(circle, color-mix(in srgb, var(--ls-bbc-lime) 16%, transparent), transparent 65%)" }} />
               <div style={{ position: "relative" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                   <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, fontWeight: 600, letterSpacing: "0.15em", color: "var(--ls-bbc-muted)", textTransform: "uppercase" }}>
                     <span style={{ width: 7, height: 7, borderRadius: 999, background: "var(--ls-bbc-lime)", boxShadow: "0 0 8px var(--ls-bbc-lime)" }} />carte de membre
                   </span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: card?.expired ? "var(--ls-bbc-coral)" : "var(--ls-bbc-lime-text)", border: `1px solid ${card?.expired ? "rgba(251,113,133,.5)" : "rgba(197,248,42,.4)"}`, padding: "4px 10px", borderRadius: 999 }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: card?.expired ? "var(--ls-bbc-coral)" : "var(--ls-bbc-lime-text)", border: `1px solid ${card?.expired ? "rgba(251,113,133,.5)" : "color-mix(in srgb, var(--ls-bbc-lime) 40%, transparent)"}`, padding: "4px 10px", borderRadius: 999 }}>
                     {!card ? "pas de carte active" : card.expired ? "carte expirée" : `carte · ${cardMax} visites`}
                   </span>
                 </div>
@@ -220,25 +226,33 @@ export function BbcClientApp(props: BbcClientAppProps) {
               </div>
             </div>
 
-            {/* transformation */}
+            {/* Le journal du jour, là où elles regardent tous les matins (maquette v8) */}
+            <JournalAccueil token={token} format="bbc" coachPrenom={coachName} onOuvrirJournal={() => setTab("journal")} />
+
+            {/* Le poids, en une ligne : la victoire reste visible, le journal prend la place */}
             {isNew ? (
-              <div style={{ borderRadius: 18, padding: 18, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", display: "flex", alignItems: "center", gap: 13 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: "rgba(197,248,42,.14)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 18 }} aria-hidden="true">📈</div>
+              <div style={{ borderRadius: 16, padding: "12px 14px", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", display: "flex", alignItems: "center", gap: 13 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: "color-mix(in srgb, var(--ls-bbc-lime) 14%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 18 }} aria-hidden="true">📈</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>ta transformation démarre</div>
                   <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2 }}>ta 1ʳᵉ pesée au club = ton point de départ.</div>
                 </div>
               </div>
             ) : weightDeltaKg != null ? (
-              <div style={{ position: "relative", overflow: "hidden", borderRadius: 18, padding: 20, textAlign: "center", background: "var(--ls-bbc-s1)", border: "1px solid rgba(197,248,42,.28)" }}>
-                <div style={{ position: "absolute", top: -40, left: "50%", transform: "translateX(-50%)", width: 220, height: 220, background: "radial-gradient(circle, rgba(197,248,42,.14), transparent 66%)" }} />
-                <div style={{ position: "relative" }}>
-                  <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", fontWeight: 600, marginBottom: 4 }}>ta transformation</div>
-                  <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 48, lineHeight: 1, color: "var(--ls-bbc-lime)" }}>{weightDeltaKg > 0 ? "+" : ""}{weightDeltaKg.toFixed(1).replace(".", ",")}</div>
-                  <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 4 }}>kg depuis le départ{currentWeight ? ` · ${currentWeight.toFixed(1).replace(".", ",")} kg aujourd'hui` : ""}</div>
-                  <button type="button" onClick={() => setTab("evolution")} style={{ marginTop: 14, background: "var(--ls-bbc-lime)", border: 0, borderRadius: 10, padding: "10px 16px", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 12.5, fontWeight: 700, cursor: "pointer" }}>voir toute mon évolution →</button>
-                </div>
-              </div>
+              <button type="button" onClick={() => setTab("evolution")} style={{ width: "100%", minHeight: 62, display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", textAlign: "left", borderRadius: 16, background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-text)", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)" }}>
+                <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 30, lineHeight: 1, color: "var(--ls-bbc-lime)", whiteSpace: "nowrap" }}>
+                  {weightDeltaKg > 0 ? "+" : ""}{weightDeltaKg.toFixed(1).replace(".", ",")}
+                  <small style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, color: "var(--ls-bbc-muted)", marginLeft: 3 }}>kg</small>
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <b style={{ display: "block", fontSize: 13.5, fontWeight: 600 }}>depuis le départ</b>
+                  {currentWeight ? <span style={{ display: "block", fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 1 }}>{currentWeight.toFixed(1).replace(".", ",")} kg aujourd'hui</span> : null}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 2, fontSize: 12, fontWeight: 600, color: "var(--ls-bbc-lime-text)", whiteSpace: "nowrap" }}>
+                  mon évolution
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+                </span>
+              </button>
             ) : null}
 
             {/* RDV */}
@@ -262,7 +276,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
             )}
 
             {/* cœurs / remise */}
-            <div style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-bbc-lime) 12%, var(--ls-bbc-s1)), var(--ls-bbc-s1))", border: "1px solid rgba(197,248,42,.3)", borderRadius: 18, padding: 18 }}>
+            <div style={{ background: "linear-gradient(135deg, color-mix(in srgb, var(--ls-bbc-lime) 12%, var(--ls-bbc-s1)), var(--ls-bbc-s1))", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 30%, transparent)", borderRadius: 18, padding: 18 }}>
               <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-lime-text)", fontWeight: 700, marginBottom: 4 }}>tes cœurs</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>fais découvrir ton club</div>
               {/* La promesse vient du club, pas du code : le coach peut la changer. */}
@@ -274,24 +288,17 @@ export function BbcClientApp(props: BbcClientAppProps) {
               <button type="button" onClick={() => setTab("coeurs")} style={{ width: "100%", minHeight: 46, borderRadius: 12, border: 0, cursor: "pointer", background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 700 }}>recommander un proche</button>
             </div>
 
-            {/* tuiles */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <button type="button" onClick={() => setTab("evolution")} style={{ textAlign: "center", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "16px 12px", cursor: "pointer", color: "var(--ls-bbc-text)" }}>
-                <div style={{ fontSize: 22 }} aria-hidden="true">📐</div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 6 }}>mes mensurations</div>
-                <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 2 }}>suis ton évolution</div>
-              </button>
-              <button type="button" onClick={() => setTab("journal")} style={{ textAlign: "center", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "16px 12px", cursor: "pointer", color: "var(--ls-bbc-text)" }}>
-                <div style={{ fontSize: 22 }} aria-hidden="true">🥗</div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 6 }}>mon journal</div>
-                <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 2 }}>repas, eau & défis</div>
-              </button>
-            </div>
           </>
         ) : tab === "evolution" ? (
           <MemberEvolution token={token ?? ""} metrics={metrics} measurements={measurements} visitDates={visitDates} />
         ) : tab === "coeurs" ? (
-          <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
+          <>
+            <button type="button" onClick={() => setTab("accueil")} style={{ alignSelf: "flex-start", minHeight: 44, display: "inline-flex", alignItems: "center", gap: 4, background: "none", border: 0, padding: "0 4px", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+              Accueil
+            </button>
+            <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
+          </>
         ) : tab === "journal" ? (
           <JournalMembre token={token} format="bbc" coachPrenom={coachName} motDuBilan={coachAdvice} />
         ) : (
@@ -299,21 +306,19 @@ export function BbcClientApp(props: BbcClientAppProps) {
         )}
       </div>
 
-      {/* bottom nav */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, maxWidth: 460, margin: "0 auto", display: "flex", alignItems: "flex-end", padding: "8px 4px calc(20px + env(safe-area-inset-bottom))", background: "color-mix(in srgb, var(--ls-bbc-bg) 82%, transparent)", backdropFilter: "blur(14px)", borderTop: "1px solid var(--ls-bbc-line)", zIndex: 20 }}>
-        {NAV.slice(0, 3).map((n) => (
+      {/* La barre : 2 onglets · Noaly dans sa bosse · 2 onglets (bbc-tokens.css, .bbc-mnav) */}
+      <nav className="bbc-mnav" aria-label="Onglets">
+        {NAV.slice(0, 2).map((n) => (
           <NavBtn key={n.k} n={n} active={tab === n.k} onClick={() => setTab(n.k)} />
         ))}
-        <button type="button" onClick={() => setNoaly(true)} style={{ flex: "none", width: 62, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: 0, cursor: "pointer", padding: "6px 0 4px" }}>
-          <span style={{ width: 50, height: 50, marginTop: -20, borderRadius: 17, background: "linear-gradient(140deg, var(--ls-bbc-teal), var(--ls-bbc-lime))", border: "3px solid var(--ls-bbc-bg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span aria-hidden="true" style={{ fontSize: 22 }}>✦</span>
-          </span>
-          <span style={{ fontSize: 9, fontWeight: 600, color: "var(--ls-bbc-teal)" }}>Noaly</span>
+        <button type="button" className="bbc-mnav-noaly" onClick={() => setNoaly(true)} aria-label="Parler à Noaly">
+          <span className="bbc-mnav-orbe"><JournalIcone nom="etincelle" taille={24} /></span>
+          Noaly
         </button>
-        {NAV.slice(3).map((n) => (
+        {NAV.slice(2).map((n) => (
           <NavBtn key={n.k} n={n} active={tab === n.k} onClick={() => setTab(n.k)} />
         ))}
-      </div>
+      </nav>
 
       {/* QR plein écran */}
       {qrFull && token ? (
@@ -345,9 +350,9 @@ export function BbcClientApp(props: BbcClientAppProps) {
 function NavBtn({ n, active, onClick }: { n: { label: string; d: string; badge?: boolean }; active: boolean; onClick: () => void }) {
   const color = active ? "var(--ls-bbc-lime)" : "var(--ls-bbc-muted)";
   return (
-    <button type="button" onClick={onClick} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: 0, cursor: "pointer", padding: "6px 0 4px", color, boxShadow: active ? "inset 0 2px 0 var(--ls-bbc-lime)" : "inset 0 2px 0 transparent", position: "relative" }}>
+    <button type="button" onClick={onClick} style={{ flex: 1, minWidth: 0, minHeight: 52, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 4, background: "none", border: 0, cursor: "pointer", padding: "6px 0 2px", color, boxShadow: active ? "inset 0 2px 0 var(--ls-bbc-lime)" : "inset 0 2px 0 transparent", position: "relative", fontFamily: "var(--ls-bbc-font-body)" }}>
       <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={n.d} /></svg>
-      <span style={{ fontSize: 9, fontWeight: 600 }}>{n.label}</span>
+      <span style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap" }}>{n.label}</span>
     </button>
   );
 }

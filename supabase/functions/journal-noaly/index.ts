@@ -4,10 +4,14 @@
 // Deux modes, appelés par l'espace membre (jeton d'URL, pas de session) :
 //
 //   • lire_repas — « 150 g de poulet, des carottes et des pâtes » devient des
-//     lignes DU CATALOGUE (journal_aliments) avec leur quantité. L'IA choisit
-//     l'aliment et la quantité ; les protéines sont recalculées ici pour
-//     l'affichage, puis par `journal_ajouter_lot` à l'écriture — jamais par
-//     l'IA. Rien n'est écrit ici : la membre relit, retire, puis valide.
+//     lignes de journal. Un aliment DU CATALOGUE (journal_aliments) garde ses
+//     chiffres officiels : l'IA ne choisit que l'aliment et la quantité, les
+//     protéines sont recalculées ici puis par `journal_ajouter_lot`. Ce que le
+//     catalogue ne connaît pas (burrata, pizza au thon…), l'IA l'ESTIME : un
+//     nom, un poids et des protéines pour 100 g, contrôlés ici et en base
+//     (0 à 90 g). Thomas, 21/09 : « une pizza thon vs une pizza artichaut, c'est
+//     des détails qui changent l'effet ». Rien n'est écrit ici : la membre
+//     relit, retire, puis valide.
 //
 //   • conseil — « Le mot de Noaly » : 2 ou 3 phrases qui DISENT le plan de fin
 //     de journée calculé par l'app (Noaly rédige, elle ne calcule pas). Gardé
@@ -175,9 +179,11 @@ const Repas = z.object({
   lignes: z.array(
     z.object({
       texte: z.string(),
-      cle: z.string(),
+      cle: z.string().nullable(),
+      nom: z.string(),
       grammes: z.number().nullable(),
       quantite: z.number().int().nullable(),
+      prot_100g: z.number().nullable(),
       estime: z.boolean(),
     }),
   ),
@@ -185,14 +191,18 @@ const Repas = z.object({
 });
 
 function systemeRepas(liste: string): string {
-  return `Tu es Noaly, l'assistante nutrition de La Base (clubs de nutrition Herbalife, en France). Une membre écrit ce qu'elle a mangé, avec ses mots ; tu le traduis en lignes de son journal alimentaire.
+  return `Tu es Noaly, l'assistante nutrition de La Base (clubs de nutrition Herbalife, en France). Une membre écrit ce qu'elle a mangé, avec ses mots ; tu le traduis en lignes de son journal alimentaire. Sois juste sur les protéines : les détails comptent (une pizza au thon n'a pas les protéines d'une pizza aux artichauts, une salade avec de la burrata n'est pas une salade avec du poulet).
 
-Chaque aliment reconnu devient une ligne :
-- \`cle\` : la clé EXACTE d'un aliment de la liste ci-dessous. N'invente jamais de clé ; si rien ne correspond, l'aliment va dans \`non_reconnus\`.
-- \`texte\` : le morceau de sa phrase qui correspond à la ligne.
-- Aliment « pesé » : \`grammes\` = le poids tel qu'on le mange (la liste est en poids CUIT, prêt à manger) et \`quantite\` = null. Sans poids donné, prends la première portion proposée et mets \`estime\` à true. Convertis les unités naturelles avec les repères de la liste (« 2 œufs » → 100 g). Un poids donné cru : pâtes, riz, semoule, quinoa, boulgour, lentilles, pois chiches → × 2,5 ; viande, poisson → × 0,75 ; et \`estime\` à true.
-- Produit « à la portion » (Herbalife) : \`quantite\` (de 1 à 5) et \`grammes\` = null.
-- \`estime\` = false seulement quand elle a donné la quantité elle-même.
+Chaque aliment devient une ligne, avec \`texte\` = le morceau de sa phrase qui lui correspond.
+
+1. S'il est dans la liste ci-dessous — le même aliment, pas un cousin —, prends sa clé EXACTE dans \`cle\` (ses chiffres sont officiels) et son nom dans \`nom\` ; \`prot_100g\` = null.
+   - Aliment « pesé » : \`grammes\` = le poids tel qu'on le mange (la liste est en poids CUIT, prêt à manger), \`quantite\` = null. Convertis les unités naturelles avec les repères de la liste (« 2 œufs » → 100 g). Un poids donné cru : pâtes, riz, semoule, quinoa, boulgour, lentilles, pois chiches → × 2,5 ; viande, poisson → × 0,75.
+   - Produit « à la portion » (Herbalife) : \`quantite\` de 1 à 5, \`grammes\` = null.
+2. Sinon, estime-le toi-même : \`cle\` = null, \`nom\` = son nom court en français (« Burrata », « Maïs doux », « Pizza au thon »), \`grammes\` = le poids mangé, \`prot_100g\` = ses protéines pour 100 g telles qu'on le mange, d'après les tables de composition françaises (CIQUAL) et sa recette habituelle.
+   - Un plat préparé (pizza, lasagnes, quiche, burger, sandwich, wrap, plat traiteur…) = UNE ligne dont les protéines tiennent compte de sa garniture.
+   - Une assiette faite d'aliments séparés (« salade maïs, tomate, burrata ») = une ligne par aliment.
+
+Sans quantité donnée, prends la portion habituelle et mets \`estime\` à true : la première portion de la liste, sinon ces repères (le poids ne dépend pas de la garniture) — une pizza entière ≈ 450 g, une demi-pizza ≈ 225 g, une part ≈ 110 g ; une burrata ≈ 125 g ; une assiette de pâtes ou de riz ≈ 200 g cuits ; un sandwich ≈ 250 g ; un burger ≈ 220 g ; une part de quiche ≈ 150 g. \`estime\` = false seulement quand elle a donné la quantité elle-même.
 
 Le shake Herbalife n'existe qu'en combinaison, jamais seul : « un shake », « mon shake », « F1 » sans précision → f1demi (le repère du club : F1 + ½ sachet de PDM). « Avec un sachet entier de PDM » → f1plein ; « au lait » → f1lait ; « au lait de soja » → f1soja.
 « Des légumes » sans précision → poelee_legumes. Une boisson sans protéines (eau, café, thé, tisane, soda) n'est pas une ligne : ignore-la, l'eau se note à part.
@@ -235,17 +245,41 @@ async function lireRepas(sb: SupabaseClient, clientId: string, body: Record<stri
   const sortie = reponse.parsed_output;
   if (!sortie || reponse.stop_reason === "refusal") return json(INDISPONIBLE, 502);
 
-  const lignes: Array<{ aliment: string; nom: string; grammes: number | null; quantite: number; prot_g: number; estime: boolean }> = [];
+  const lignes: Array<{
+    aliment: string | null;
+    nom: string;
+    grammes: number | null;
+    quantite: number;
+    prot_g: number;
+    prot_100g: number | null;
+    estime: boolean;
+  }> = [];
   const nonReconnus = [...sortie.non_reconnus];
   for (const l of sortie.lignes) {
-    const a = cat.parCle.get(l.cle);
+    const a = l.cle ? cat.parCle.get(l.cle) : undefined;
     if (!a) {
-      nonReconnus.push(l.texte || l.cle);
+      // Estimée par Noaly : un nom, un poids, des protéines pour 100 g plausibles
+      // (les mêmes bornes que la base : 0 à 90 g, 1 à 2 000 g).
+      const nom = (l.nom || l.texte || "").replace(/\s+/g, " ").trim().slice(0, 60);
+      const p100 = l.prot_100g;
+      if (!nom || p100 == null || !Number.isFinite(p100) || p100 < 0 || p100 > 90) {
+        nonReconnus.push(l.texte || l.nom || "");
+        continue;
+      }
+      let g = l.grammes;
+      let estime = l.estime;
+      if (g == null || !Number.isFinite(g) || g < 1) {
+        g = 100;
+        estime = true;
+      }
+      g = Math.min(2000, Math.round(g));
+      const p = Math.round(p100 * 100) / 100;
+      lignes.push({ aliment: null, nom: nom.charAt(0).toUpperCase() + nom.slice(1), grammes: g, quantite: 1, prot_g: arrondi((p * g) / 100), prot_100g: p, estime });
       continue;
     }
     if (a.prot_portion != null) {
       const q = Math.min(5, Math.max(1, Math.round(l.quantite ?? 1)));
-      lignes.push({ aliment: a.cle, nom: a.nom, grammes: null, quantite: q, prot_g: protAliment(a, null, q), estime: l.estime });
+      lignes.push({ aliment: a.cle, nom: a.nom, grammes: null, quantite: q, prot_g: protAliment(a, null, q), prot_100g: null, estime: l.estime });
     } else {
       let g = l.grammes;
       let estime = l.estime;
@@ -254,7 +288,7 @@ async function lireRepas(sb: SupabaseClient, clientId: string, body: Record<stri
         estime = true;
       }
       g = Math.min(2000, Math.round(g));
-      lignes.push({ aliment: a.cle, nom: a.nom, grammes: g, quantite: 1, prot_g: protAliment(a, g, 1), estime });
+      lignes.push({ aliment: a.cle, nom: a.nom, grammes: g, quantite: 1, prot_g: protAliment(a, g, 1), prot_100g: null, estime });
     }
   }
   return json({ lignes: lignes.slice(0, 12), non_reconnus: nonReconnus.filter(Boolean).slice(0, 8) });

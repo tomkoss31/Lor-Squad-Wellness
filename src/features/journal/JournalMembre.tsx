@@ -14,14 +14,16 @@
 //   les défis du jour (+5 XP chacun, les niveaux de l'app)
 //   une ligne par repas (on touche la ligne : voir, corriger, ajouter)
 //   sport + humeur en un bouton
-//   « Mes conseils du jour »
+//   « Mes conseils du jour » (Noaly, en rose en BBC)
+// Lot 2 (21/09, maquette v8) : « Écris ton repas, Noaly calcule » dans l'ajout,
+// « Le mot de Noaly » dans les conseils — edge `journal-noaly`.
 // =============================================================================
 
 import "./journal.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JournalIcone } from "./JournalIcone";
 import { FeuilleAjout, FeuilleConseils, FeuilleJournee, FeuilleModifier, FeuilleRepas, type AlerteSport } from "./JournalFeuilles";
-import { chargerAliments, journalMembre, prevenirCoachNiveau, signalerXp } from "./journalApi";
+import { chargerAliments, journalMembre, noaly, prevenirCoachNiveau, signalerXp } from "./journalApi";
 import {
   ACTIVITES,
   COEFFICIENTS,
@@ -381,7 +383,7 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
       </button>
 
       {aujourdhui ? (
-        <button type="button" className="jr-cta" onClick={() => setFeuille({ type: "conseils" })}>
+        <button type="button" className="jr-nly-btn" onClick={() => setFeuille({ type: "conseils" })}>
           <JournalIcone nom="etincelle" taille={18} />Mes conseils du jour
         </button>
       ) : null}
@@ -393,6 +395,8 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           creneau={feuille.creneau} etat={e} aliments={aliments} occupe={occupe} onFermer={fermer}
           onAjouter={(a, g, q) => { fermer(); void agir(() => journalMembre.ajouter(token!, e.jour, feuille.creneau, a.cle, g, q), "Noté"); }}
           onReprendreVeille={() => { fermer(); void agir(() => journalMembre.reprendreVeille(token!, e.jour, feuille.creneau), "Repris d'hier"); }}
+          onLireRepas={(texte) => noaly.lireRepas(token!, feuille.creneau, texte)}
+          onAjouterLot={(lignes) => { fermer(); void agir(() => journalMembre.ajouterLot(token!, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}
         />
       ) : null}
       {feuille?.type === "repas" ? (
@@ -417,7 +421,12 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
         />
       ) : null}
       {feuille?.type === "conseils" ? (
-        <FeuilleConseils etat={e} aliments={aliments} format={format} coachPrenom={coach} alertes={format === "std" ? alertesSport : undefined} onFermer={fermer} />
+        <FeuilleConseils
+          etat={e} aliments={aliments} format={format} coachPrenom={coach} alertes={format === "std" ? alertesSport : undefined}
+          maintenant={new Date()}
+          chargerMot={(plan) => noaly.conseil(token!, e.jour, plan.map((x) => ({ creneau: x.creneau, aliment: x.aliment.cle, grammes: x.grammes })))}
+          onFermer={fermer}
+        />
       ) : null}
     </div>
   );
