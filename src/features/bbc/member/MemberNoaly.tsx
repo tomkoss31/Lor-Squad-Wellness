@@ -74,7 +74,9 @@ export function MemberNoaly({ token, firstName, onClose }: MemberNoalyProps) {
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 75, background: "rgba(0,0,0,.55)", display: "flex", alignItems: "flex-end" }}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bbc-mode"
+        // Pas de `bbc-mode` ici (21/09) : la feuille est DANS l'app membre et
+        // hérite de ses jetons. En redéclarant la classe, elle reprenait les
+        // couleurs sombres et restait noire en thème clair.
         style={{
           width: "100%", maxWidth: 460, margin: "0 auto", maxHeight: "86vh", display: "flex", flexDirection: "column",
           background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line2)", borderRadius: "26px 26px 0 0",

@@ -78,5 +78,5 @@ export function scriptAccentColor(a: BbcScript["accent"]) {
   return a === "lime" ? "var(--ls-bbc-lime)" : a === "teal" ? "var(--ls-bbc-teal)" : "var(--ls-bbc-coral)";
 }
 export function scriptAccentBg(a: BbcScript["accent"]) {
-  return a === "lime" ? "rgba(197,248,42,.10)" : a === "teal" ? "rgba(45,212,191,.10)" : "rgba(251,113,133,.10)";
+  return a === "lime" ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : a === "teal" ? "rgba(45,212,191,.10)" : "rgba(251,113,133,.10)";
 }

@@ -211,7 +211,7 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
                     <b>{NOM_CRENEAU[c]}</b>
                     <br />
                     <span style={{ fontSize: 12.5 }}>
-                      {ls.map((l) => `${l.libelle}${l.grammes ? ` ${Math.round(l.grammes)} g` : ""}${l.quantite > 1 ? ` × ${l.quantite}` : ""}${l.origine === "club" ? " (club)" : ""}`).join(" · ")}
+                      {ls.map((l) => `${l.libelle}${l.grammes ? ` ${Math.round(l.grammes)} g` : ""}${l.quantite > 1 ? ` × ${l.quantite}` : ""}${l.origine === "club" ? " (club)" : ""}${l.estime ? " (estimé par Noaly)" : ""}`).join(" · ")}
                     </span>
                   </span>
                   <span style={{ fontFamily: "var(--jr-fm)", color: "var(--jr-acc-tx)", fontWeight: 700 }}>{Math.round(protJour(ls))} g</span>

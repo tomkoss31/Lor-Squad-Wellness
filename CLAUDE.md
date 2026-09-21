@@ -214,6 +214,18 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   déjà noté) ; tri `journal_rappel_cibles()` (rend des jetons : service_role seulement),
   anti-doublon `journal_rappels_envoyes`, `{dry_run:true}` pour compter sans envoyer. Le lien
   `?tab=journal` est lu par les deux espaces (le standard ignorait `?tab=` jusqu'au 21/09).
+- **Bloc A** (21/09, migration `20261215600000`) : la remarque de la coach part en notification
+  (« Thomas t'a laissé un mot dans ton journal » : trigger `journal_remarque_notifier` → edge
+  **`journal-remarque-notifier`**, lien `?tab=journal`) ; le chat de Noaly (`noaly`, mode
+  `client_chat`) lit le journal du jour, SEULEMENT si la personne a noté dans les 7 jours (sinon rien
+  ne change) ; la coach voit « (estimé par Noaly) » (`estime` dans `journal_semaine_coach`) ;
+  `journal_estimations_frequentes(jours)` (admins) liste les plats que Noaly estime le plus, à
+  ajouter au catalogue avec une valeur OFFICIELLE : maïs doux ajouté (CIQUAL 20066) ; la burrata
+  n'est pas dans CIQUAL 2020, elle reste estimée. ⚠️ `noaly` en ligne (v20) porte ce code de
+  DEV : un déploiement de `noaly` depuis `main` l'effacerait (sans gravité tant que le journal
+  n'est pas en prod) → le reporter avec le cherry-pick. Au passage : l'accueil membre BBC n'a
+  plus d'emojis (SVG), les teintes vert-jaune des vues coach BBC sont passées à l'orange, et la
+  feuille Noaly suit enfin le thème clair (elle redéclarait `.bbc-mode`, donc les jetons sombres).
 - Reste à faire : la photo, le mail de lancement (`docs/campagnes/journal-nutritionnel/`, captures
   à refaire : l'accueil a changé), la recette iPhone de Thomas avant `main`.
 
@@ -981,7 +993,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 82 (au 21/09/2026)
+## ⚡ Edge Functions — les 83 (au 21/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -1014,7 +1026,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `formation-relay-to-admin` | fetch front (coach) | Escalade question admin |
 | `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
-| `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis) |
+| `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis). `client_chat` lit le journal du jour depuis le 21/09 (si la personne le tient) |
 | `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
 | `create-payment-link` | fetch front (page publique) | Caisse directe : Square quick_pay OU Stripe Checkout Session (compte du distri), prix serveur (no-verify-jwt) |
 | `square-payment-webhook` | webhook Square | payment.updated → bilan_orders paid + push coach (auth = signature HMAC) |
@@ -1052,6 +1064,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `client-app-level-up-notify` | fetch (PWA cliente) | PWA v2 : prévient le coach quand la cliente passe un niveau |
 | `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, ou estimées par Noaly hors catalogue, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
 | `journal-rappel` | cron `16 18,19 * * *` UTC (20 h 16 Paris) | Journal : notification de 20 h si rien n'est noté ce jour-là. Service_role seulement ; `{dry_run:true}` compte sans envoyer |
+| `journal-remarque-notifier` | trigger Postgres (`journal_remarques`, AFTER INSERT) | Journal : la remarque de la coach en notification (« Thomas t'a laissé un mot dans ton journal »). Relit tout en base à partir de `remarque_id` ; service_role seulement ; `{dry_run:true}` montre la notification sans l'envoyer |
 | `create-club-card-payment` | fetch (site du club) | Le site du club vend ses cartes de visites (paiement) |
 | `create-shop-checkout` | fetch (boutique HL SKIN) | Checkout de la boutique (10/07/2026) |
 | `confirm-shop-payment` | fetch (boutique HL SKIN) | Confirmation du paiement boutique, sans webhook |
@@ -1068,7 +1081,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `pv-month-end-reminder` | plus de cron depuis le 18/09 (supprimé) | Rappel PV de fin de mois — feature masquée (niveau complet), fonction gardée |
 | `rank-threshold-notifier` | plus de cron depuis le 18/09 (supprimé) | Notif « seuil de rang approché / atteint » — masquée, fonction gardée |
 
-> **82 fonctions au 21/09/2026** (+ `journal-noaly` et `journal-rappel` ; le partage public `/partage/:token` et ses 2 fonctions ont été
+> **83 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
 > fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
 > front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
