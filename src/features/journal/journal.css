@@ -411,11 +411,31 @@
   width: 44px; height: 44px; border: 0; background: none; color: var(--jr-hint);
   display: flex; align-items: center; justify-content: center; flex: none;
 }
-.jr-attente { display: inline-flex; gap: 4px; padding: 4px 0; }
-.jr-attente i { width: 6px; height: 6px; border-radius: 50%; background: var(--jr-nly-tx); animation: jr-tape 1s infinite; }
-.jr-attente i:nth-child(2) { animation-delay: 0.15s; }
-.jr-attente i:nth-child(3) { animation-delay: 0.3s; }
-@keyframes jr-tape { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
+/* Noaly travaille : le rond tourne, une onde s'en échappe, la ligne dit l'étape,
+   la barre avance (jusqu'à 92 % : elle se termine quand la réponse arrive). */
+.jr-travail {
+  display: flex; flex-direction: column; gap: 11px; background: var(--jr-nly-soft); border: 1px solid var(--jr-nly-line);
+  border-radius: 14px; padding: 12px 13px;
+}
+.jr-travail-l { display: flex; align-items: center; gap: 12px; }
+.jr-travail b { display: block; font-size: 14px; font-weight: 700; }
+.jr-travail small { display: block; min-height: 1.45em; margin-top: 2px; font-size: 12.5px; color: var(--jr-mut); }
+.jr-travail small span { display: inline-block; animation: jr-etape 0.35s var(--jr-ease) both; }
+.jr-orbe {
+  position: relative; width: 38px; height: 38px; flex: none; border-radius: 999px;
+  background: var(--jr-nly-btn); color: var(--jr-nly-ink); display: grid; place-items: center;
+}
+.jr-orbe::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 999px; border: 2px solid var(--jr-nly-line);
+  animation: jr-onde 1.6s ease-out infinite;
+}
+.jr-orbe svg { animation: jr-tourne 2.4s linear infinite; }
+.jr-barre { height: 4px; border-radius: 99px; background: var(--jr-s3); overflow: hidden; }
+.jr-barre i { display: block; height: 100%; width: 4%; border-radius: 99px; background: var(--jr-nly-tx); animation: jr-progres 8s cubic-bezier(0.25, 0.55, 0.35, 1) forwards; }
+@keyframes jr-onde { from { transform: scale(0.85); opacity: 0.9; } to { transform: scale(1.4); opacity: 0; } }
+@keyframes jr-tourne { to { transform: rotate(360deg); } }
+@keyframes jr-progres { from { width: 4%; } to { width: 92%; } }
+@keyframes jr-etape { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 .jr-tag.nly { background: var(--jr-nly-soft); color: var(--jr-nly-tx); }
 
 /* La carte « Mon journal » de l'accueil (maquette v8) : l'anneau, l'eau en un
@@ -503,5 +523,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .jr-ring .jr-arc, .jr-xpbar i, .jr-toast, .jr-defi { transition: none; }
-  .jr-defi.juste, .jr-montee, .jr-feuille, .jr-attente i, .jr-acc-verres i.neuf::after { animation: none; }
+  .jr-defi.juste, .jr-montee, .jr-feuille, .jr-acc-verres i.neuf::after { animation: none; }
+  .jr-orbe::before, .jr-orbe svg, .jr-travail small span { animation: none; }
+  .jr-barre i { animation: none; width: 45%; }
 }

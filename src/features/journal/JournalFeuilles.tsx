@@ -144,6 +144,33 @@ function Quantite({ a, grammes, quantite, onGrammes, onQuantite }: {
   );
 }
 
+// ─── Noaly travaille ──────────────────────────────────────────────────────────
+// Thomas, 21/09 : « 5 s c'est peut-être long, faut dire travail en cours… ou une
+// icône qui travaille, que l'on comprenne ». Le rond de Noaly tourne, une ligne
+// dit ce qu'elle fait (elle change toutes les 1,6 s), une barre avance.
+export const ETAPES_REPAS = ["Elle lit ton repas", "Elle cherche chaque aliment", "Elle estime les quantités", "Elle calcule tes protéines", "Presque fini…"];
+export const ETAPES_MOT = ["Elle regarde ta journée", "Elle prépare la suite de ta journée", "Elle écrit ton mot", "Presque fini…"];
+
+export function NoalyTravaille({ titre, etapes }: { titre: string; etapes: string[] }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const t = window.setInterval(() => setI((x) => Math.min(x + 1, etapes.length - 1)), 1600);
+    return () => window.clearInterval(t);
+  }, [etapes.length]);
+  return (
+    <div className="jr-travail" role="status" aria-live="polite">
+      <div className="jr-travail-l">
+        <span className="jr-orbe" aria-hidden="true"><JournalIcone nom="etincelle" taille={18} /></span>
+        <span className="jr-grow">
+          <b>{titre}</b>
+          <small><span key={i}>{etapes[i]}</span></small>
+        </span>
+      </div>
+      <div className="jr-barre" aria-hidden="true"><i /></div>
+    </div>
+  );
+}
+
 // ─── Ajouter ──────────────────────────────────────────────────────────────────
 const fmtProt = (g: number) => (g >= 10 ? String(Math.round(g)) : String(Math.round(g * 10) / 10).replace(".", ","));
 
@@ -253,12 +280,7 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
             <JournalIcone nom="etincelle" taille={18} />Calculer avec Noaly
           </button>
         ) : null}
-        {attente ? (
-          <div className="jr-mot" role="status">
-            <JournalIcone nom="etincelle" taille={18} />
-            <span><span className="jr-qui">Noaly calcule</span><span className="jr-attente" aria-hidden="true"><i /><i /><i /></span></span>
-          </div>
-        ) : null}
+        {attente ? <NoalyTravaille titre="Noaly travaille sur ton repas" etapes={ETAPES_REPAS} /> : null}
         {erreurNoaly ? <div className="jr-vide">{erreurNoaly}</div> : null}
         {proposition ? (
           <>
@@ -547,10 +569,7 @@ export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, 
       onFermer={onFermer}
     >
       {mot.etat === "attente" ? (
-        <div className="jr-mot" role="status">
-          <JournalIcone nom="etincelle" taille={18} />
-          <span><span className="jr-qui">Le mot de Noaly</span><span className="jr-attente" aria-hidden="true"><i /><i /><i /></span></span>
-        </div>
+        <NoalyTravaille titre="Noaly prépare ton mot" etapes={ETAPES_MOT} />
       ) : mot.etat === "ok" ? (
         <div className="jr-mot">
           <JournalIcone nom="etincelle" taille={18} />

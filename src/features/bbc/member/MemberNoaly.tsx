@@ -115,7 +115,12 @@ export function MemberNoaly({ token, firstName, onClose }: MemberNoalyProps) {
             ))
           )}
           {busy ? (
-            <div style={{ alignSelf: "flex-start", fontSize: 12.5, fontWeight: 600, color: "var(--ls-bbc-noaly-text)", padding: "8px 4px" }}>Noaly réfléchit…</div>
+            // Une bulle qui travaille (Thomas, 21/09 : « une icône qui travaille, que l'on comprenne »).
+            <div role="status" aria-live="polite" style={{ alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 10, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", borderRadius: "16px 16px 16px 5px", padding: "10px 14px" }}>
+              <span className="bbc-nly-orbe" aria-hidden="true"><JournalIcone nom="etincelle" taille={14} /></span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ls-bbc-noaly-text)" }}>Noaly réfléchit</span>
+              <span className="bbc-nly-points" aria-hidden="true"><i /><i /><i /></span>
+            </div>
           ) : null}
           {error ? (
             <div role="alert" style={{ fontSize: 12.5, color: "var(--ls-bbc-coral)", background: "rgba(251,113,133,.10)", border: "1px solid rgba(251,113,133,.28)", borderRadius: 12, padding: "10px 12px", lineHeight: 1.45 }}>
