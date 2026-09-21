@@ -176,7 +176,7 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
     sectionId: "agenda",
     pageTitle: "Agenda & follow-ups",
     subtitle:
-      "Protocole automatique 14 jours + digest matin 7h + période de grâce 15 min : pilotage chirurgical du suivi.",
+      "Protocole automatique 14 jours + période de grâce 15 min : pilotage chirurgical du suivi.",
     icon: "📅",
     takeaways: [
       {
@@ -184,12 +184,6 @@ export const PLAYBOOK_SECTIONS: PlaybookSection[] = [
         title: "4 checkpoints J+1 / J+3 / J+7 / J+10",
         detail:
           "La Base 360 note ces 4 contacts sur ton dashboard. Bienvenue, premiers ressentis, VIP, check énergie. Calibrés rétention sans spam.",
-      },
-      {
-        emoji: "⏰",
-        title: "Digest matin à 7h",
-        detail:
-          "Le cron morning-suivis-digest envoie une push notif chaque matin avec les actions du jour : RDV imminents + follow-ups en retard.",
       },
       {
         emoji: "🛡️",

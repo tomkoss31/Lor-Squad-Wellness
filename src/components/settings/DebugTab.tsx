@@ -23,7 +23,6 @@ interface ActivityLogRow {
 
 const EDGE_FUNCTIONS = [
   "send-push",
-  "morning-suivis-digest",
   "rdv-imminent-notifier",
   "new-message-notifier",
   "new-coach-message-notifier",

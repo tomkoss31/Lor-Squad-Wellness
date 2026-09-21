@@ -7,10 +7,11 @@
 // voulait l'endroit VRAIMENT dédié : la liste complète de SES suivis du
 // protocole, non plafonnée, sans les RDV, avec envoi en 2 clics.
 //
-// Source de vérité unique : getFollowUpsDue() (même éligibilité précise que
-// l'edge function morning-suivis-digest : programme/produits + body scan).
-// Donc le compteur de cette page == le compteur de la notif. En bonus, la
-// page inclut les retards et une section "à venir cette semaine".
+// Source de vérité unique : getFollowUpsDue() (éligibilité précise :
+// programme/produits + body scan). La notification du matin qui en reprenait
+// le compte (edge morning-suivis-digest) a été supprimée le 21/09/2026 (Thomas :
+// « pas besoin ») : cette page est le seul endroit. Elle inclut aussi les
+// retards et une section "à venir cette semaine".
 //
 // Envoi en 2 clics : FollowUpStepModal (message interpolé + Copier/WhatsApp/
 // SMS + "Marquer comme envoyé" qui log dans follow_up_protocol_log → l'item

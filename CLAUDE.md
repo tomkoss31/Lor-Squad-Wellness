@@ -1012,7 +1012,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 82 (au 21/09/2026)
+## ⚡ Edge Functions — les 80 (au 21/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -1034,14 +1034,12 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `submit-testimonial` | fetch front (form public) | Création témoignage modéré |
 | `get-testimonial-context` | fetch front (form public) | Pré-remplit contexte témoignage |
 | `send-push` | fetch front + Edge interne | Envoi Web Push |
-| `morning-suivis-digest` | cron 0 7 * * * | Digest matin suivis |
 | `rdv-imminent-notifier` | cron */5 * * * * | Notif RDV imminent |
 | `new-message-notifier` | trigger Postgres | Notif nouveau message client |
 | `new-coach-message-notifier` | trigger Postgres | Notif coach → client |
 | `coach-tips-dispatcher` | cron quotidien | Tips contextuels coach |
 | `flex-notifier` | cron evening / late / weekly | Push FLEX (chantier 2026-11-05) |
 | `formation-validation-notifier` | trigger / fetch | Notif validation module |
-| `formation-relay-to-admin` | fetch front (coach) | Escalade question admin |
 | `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
 | `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis). `client_chat` lit le journal du jour depuis le 21/09 (si la personne le tient) |
@@ -1088,7 +1086,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `confirm-shop-payment` | fetch (boutique HL SKIN) | Confirmation du paiement boutique, sans webhook |
 | `shop-welcome-lead` | fetch (boutique HL SKIN) | Popup bienvenue boutique → lead |
 | `shop-relance-notifier` | cron 1×/jour 09:40 UTC (horaire jusqu'au 18/09) | Relances boutique HL SKIN (0 commande depuis le 07/08) |
-| `stripe-manual-reconcile` | cron toutes les 6 h (horaire jusqu'au 18/09) | Confirme les paiements Stripe « manuels » (liens montant libre) en attente |
+| `stripe-manual-reconcile` | cron 1×/jour 6 h 50 UTC (8 h 50 Paris, depuis le 21/09 ; 4×/jour avant) | Confirme les paiements Stripe « manuels » (liens montant libre) en attente |
 | `test-twilio-sms` | outil, à la main | Envoi SMS manuel via Twilio (envois ponctuels pilotés) — jamais depuis l'app |
 | `crm-relance-notifier` | cron 07:10 UTC | Push « tu as des relances à faire » (relances CRM dues ou en retard) |
 | `notify-referral-converted` | trigger / fetch | Notif au coach quand une recommandation (parrainage) se convertit |
@@ -1099,7 +1097,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `pv-month-end-reminder` | plus de cron depuis le 18/09 (supprimé) | Rappel PV de fin de mois — feature masquée (niveau complet), fonction gardée |
 | `rank-threshold-notifier` | plus de cron depuis le 18/09 (supprimé) | Notif « seuil de rang approché / atteint » — masquée, fonction gardée |
 
-> **82 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; le partage public `/partage/:token` et ses 2 fonctions ont été
+> **80 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; puis `morning-suivis-digest` (« pas besoin ») et `formation-relay-to-admin` (0 formation en attente) supprimées avec leurs tâches, `stripe-manual-reconcile` passée à 1 fois par jour ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
 > fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
 > front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
