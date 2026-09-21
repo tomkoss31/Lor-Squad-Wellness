@@ -7,9 +7,15 @@
 // `error: FunctionsHttpError` avec un message generique "Edge Function
 // returned a non-2xx status code".
 //
-// Le vrai message du backend est cache dans error.context.response (un
-// objet Response qu on peut clone() + json()). Cette fonction fait ce
-// parsing et retourne le 1er message dispo, avec un fallback friendly.
+// Le vrai message du backend est cache dans error.context : c est la Response
+// elle-meme (qu on peut clone() + json()) dans les SDK recents — dans les
+// anciens, c etait error.context.response. Cette fonction gere les deux, fait
+// le parsing et retourne le 1er message dispo, avec un fallback friendly.
+//
+// Bug du 21/09/2026 : elle ne lisait QUE error.context.response, donc avec
+// supabase-js 2.101 elle retombait toujours sur « Edge Function returned a
+// non-2xx status code » — la vraie raison (« Objectif kilos invalide »)
+// n arrivait jamais jusqu a l ecran, sur toutes les pages qui l utilisent.
 //
 // Usage :
 //   const { data, error } = await sb.functions.invoke("my-fn", { body });
@@ -25,13 +31,23 @@ interface MaybeApiData {
 
 interface MaybeFunctionsError {
   message?: string;
-  context?: { response?: Response };
+  context?: unknown;
+}
+
+/** La Response de l erreur : `context` lui-meme (SDK recent) ou
+ *  `context.response` (ancien SDK). null si on n en trouve pas. */
+function responseOf(e: MaybeFunctionsError | null): Response | null {
+  const c = e?.context;
+  if (!c || typeof c !== "object") return null;
+  if (typeof (c as Response).clone === "function") return c as Response;
+  const r = (c as { response?: Response }).response;
+  return r && typeof r.clone === "function" ? r : null;
 }
 
 /**
  * Tente d extraire le message d erreur depuis :
  *   1. data.error (si la fonction a renvoye 200 avec success:false)
- *   2. error.context.response.json() body.error (cas non-2xx)
+ *   2. body.error de la Response cachee dans error.context (cas non-2xx)
  *   3. error.message (fallback brut SDK)
  *   4. fallback custom (defaut : "Erreur inconnue")
  */
@@ -48,10 +64,11 @@ export async function extractFunctionError(
 
   // 2. Body de la response cachee dans error.context (cas 4xx/5xx)
   const e = error as MaybeFunctionsError | null;
-  if (e?.context?.response) {
+  const resp = responseOf(e);
+  if (resp) {
     // 2a. Tenter clone().json() (chemin standard)
     try {
-      const cloned = e.context.response.clone();
+      const cloned = resp.clone();
       const body = (await cloned.json().catch(() => null)) as MaybeApiData | null;
       if (body && typeof body.error === "string" && body.error.trim()) {
         return body.error.trim();
@@ -64,7 +81,7 @@ export async function extractFunctionError(
     // 2b. Fallback : clone().text() puis parse manuel JSON (Safari iOS
     // peut planter sur clone().json() dans certains cas)
     try {
-      const cloned2 = e.context.response.clone();
+      const cloned2 = resp.clone();
       const raw = await cloned2.text().catch(() => "");
       if (raw && raw.trim()) {
         try {
