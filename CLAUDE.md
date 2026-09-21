@@ -1034,13 +1034,13 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `submit-testimonial` | fetch front (form public) | Création témoignage modéré |
 | `get-testimonial-context` | fetch front (form public) | Pré-remplit contexte témoignage |
 | `send-push` | fetch front + Edge interne | Envoi Web Push |
-| `rdv-imminent-notifier` | cron */5 * * * * | Notif RDV imminent |
+| `rdv-imminent-notifier` | cron `8 5-18 * * *` UTC (1×/heure, 7 h–20 h Paris l'été, depuis le 21/09 ; toutes les 30 min avant) | « RDV dans 1 h » au coach (fenêtre 30–90 min devant : à l'heure, rien n'est raté) |
 | `new-message-notifier` | trigger Postgres | Notif nouveau message client |
 | `new-coach-message-notifier` | trigger Postgres | Notif coach → client |
-| `coach-tips-dispatcher` | cron quotidien | Tips contextuels coach |
-| `flex-notifier` | cron evening / late / weekly | Push FLEX (chantier 2026-11-05) |
+| `coach-tips-dispatcher` | plus de cron depuis le 18/09 (supprimé, il était inactif) | Tips contextuels coach — plus rien ne l'appelle |
 | `formation-validation-notifier` | trigger / fetch | Notif validation module |
-| `daily-actions-notifier` | cron 18h + 19h UTC | Push 20h Paris check-list (#2) |
+| `dispatch-newsletter` | fetch front (admin, `AdminNewsletterEditPage`) | Envoi d'une newsletter : test à l'admin, ou à tous selon l'audience ; lien de désinscription signé par destinataire (`%%DESABO%%`) |
+| `send-newsletter-email` | ⚠️ AUCUN appelant (reste de la validation Resend du 23/05) | Corps vide ou `test:true` → un mail de test fixe à Thomas, SANS contrôle d'accès ; sinon admin seulement. Suppression proposée le 21/09 |
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
 | `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis). `client_chat` lit le journal du jour depuis le 21/09 (si la personne le tient) |
 | `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
@@ -1050,7 +1050,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `create-manual-payment-link` | fetch front (coach authentifié) | Lien « montant libre » hors bilan (Mon panier + fin bilan physique ThankYouStep + ticket programme étape 11 via `InlinePaymentButton`). **Square OU Stripe** selon config du distri (fix 2026-07-16 : était Stripe-only → « pas activé » pour les coachs Square). Auth = JWT distri (verify_jwt par défaut), credentials côté serveur |
 | `qualif-bootstrap` | fetch front (page publique /qualif/:token) | Chantier Qualif : mode "status" (lecture, vérifie `bilan_orders` payé côté serveur) / "register" (crée fiche self-serve = clients + assessment + client_app_accounts + auth.users + client_qualif_onboarding + client_consents, IDEMPOTENT via `online_bilans.converted_to_client_id`). (no-verify-jwt) |
 | `qualif-update` | fetch front (page publique /qualif/:token) | Chantier Qualif : avance le parcours (modes flavor/skip_flavor/app_opened/telegram/complete). Écrit `client_qualif_onboarding` (dont `flavor_choices` jsonb F1+Thé+Aloé). Mode flavor → push coach « 🥤 X a choisi ses saveurs ». (no-verify-jwt) |
-| `client-rdv-reminder` | cron */30 | Rappel RDV AU CLIENT / PROSPECT, 3 sources : (1) `follow_ups` client PWA → push 2h avant + push/email veille 18h (anti-doublon `client_rdv_reminders_sent`) ; (2) `rdv_bookings` prospect funnel public → email veille 18h (anti-doublon `rdv_bookings.reminder_email_sent_at`) ; (3) `prospects` = RDV ajoutés À LA MAIN dans l'Agenda → email veille 18h si email renseigné (anti-doublon `prospects.reminder_email_sent_at`, ajouté 2026-07-25). ⚠️ le bloc follow_ups est sous garde `if (rows.length>0)` — les blocs prospects tournent MÊME sans suivi client (avant : return anticipé les court-circuitait) |
+| `client-rdv-reminder` | cron `5,35 4-20 * * *` UTC (toutes les 30 min, 6 h–22 h 35 Paris l'été, depuis le 21/09 ; 24 h/24 avant) | Rappel RDV AU CLIENT / PROSPECT, 3 sources : (1) `follow_ups` client PWA → push 2h avant + push/email veille 18h (anti-doublon `client_rdv_reminders_sent`) ; (2) `rdv_bookings` prospect funnel public → email veille 18h (anti-doublon `rdv_bookings.reminder_email_sent_at`) ; (3) `prospects` = RDV ajoutés À LA MAIN dans l'Agenda → email veille 18h si email renseigné (anti-doublon `prospects.reminder_email_sent_at`, ajouté 2026-07-25). ⚠️ le bloc follow_ups est sous garde `if (rows.length>0)` — les blocs prospects tournent MÊME sans suivi client (avant : return anticipé les court-circuitait) |
 | `bbc-call-reminder` | cron */10 | **Mode BBC** — séquence de rappels des rituels : midi le jour J / −30 min / −15 min → push MEMBRE ; +30 min après → push COACH (« patate chaude », suivi 10 min). Anti-doublon `club_call_reminders_sent` (registration_id + kind). Ne notifie pas le +30 si le suivi est déjà marqué fait. Les 3 push membre mènent à sa PWA, et le −15 min ouvre le lien Zoom réglé dans `clubs.settings.links`. |
 | `book-rdv` | fetch front (page publique /rdv) | Réservation RDV funnel : résout coach par slug, re-check anti-doublon, insert `rdv_bookings`, notif push coach (no-verify-jwt) |
 | `send-password-reset` | fetch front (/forgot-password) | Mot de passe oublié via Resend : `admin.generateLink(recovery)` + envoi Resend (contourne le mailer Supabase bridé « limite atteinte »). Anti-énumération + throttle IP/email. Template `_shared/email.ts`. (no-verify-jwt) |
@@ -1066,7 +1066,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `rdv-accepted-notify` | fetch front | « C'est confirmé » au prospect (11/08/2026) |
 | `rdv-confirm-client` | fetch front | Mail de confirmation au CLIENT de suivi quand le RDV est posé |
 | `club-mail-apres-rdv` | fetch front (qualification d'un RDV club) | Le mail d'après-RDV : « vous démarrez » / « vous n'avez pas pu venir » — idempotent (edge v7, 16/09) |
-| `club-mail-creneau-manquant` | cron toutes les 10 min | Rattrape la plus grosse fuite de l'entonnoir : mail à qui n'a pas fini sa réservation (lectures avec relance anti-Nano, `_shared/reessais.ts`) |
+| `club-mail-creneau-manquant` | cron `2,32 5-21 * * *` UTC (toutes les 30 min, 7 h–23 h 30 Paris l'été, depuis le 21/09 ; toutes les 10 min avant) | Rattrape la plus grosse fuite de l'entonnoir : mail à qui n'a pas fini sa réservation (lectures avec relance anti-Nano, `_shared/reessais.ts`) |
 | `club-mail-relance-dormants` | ⚠️ AUCUN appelant (ni cron, ni front) | Dernier essai propre sur les leads sans réponse — jamais branchée. À trancher (lot 3 de l'audit) |
 | `make-lead-entrant` | Make (webhook du formulaire Meta) | LE tuyau Meta → app : crée le lead, SMS automatique + liens personnels. **Ne PAS supprimer** même si le front ne la cite pas |
 | `lead-clic` | lien dans les SMS / mails | « Qui a cliqué sur son lien ? » : trace le clic puis redirige |
@@ -1099,7 +1099,11 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 > **80 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; puis `morning-suivis-digest` (« pas besoin ») et `formation-relay-to-admin` (0 formation en attente) supprimées avec leurs tâches, `stripe-manual-reconcile` passée à 1 fois par jour ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
-> fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
-> front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
-> (appelée par `dispatch-newsletter`), `client-app-confirm-calendar` et `club-mail-relance-dormants` /
-> `lead-relaunch-send` (jamais branchées) — les trois dernières sont à trancher avec Thomas (lot 3 de l'audit).
+> fait foi ; toute nouvelle fonction = une ligne ici). **En ligne = dépôt = 80 depuis le 21/09** : les
+> 7 fonctions FANTÔMES (en ligne sans aucun code, appelées par rien) ont été supprimées ce jour-là —
+> `admin-cancel-campaign`, `admin-resend-rdv-confirm`, `coach-reminder-notifier`, `daily-actions-notifier`,
+> `flex-notifier`, `passive-supervisor-data`, `tmp-shop-upload`. Contrôle : comparer
+> `supabase functions list` à `ls supabase/functions`. Ne sont appelées par rien dans l'app :
+> `make-lead-entrant` (Make), `test-twilio-sms` (outil), puis `send-newsletter-email`, `coach-tips-dispatcher`,
+> `client-app-confirm-calendar`, `club-mail-relance-dormants` et `lead-relaunch-send` — ces cinq-là sont à
+> trancher avec Thomas.
