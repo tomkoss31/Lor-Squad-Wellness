@@ -226,6 +226,25 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   n'est pas en prod) → le reporter avec le cherry-pick. Au passage : l'accueil membre BBC n'a
   plus d'emojis (SVG), les teintes vert-jaune des vues coach BBC sont passées à l'orange, et la
   feuille Noaly suit enfin le thème clair (elle redéclarait `.bbc-mode`, donc les jetons sombres).
+- **Bloc B** (21/09, migrations `20261215610000` → `640000`, maquette Jt3RNaarpnav5XRGzhrTwz validée :
+  « 1 OK, 2 OK, 3 ok pour 3 jours, 4 oui masque ») :
+  **6 « Tes habituels »** en tête d'« Ajouter » (`_journal_habituels` : noté ≥ 2 jours sur 14 à ce
+  repas, SA quantité, 4 max ; un toucher = noté ; un plat estimé revient sans rappeler Noaly ; ce
+  qui est déjà noté n'est pas reproposé) · **9 les kcal**, en gris sous les protéines et en total
+  du jour, jamais sur l'accueil ni en objectif (`_journal_kcal_ligne`, calculées à la lecture ;
+  `journal_lignes.kcal_100g` = estimation de Noaly) ; la coach les masque membre par membre
+  (`journal_reglages.kcal_visibles`, `journal_regler_kcal`) ; 14 aliments sans énergie publiée
+  dans CIQUAL 2020 ont leurs kcal calculées par la formule UE 1169/2011 (vérifiée sur 48 aliments,
+  écart max 4 kcal) ; restent SANS kcal, faute de source : croque-monsieur, les 2 chips
+  protéinées, Rebuild Strength · **8 « elle a lâché son journal »**, 7e règle de Contacter
+  (`journal_signaux_club`, RLS de la coach : ≥ 5 jours notés sur 7 puis 3 à 14 jours de silence ;
+  « pas venue » passe devant ; relancée une fois, elle ne revient pas tant qu'elle n'a pas repris) ·
+  **7 « Ta semaine »** (`journal_semaine`, `JournalSemaine.tsx`) : en tête le dimanche soir et le
+  lundi, en bas sinon ; UNE chose à travailler, calculée ; notification dimanche 19 h 10 (cron
+  `journal-semaine` `10 17,18 * * 0`, edge `journal-rappel` mode « semaine », ≥ 3 jours notés,
+  anti-doublon `journal_semaines_envoyees`, lien `?tab=journal&semaine=1`).
+- Idée de Thomas, à discuter (rien de codé) : le plan de la semaine par mail le vendredi soir —
+  bilan, plan, 5 recettes, liste de courses (mémoire `project_journal_plan_semaine_mail`).
 - Reste à faire : la photo, le mail de lancement (`docs/campagnes/journal-nutritionnel/`, captures
   à refaire : l'accueil a changé), la recette iPhone de Thomas avant `main`.
 
@@ -1062,8 +1081,8 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `update-colis-lead-action` | fetch (funnel `/colis`) | Affine le choix final du funnel colis |
 | `client-app-save-measurement` | fetch (PWA cliente) | PWA v2 (07/2026) : enregistre une session de mensurations de la cliente |
 | `client-app-level-up-notify` | fetch (PWA cliente) | PWA v2 : prévient le coach quand la cliente passe un niveau |
-| `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, ou estimées par Noaly hors catalogue, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
-| `journal-rappel` | cron `16 18,19 * * *` UTC (20 h 16 Paris) | Journal : notification de 20 h si rien n'est noté ce jour-là. Service_role seulement ; `{dry_run:true}` compte sans envoyer |
+| `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, ou estimées par Noaly hors catalogue avec protéines ET kcal pour 100 g, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
+| `journal-rappel` | cron `16 18,19 * * *` UTC (20 h 16 Paris) + cron `journal-semaine` `10 17,18 * * 0` (dimanche 19 h 10) | Journal : notification de 20 h si rien n'est noté ce jour-là ; mode « semaine » : « ta semaine en 3 chiffres » le dimanche (≥ 3 jours notés). Service_role seulement ; `{dry_run:true}` compte sans envoyer |
 | `journal-remarque-notifier` | trigger Postgres (`journal_remarques`, AFTER INSERT) | Journal : la remarque de la coach en notification (« Thomas t'a laissé un mot dans ton journal »). Relit tout en base à partir de `remarque_id` ; service_role seulement ; `{dry_run:true}` montre la notification sans l'envoyer |
 | `create-club-card-payment` | fetch (site du club) | Le site du club vend ses cartes de visites (paiement) |
 | `create-shop-checkout` | fetch (boutique HL SKIN) | Checkout de la boutique (10/07/2026) |
