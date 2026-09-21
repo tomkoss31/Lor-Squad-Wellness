@@ -83,7 +83,7 @@ export function BbcContacter({ contacts, faits, count, target, onContact }: Prop
 
       <Carte eye="Pourquoi ces personnes" tone="plein" right="l'ordre">
         <Vide>
-          1 · les leads qui attendent (pub, site, recommandations) · 2 · les relances à la date que tu as dite · 3 · la 9e visite, les cartes finies, les absentes depuis 6 jours · 4 · les régulières depuis 3 semaines et les cœurs à demander.
+          1 · les leads qui attendent (pub, site, recommandations) · 2 · les relances à la date que tu as dite · 3 · la 9e visite, les cartes finies, les absentes depuis 6 jours, celles qui ont lâché leur journal · 4 · les régulières depuis 3 semaines et les cœurs à demander.
           Quand tu réponds « et alors ? », la ligne passe dans « Faits » et le compteur monte. Une personne appelée par une autre coach du club sort aussi de ta liste.
         </Vide>
       </Carte>

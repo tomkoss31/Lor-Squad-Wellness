@@ -94,6 +94,40 @@ describe("les signaux de visites (livraison B)", () => {
   });
 });
 
+describe("le journal lâché (bloc B, 8)", () => {
+  const carte = { type: 10, used: 4, remaining: 6, expired: false };
+  const sigJ = (derniereLigne: string, joursNotes: number, dejaRelancee = false, derniereVisite: string | null = null) =>
+    new Map([["m1", { derniereVisite, visites30j: 3, journal: { derniereLigne, joursNotes, dejaRelancee } }]]);
+
+  it("elle notait 6 jours sur 7, plus rien depuis 4 jours → on lui écrit", () => {
+    const l = aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-14", 6), maintenant: now });
+    expect(l).toHaveLength(1);
+    expect(l[0].raison).toBe("journal");
+    expect(l[0].key).toBe("membre:m1:journal");
+    expect(l[0].urgence).toBe(3);
+    expect(l[0].texte).toBe("Notait son journal 6 jours sur 7, plus rien depuis 4 jours");
+    expect(messagePour(l[0], "Thomas")).toContain("Ton journal est tout calme");
+  });
+
+  it("2 jours de silence, ou plus de 14 : rien", () => {
+    expect(aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-16", 7), maintenant: now })).toHaveLength(0);
+    expect(aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-03", 7), maintenant: now })).toHaveLength(0);
+  });
+
+  it("4 jours sur 7, ce n'était pas encore une habitude : rien", () => {
+    expect(aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-14", 4), maintenant: now })).toHaveLength(0);
+  });
+
+  it("déjà relancée pour son journal, sans avoir repris : on ne la repropose pas", () => {
+    expect(aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-14", 6, true), maintenant: now })).toHaveLength(0);
+  });
+
+  it("absente du club aussi : une seule ligne, l'absence passe devant", () => {
+    const l = aContacter({ leads: [], membres: [membre({ card: carte })], coeurs: [], signaux: sigJ("2026-09-14", 6, false, "2026-09-10T08:00:00+02:00"), maintenant: now });
+    expect(l.map((c) => c.raison)).toEqual(["absente"]);
+  });
+});
+
 describe("les petites phrases", () => {
   it("attente", () => {
     expect(attente(21)).toBe("attend depuis 21 min");
