@@ -1,7 +1,8 @@
 // =============================================================================
 // BbcClub — pointage du club, DONNÉES RÉELLES (chantier BBC).
 // Chaque membre = un client du coach ; « +1 visite » insère club_visits.
-// Alerte 7-9 = orange (bientôt bilan), 10+ = rouge (bilan des 10 à faire).
+// Bilan possible dès ≥ type−3 visites (rouge), MÊME carte périmée (option a).
+// Carte périmée AVANT ça (peu de visites) = ambre « à renouveler », pas de bilan.
 // Le pointage : un tap, ou le scan QR du membre (bouton en haut de page).
 // =============================================================================
 
@@ -208,8 +209,17 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(420px, 100%), 1fr))", gap: 14 }}
           >
             {members.map((m) => {
-              // Carte expirée = alerte au même titre qu'une carte finie.
-              const lvl = m.card?.expired ? "bilan" : visitLevel(m.card?.used ?? 0, m.card?.type);
+              // Deux états distincts (Thomas, 21/09) — une carte n'est plus « bilan à
+              // faire » juste parce qu'elle a expiré par le temps :
+              //  · bilan possible dès qu'on est proche des 10 (≥ type−3 visites), MÊME
+              //    carte périmée — c'est le rendez-vous des 10 (option a de Thomas) ;
+              //  · périmée par le temps AVANT ça (peu de visites, carte qui dort) →
+              //    « à renouveler », pas de bilan.
+              const used = m.card?.used ?? 0;
+              const type = m.card?.type ?? 0;
+              const bilanDispo = !!m.card && used >= type - 3;
+              const perime = !!m.card && m.card.expired && !bilanDispo;
+              const lvl: VisitLevel = bilanDispo ? "bilan" : perime ? "warn" : visitLevel(used, type);
               return (
                 <div key={m.id} className="bbc-pointage-ligne" style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)" }}>
                   <span style={{ width: 42, height: 42, borderRadius: 999, flex: "none", background: levelBg(lvl), display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 15, fontWeight: 800, color: levelColor(lvl) }}>{m.card ? m.card.used : m.visits}</span>
@@ -224,11 +234,13 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                       {nomDeFamille(m.name) ? <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ls-bbc-muted)", marginLeft: 4 }}>{nomDeFamille(m.name)}</span> : null}
                     </div>
                     <div style={{ fontSize: 11, color: levelColor(lvl), whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {m.card
-                        ? m.card.expired
-                          ? `carte ${m.card.type} EXPIRÉE · à renouveler`
-                          : `carte ${m.card.type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`
-                        : `${m.visits} visite${m.visits > 1 ? "s" : ""} au total · pas de carte`}
+                      {!m.card
+                        ? `${m.visits} visite${m.visits > 1 ? "s" : ""} au total · pas de carte`
+                        : perime
+                          ? `carte ${type} périmée · à renouveler`
+                          : used >= type
+                            ? `carte ${type} finie · bilan des 10 à faire`
+                            : `carte ${type} · ${m.card.remaining} restante${m.card.remaining > 1 ? "s" : ""}`}
                     </div>
                   </div>
                   {/* Les boutons vivent dans UN groupe : sur telephone il passe sous
@@ -236,10 +248,25 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
                       disputer la ligne — trois boutons ne laissaient plus rien a
                       « Lucie Petit » a 375 px (18/09). */}
                   <div className="bbc-pointage-actions" style={{ display: "flex", alignItems: "center", gap: 10, flex: "none" }}>
-                  <button type="button" onClick={() => setCardFor(m.id)} title={m.card ? "Renouveler la carte" : "Attribuer une carte"} style={{ border: "1px solid var(--ls-bbc-line2)", background: "transparent", cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, color: m.card ? "var(--ls-bbc-muted)" : "var(--ls-bbc-lime-text)", flex: "none" }}>
-                    {m.card ? "carte" : "+ carte"}
+                  <button
+                    type="button"
+                    onClick={() => setCardFor(m.id)}
+                    title={m.card ? "Renouveler la carte" : "Attribuer une carte"}
+                    style={{
+                      border: perime ? 0 : "1px solid var(--ls-bbc-line2)",
+                      background: perime ? "var(--ls-bbc-amber)" : "transparent",
+                      cursor: "pointer",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      padding: "8px 11px",
+                      borderRadius: 10,
+                      color: perime ? "#241a04" : m.card ? "var(--ls-bbc-muted)" : "var(--ls-bbc-lime-text)",
+                      flex: "none",
+                    }}
+                  >
+                    {perime ? "renouveler" : m.card ? "carte" : "+ carte"}
                   </button>
-                  {lvl === "bilan" ? (
+                  {bilanDispo ? (
                     <button type="button" onClick={() => setBilan({ id: m.id, name: m.name })} style={{ border: 0, cursor: "pointer", fontSize: 11.5, fontWeight: 700, padding: "8px 11px", borderRadius: 10, background: "var(--ls-bbc-coral)", color: "#fff", flex: "none" }}>bilan</button>
                   ) : null}
                   {/* UN SEUL bouton, trois états — c'est lui qui porte à la fois
