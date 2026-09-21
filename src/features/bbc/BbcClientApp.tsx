@@ -194,7 +194,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
                     <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 500, fontSize: 15, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>visite{visits > 1 ? "s" : ""}</span>
                   )}
                   <span style={{ flex: 1, textAlign: "right", fontSize: 11, color: "var(--ls-bbc-muted)", paddingBottom: 8 }}>
-                    {isNew ? "ta carte démarre" : !card ? "vois ton coach pour ta carte" : left > 0 ? `plus que ${left} visite${left > 1 ? "s" : ""}` : "carte complète 🎉"}
+                    {isNew ? "ta carte démarre" : !card ? "vois ton coach pour ta carte" : left > 0 ? `plus que ${left} visite${left > 1 ? "s" : ""}` : <>carte complète <IconeClub nom="fete" /></>}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 5, marginTop: 12 }}>
@@ -202,16 +202,18 @@ export function BbcClientApp(props: BbcClientAppProps) {
                     <div key={i} style={{ flex: 1, height: 8, borderRadius: 3, background: i < shown ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s1)" }} />
                   ))}
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--ls-bbc-lime-text)", marginTop: 9 }}>
-                  {isNew
-                    ? "ta 1ʳᵉ visite est offerte 🎁"
-                    : !card
-                      ? "demande ta carte à ton coach pour continuer 🎟️"
-                      : card.expired
-                        ? "ta carte a expiré · vois ton coach pour la renouveler"
-                        : left > 0
-                          ? `plus que ${left} → ton bilan t'attend 🎁`
-                          : "carte finie · ton bilan avec ton coach 🎁"}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 500, color: "var(--ls-bbc-lime-text)", marginTop: 9 }}>
+                  {isNew ? (
+                    <><IconeClub nom="cadeau" />ta 1ʳᵉ visite est offerte</>
+                  ) : !card ? (
+                    <><IconeClub nom="ticket" />demande ta carte à ton coach pour continuer</>
+                  ) : card.expired ? (
+                    "ta carte a expiré · vois ton coach pour la renouveler"
+                  ) : left > 0 ? (
+                    <><IconeClub nom="cadeau" />{`plus que ${left} → ton bilan t'attend`}</>
+                  ) : (
+                    <><IconeClub nom="cadeau" />carte finie · ton bilan avec ton coach</>
+                  )}
                 </div>
                 {token ? (
                   <button type="button" onClick={() => setQrFull(true)} style={{ width: "100%", textAlign: "left", border: 0, cursor: "pointer", display: "flex", gap: 14, alignItems: "center", marginTop: 14, background: "#FBF7F0", borderRadius: 16, padding: 14 }}>
@@ -232,7 +234,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
             {/* Le poids, en une ligne : la victoire reste visible, le journal prend la place */}
             {isNew ? (
               <div style={{ borderRadius: 16, padding: "12px 14px", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", display: "flex", alignItems: "center", gap: 13 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: "color-mix(in srgb, var(--ls-bbc-lime) 14%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 18 }} aria-hidden="true">📈</div>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: "color-mix(in srgb, var(--ls-bbc-lime) 14%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", color: "var(--ls-bbc-lime-text)" }} aria-hidden="true"><IconeClub nom="courbe" taille={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>ta transformation démarre</div>
                   <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2 }}>ta 1ʳᵉ pesée au club = ton point de départ.</div>
@@ -258,7 +260,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
             {/* RDV */}
             {rdv ? (
               <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderLeft: "3px solid var(--ls-bbc-teal)", borderRadius: 16, padding: 15, display: "flex", alignItems: "center", gap: 13 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: "rgba(45,212,191,.14)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 18 }} aria-hidden="true">📅</div>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: "rgba(45,212,191,.14)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", color: "var(--ls-bbc-teal)" }} aria-hidden="true"><IconeClub nom="agenda" taille={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", fontWeight: 600 }}>prochain rdv</div>
                   <div style={{ fontSize: 15, fontWeight: 600, marginTop: 2 }}>{rdv}</div>
@@ -267,7 +269,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
               </div>
             ) : (
               <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: 15, display: "flex", alignItems: "center", gap: 13 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 11, background: "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", fontSize: 18 }} aria-hidden="true">📅</div>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", color: "var(--ls-bbc-muted)" }} aria-hidden="true"><IconeClub nom="agenda" taille={20} /></div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 600 }}>pas encore de rdv</div>
                   <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2 }}>demande à {coach} ton prochain créneau depuis la messagerie.</div>
@@ -344,6 +346,23 @@ export function BbcClientApp(props: BbcClientAppProps) {
       ) : null}
 
     </div>
+  );
+}
+
+/** Les icônes de l'accueil (21/09 : les emojis 📅 🎁 📈 🎟️ 🎉 passent en SVG, comme la barre). */
+const TRACES_CLUB = {
+  agenda: "M8 2v4M16 2v4M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM3 10h18",
+  cadeau: "M4 8h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1zM12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5",
+  ticket: "M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2zM13 5v2M13 17v2M13 11v2",
+  courbe: "M22 7l-8.5 8.5-5-5L2 17M16 7h6v6",
+  fete: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 17l.7 1.8 1.8.7-1.8.7L19 22l-.7-1.8-1.8-.7 1.8-.7z",
+} as const;
+
+function IconeClub({ nom, taille = 14 }: { nom: keyof typeof TRACES_CLUB; taille?: number }) {
+  return (
+    <svg width={taille} height={taille} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "none", verticalAlign: "-2px" }}>
+      <path d={TRACES_CLUB[nom]} />
+    </svg>
   );
 }
 

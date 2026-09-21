@@ -29,12 +29,12 @@ export function BbcPrelancement({ userId, coachName }: BbcPrelancementProps) {
           position: "relative",
           overflow: "hidden",
           background: readyToOpen ? "rgba(45,212,191,.10)" : "var(--ls-bbc-s1)",
-          border: `1px solid ${readyToOpen ? "rgba(45,212,191,.35)" : "rgba(197,248,42,.28)"}`,
+          border: `1px solid ${readyToOpen ? "rgba(45,212,191,.35)" : "color-mix(in srgb, var(--ls-bbc-lime) 28%, transparent)"}`,
           borderRadius: 20,
           padding: "22px 24px",
         }}
       >
-        <div style={{ position: "absolute", top: -50, right: -30, width: 220, height: 220, background: `radial-gradient(circle, ${readyToOpen ? "rgba(45,212,191,.16)" : "rgba(197,248,42,.14)"}, transparent 66%)` }} />
+        <div style={{ position: "absolute", top: -50, right: -30, width: 220, height: 220, background: `radial-gradient(circle, ${readyToOpen ? "rgba(45,212,191,.16)" : "color-mix(in srgb, var(--ls-bbc-lime) 14%, transparent)"}, transparent 66%)` }} />
         <div style={{ position: "relative" }}>
           <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, letterSpacing: "0.16em", textTransform: "uppercase", color: readyToOpen ? "var(--ls-bbc-teal)" : "var(--ls-bbc-lime-text)", fontWeight: 700 }}>
             {readyToOpen ? "prêt à ouvrir" : "avant d'ouvrir ton club"}
@@ -88,13 +88,13 @@ export function BbcPrelancement({ userId, coachName }: BbcPrelancementProps) {
           const isOpen = shownWeek === w.week;
           const tasks = PRELAUNCH_TASKS.filter((t) => t.week === w.week);
           return (
-            <div key={w.week} style={{ background: "var(--ls-bbc-s1)", border: `1px solid ${isOpen ? "rgba(197,248,42,.28)" : "var(--ls-bbc-line)"}`, borderRadius: 20, overflow: "hidden" }}>
+            <div key={w.week} style={{ background: "var(--ls-bbc-s1)", border: `1px solid ${isOpen ? "color-mix(in srgb, var(--ls-bbc-lime) 28%, transparent)" : "var(--ls-bbc-line)"}`, borderRadius: 20, overflow: "hidden" }}>
               <button
                 type="button"
                 onClick={() => setOpenWeek(isOpen ? -1 : w.week)}
                 style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", background: "transparent", border: 0, cursor: "pointer", textAlign: "left", padding: "18px 20px", color: "var(--ls-bbc-text)" }}
               >
-                <span style={{ width: 42, height: 42, borderRadius: 13, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 16, background: complete ? "rgba(45,212,191,.14)" : isOpen ? "rgba(197,248,42,.14)" : "var(--ls-bbc-s2)", border: `1px solid ${complete ? "var(--ls-bbc-teal)" : isOpen ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: complete ? "var(--ls-bbc-teal)" : isOpen ? "var(--ls-bbc-lime)" : "var(--ls-bbc-hint)" }}>
+                <span style={{ width: 42, height: 42, borderRadius: 13, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 16, background: complete ? "rgba(45,212,191,.14)" : isOpen ? "color-mix(in srgb, var(--ls-bbc-lime) 14%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${complete ? "var(--ls-bbc-teal)" : isOpen ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: complete ? "var(--ls-bbc-teal)" : isOpen ? "var(--ls-bbc-lime)" : "var(--ls-bbc-hint)" }}>
                   {complete ? "✓" : w.week}
                 </span>
                 <span style={{ flex: 1, minWidth: 0 }}>
@@ -116,7 +116,7 @@ export function BbcPrelancement({ userId, coachName }: BbcPrelancementProps) {
                         key={t.key}
                         type="button"
                         onClick={() => void toggle(t.key)}
-                        style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%", textAlign: "left", cursor: "pointer", padding: "12px 14px", borderRadius: 13, marginBottom: 8, background: ok ? "rgba(197,248,42,.07)" : "var(--ls-bbc-s2)", border: `1px solid ${ok ? "rgba(197,248,42,.28)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}
+                        style={{ display: "flex", alignItems: "flex-start", gap: 12, width: "100%", textAlign: "left", cursor: "pointer", padding: "12px 14px", borderRadius: 13, marginBottom: 8, background: ok ? "color-mix(in srgb, var(--ls-bbc-lime) 7%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${ok ? "color-mix(in srgb, var(--ls-bbc-lime) 28%, transparent)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}
                       >
                         <span style={{ width: 24, height: 24, borderRadius: 999, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: ok ? "var(--ls-bbc-lime)" : "transparent", border: `1px solid ${ok ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line2)"}`, fontSize: 12, fontWeight: 800, color: ok ? "var(--ls-bbc-lime-ink)" : "transparent" }}>
                           ✓

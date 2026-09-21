@@ -13,6 +13,7 @@
 //     token client (client_app_accounts) ; le contexte est construit CÔTÉ
 //     SERVEUR (jamais fourni par le client) ; garde-fous santé stricts +
 //     escalade vers le coach ; cap quotidien de messages par client.
+//     Depuis le 21/09/2026 : le journal nutritionnel du jour (s'il le tient).
 //   - "bilan_analysis" : assistant du bilan PHYSIQUE (étape « Programme
 //     proposé », en RDV). Reçoit un résumé du bilan construit côté front et
 //     renvoie synthèse + pitch à dire au client + points d'attention +
@@ -284,6 +285,108 @@ async function handleCoachChat(sb: SupabaseClient, body: Record<string, unknown>
   return json({ content: data.content ?? [], stop_reason: data.stop_reason, model: MODEL });
 }
 
+// ─── Le journal nutritionnel dans le chat (bloc A, 21/09/2026) ───────────────
+//
+// Ce que le client a noté AUJOURD'HUI, pour que « qu'est-ce que je mange ce
+// soir ? » parte de SA journée. Chargé seulement s'il tient son journal (une
+// ligne à lui dans les 7 derniers jours) : pour les autres, rien ne change.
+// Lecture seule — le chat n'écrit jamais dans le journal (un repas écrit se
+// calcule dans l'onglet Journal, edge `journal-noaly`).
+// Miroir des règles de l'app (src/features/journal/journalCalculs.ts) : verre
+// de 25 cl, boisson du club 40 cl, noms des repas ; objectifs = même fonction.
+const NOM_REPAS_JOURNAL: Record<string, string> = {
+  pdj: "Petit-déjeuner",
+  enc1: "Encas du matin",
+  dej: "Déjeuner",
+  enc2: "Encas de l'après-midi",
+  din: "Dîner",
+  aut: "Autre",
+};
+
+function jourParis(d: Date): string {
+  return new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+
+function chiffre(n: number): string {
+  return n.toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+}
+
+async function contexteJournal(sb: SupabaseClient, clientId: string): Promise<string> {
+  const maintenant = new Date();
+  const auj = jourParis(maintenant);
+  const { count } = await sb
+    .from("journal_lignes")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", clientId)
+    .gte("jour", jourParis(new Date(maintenant.getTime() - 7 * 86_400_000)))
+    .in("origine", ["membre", "noaly"]);
+  if (!count) return "";
+
+  const [lignesRes, jourRes, objRes] = await Promise.all([
+    sb
+      .from("journal_lignes")
+      .select("creneau, libelle, grammes, quantite, prot_g, aliment")
+      .eq("client_id", clientId)
+      .eq("jour", auj)
+      .order("cree_le"),
+    sb.from("journal_jours").select("verres, boisson_club, activite").eq("client_id", clientId).eq("jour", auj).maybeSingle(),
+    sb.rpc("_journal_objectifs_client", { p_client: clientId }),
+  ]);
+  const lignes = (lignesRes.data ?? []) as Array<{
+    creneau: string;
+    libelle: string;
+    grammes: number | null;
+    quantite: number;
+    prot_g: number;
+    aliment: string | null;
+  }>;
+  const jour = jourRes.data as { verres?: number; boisson_club?: boolean; activite?: string | null } | null;
+  const obj = (objRes.data ?? {}) as { proteines?: number | null; eau_l?: number };
+
+  const protDe = (ls: typeof lignes) => ls.reduce((s, l) => s + Number(l.prot_g || 0), 0);
+  const prot = protDe(lignes);
+  const eau = Math.round(((jour?.verres ?? 0) * 0.25 + (jour?.boisson_club ? 0.4 : 0)) * 100) / 100;
+  const heure = new Intl.DateTimeFormat("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" }).format(maintenant);
+
+  const notes = Object.keys(NOM_REPAS_JOURNAL)
+    .filter((c) => lignes.some((l) => l.creneau === c))
+    .map((c) => {
+      const ls = lignes.filter((l) => l.creneau === c);
+      const detail = ls
+        .map((l) =>
+          `${l.libelle}${l.grammes ? ` ${Math.round(Number(l.grammes))} g` : ""}${l.quantite > 1 ? ` ×${l.quantite}` : ""}${l.aliment ? "" : " (estimé)"}`,
+        )
+        .join(", ");
+      return `  · ${NOM_REPAS_JOURNAL[c]} : ${detail} — ${chiffre(protDe(ls))} g de protéines\n`;
+    });
+  const vides = Object.keys(NOM_REPAS_JOURNAL)
+    .filter((c) => c !== "aut" && !lignes.some((l) => l.creneau === c))
+    .map((c) => NOM_REPAS_JOURNAL[c].toLowerCase());
+  const activite = jour?.activite
+    ? jour.activite === "repos" ? "repos" : jour.activite === "60" ? "1 h et plus" : `${jour.activite} min`
+    : null;
+
+  return (
+    `Son JOURNAL NUTRITIONNEL d'aujourd'hui (onglet « Journal » de son app, qui remplace l'ancien onglet « Conseils » ; il est ${heure} à Paris) :\n` +
+    (obj.proteines
+      ? `- Protéines : ${chiffre(prot)} g notés sur un objectif de ${obj.proteines} g` +
+        (prot >= obj.proteines ? " (objectif atteint)\n" : ` (il en manque ${chiffre(obj.proteines - prot)} g)\n`)
+      : `- Protéines : ${chiffre(prot)} g notés (pas encore d'objectif : il se calcule avec le poids de son bilan)\n`) +
+    `- Eau : ${chiffre(eau)} L sur un objectif de ${chiffre(obj.eau_l ?? 2)} L\n` +
+    (notes.length ? `- Noté aujourd'hui :\n${notes.join("")}` : `- Rien de noté pour l'instant aujourd'hui.\n`) +
+    (notes.length && vides.length ? `- Pas encore noté : ${vides.join(", ")}\n` : "") +
+    (activite ? `- Activité du jour : ${activite}\n` : "") +
+    `Pour parler de son journal, appuie-toi UNIQUEMENT sur ces chiffres (« estimé » = plat hors catalogue, calculé par Noaly). ` +
+    `S'il demande quoi manger, pars de ce qui manque (les protéines d'abord, puis l'eau). Encas protéiné, dans cet ordre : un produit Herbalife, puis fromage blanc ou skyr. Le shake du club se prend toujours en combo : Formula 1 + ½ sachet de PDM (18 g de protéines, le repère du club) ou Formula 1 + 250 ml de lait (18 g). ` +
+    `Pour noter un repas : l'onglet Journal ou la carte « Mon journal » de l'accueil ; un plat qui n'est pas dans la liste s'écrit en toutes lettres et Noaly calcule les protéines.\n`
+  );
+}
+
 // ─── Mode 3 : client_chat (PWA client, contexte construit côté serveur) ─────
 
 async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown>) {
@@ -317,6 +420,13 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
       429,
     );
   }
+
+  // Le journal du jour se charge pendant le reste du contexte ; une panne ne
+  // prive jamais le client de sa réponse (Noaly répond sans le journal).
+  const journalEnRoute = contexteJournal(sb, account.client_id as string).catch((e) => {
+    console.warn("[noaly] journal non critique:", e instanceof Error ? e.message : e);
+    return "";
+  });
 
   // Contexte serveur : données du client UNIQUEMENT (jamais fournies par le front).
   const [{ data: cli }, { data: coachUser }] = await Promise.all([
@@ -427,6 +537,8 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
       })
     : null;
 
+  const journalContexte = await journalEnRoute;
+
   const system =
     `Tu es Noaly, l'assistante IA de La Base 360, qui répond aux CLIENTS du club bien-être/nutrition dans leur application.\n` +
     `Contexte de CE client (seules infos que tu connais — n'invente rien d'autre) :\n` +
@@ -436,6 +548,7 @@ async function handleClientChat(sb: SupabaseClient, body: Record<string, unknown
     (cli?.current_program ? `- Programme en cours : ${cli.current_program}\n` : "") +
     (cli?.objective ? `- Objectif : ${cli.objective}\n` : "") +
     bbcContext +
+    journalContexte +
     (bbcContext
       ? ""
       : `L'app du client contient les onglets : Accueil (RDV), Évolution (poids/bilans), Produits, Conseils (assiette idéale, routine), Messages (écrire au coach), Recommander (Club VIP, remises 15→35%).\n`) +

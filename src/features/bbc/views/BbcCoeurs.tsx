@@ -70,7 +70,7 @@ export function BbcCoeurs({ userId, club }: BbcCoeursProps) {
 
       {/* À valider (reco saisie par le membre → le coach confirme le démarrage) */}
       {pending.length > 0 ? (
-        <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid rgba(197,248,42,.32)", borderRadius: 20, padding: "20px 24px" }}>
+        <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 32%, transparent)", borderRadius: 20, padding: "20px 24px" }}>
           <Eye right={`${pending.length} à valider`}>recos à valider</Eye>
           <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 12 }}>Un cœur ne compte que si la personne a <b style={{ color: "var(--ls-bbc-text)" }}>démarré</b>. Confirme.</div>
           {pending.map((p) => (
@@ -104,7 +104,7 @@ export function BbcCoeurs({ userId, club }: BbcCoeursProps) {
             const atOne = np !== null && np - m.hearts === 1;
             return (
               <div key={m.key} style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 0", borderTop: "1px solid var(--ls-bbc-line)" }}>
-                <span style={{ width: 40, height: 40, borderRadius: 999, flex: "none", background: atOne ? "rgba(197,248,42,.12)" : "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, fontWeight: 700, color: atOne ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)" }}>
+                <span style={{ width: 40, height: 40, borderRadius: 999, flex: "none", background: atOne ? "color-mix(in srgb, var(--ls-bbc-lime) 12%, transparent)" : "var(--ls-bbc-s2)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, fontWeight: 700, color: atOne ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)" }}>
                   {(m.name[0] ?? "?").toUpperCase()}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>

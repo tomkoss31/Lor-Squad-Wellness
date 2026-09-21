@@ -125,7 +125,7 @@ export function BbcCardSheet({ memberName, currentCard, cardsConfig, ouvertureIs
           {options.map((o) => {
             const on = type === o.t;
             return (
-              <button key={o.t} type="button" onClick={() => pickType(o.t)} style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "left", background: on ? "rgba(197,248,42,.10)" : "var(--ls-bbc-s2)", border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}>
+              <button key={o.t} type="button" onClick={() => pickType(o.t)} style={{ padding: "14px 12px", borderRadius: 14, cursor: "pointer", textAlign: "left", background: on ? "color-mix(in srgb, var(--ls-bbc-lime) 10%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${on ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)"}`, color: "var(--ls-bbc-text)" }}>
                 <div style={{ fontFamily: "var(--ls-bbc-font-mono)", fontWeight: 800, fontSize: 20, color: on ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)" }}>{o.t}</div>
                 <div style={{ fontSize: 12.5, fontWeight: 600, marginTop: 2 }}>{o.label}</div>
                 <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 1 }}>{o.days}</div>

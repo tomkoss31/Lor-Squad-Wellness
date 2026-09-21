@@ -195,7 +195,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
       </div>
 
       {/* ── LE CALCUL (tes chiffres) ───────────────────────────────────── */}
-      <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid rgba(197,248,42,.28)", borderRadius: 20, padding: "22px 24px" }}>
+      <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 28%, transparent)", borderRadius: 20, padding: "22px 24px" }}>
         <Eye>ton calcul de rentabilité</Eye>
         <div style={{ fontSize: 12, color: "var(--ls-bbc-muted)", marginBottom: 16, lineHeight: 1.5 }}>
           Les prix des cartes ({eur(input.prixCarte10)} / {eur(input.prixCarte30)}) et le coût d'une visite viennent de tes
@@ -266,7 +266,7 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
         <Eye>l'échelle : combien de clubs pour ton objectif</Eye>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 12 }}>
           {ECHELLE_ORG.map((e) => (
-            <div key={e.clubs} style={{ background: e.clubs === 3 ? "rgba(197,248,42,.08)" : "var(--ls-bbc-s2)", border: `1px solid ${e.clubs === 3 ? "rgba(197,248,42,.3)" : "var(--ls-bbc-line)"}`, borderRadius: 14, padding: "14px 16px" }}>
+            <div key={e.clubs} style={{ background: e.clubs === 3 ? "color-mix(in srgb, var(--ls-bbc-lime) 8%, transparent)" : "var(--ls-bbc-s2)", border: `1px solid ${e.clubs === 3 ? "color-mix(in srgb, var(--ls-bbc-lime) 30%, transparent)" : "var(--ls-bbc-line)"}`, borderRadius: 14, padding: "14px 16px" }}>
               <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 22, color: e.clubs === 3 ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-text)" }}>
                 {e.clubs} club{e.clubs > 1 ? "s" : ""}
               </div>

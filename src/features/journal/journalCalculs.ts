@@ -371,7 +371,8 @@ export interface JourCoach {
   boisson_club: boolean;
   activite: Activite | null;
   humeur: Humeur | null;
-  lignes: Array<{ creneau: Creneau; libelle: string; grammes: number | null; quantite: number; prot_g: number; origine: string }>;
+  /** `estime` : un plat hors catalogue, calculé par Noaly (pas de valeur officielle). */
+  lignes: Array<{ creneau: Creneau; libelle: string; grammes: number | null; quantite: number; prot_g: number; origine: string; estime?: boolean }>;
 }
 
 export interface SemaineCoach {

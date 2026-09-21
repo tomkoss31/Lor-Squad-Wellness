@@ -82,7 +82,7 @@ export function BbcAppels({ userId, club }: BbcAppelsProps) {
         upcoming.map((c) => {
           const inscrits = forOccurrence(c.key, c.at);
           return (
-            <div key={c.key} style={{ background: "var(--ls-bbc-s1)", border: `1px solid ${c.isToday ? "rgba(197,248,42,.32)" : "var(--ls-bbc-line)"}`, borderRadius: 20, padding: "18px 20px" }}>
+            <div key={c.key} style={{ background: "var(--ls-bbc-s1)", border: `1px solid ${c.isToday ? "color-mix(in srgb, var(--ls-bbc-lime) 32%, transparent)" : "var(--ls-bbc-line)"}`, borderRadius: 20, padding: "18px 20px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: "var(--ls-bbc-font-mono)", fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase", color: c.isToday ? "var(--ls-bbc-lime-text)" : "var(--ls-bbc-muted)", fontWeight: 700 }}>
