@@ -2,8 +2,10 @@
 // BbcClientApp — l'app MEMBRE BBC (PWA), port du design validé Thomas.
 // Coquille (header + scroll + bottom nav + Noaly + QR plein écran) + onglet
 // ACCUEIL entièrement câblé en réel (visites, QR du token, transformation Δ
-// poids, prochain RDV). Évolution / Cœurs / Conseils / Messages : portés dans
+// poids, prochain RDV). Évolution / Cœurs / Journal / Messages : portés dans
 // les commits suivants (déjà dessinés). Identité --ls-bbc-*.
+// 21/09/2026 : « Journal » (journal nutritionnel) remplace « Conseils » — le mot
+// du coach et l'assiette y sont repris ; ?tab=conseils mène au journal.
 // =============================================================================
 
 import "../../styles/bbc-tokens.css";
@@ -12,12 +14,13 @@ import { QRCode } from "../../components/ui/QRCode";
 import { MemberEvolution, type Measurement, type Metric } from "./member/MemberEvolution";
 import { MemberReglages } from "./member/MemberReglages";
 import { MemberCoeurs } from "./member/MemberCoeurs";
-import { MemberConseils } from "./member/MemberConseils";
+import { JournalMembre } from "../journal/JournalMembre";
+import { TRACE_ONGLET_JOURNAL } from "../journal/JournalIcone";
 import { MemberMessages } from "./member/MemberMessages";
 import { BbcMemberEntry } from "./BbcMemberEntry";
 import { MemberNoaly } from "./member/MemberNoaly";
 
-type MemberTab = "accueil" | "evolution" | "coeurs" | "conseils" | "messages";
+type MemberTab = "accueil" | "evolution" | "coeurs" | "journal" | "messages";
 
 interface BbcClientAppProps {
   clientName?: string;
@@ -73,7 +76,9 @@ export function BbcClientApp(props: BbcClientAppProps) {
   const [tab, setTab] = useState<MemberTab>(() => {
     if (typeof window === "undefined") return "accueil";
     const t = new URLSearchParams(window.location.search).get("tab");
-    return t === "messages" || t === "evolution" || t === "coeurs" || t === "conseils" ? (t as MemberTab) : "accueil";
+    // « conseils » = les vieux liens (push, messages) : l'onglet est devenu le journal.
+    if (t === "conseils" || t === "journal") return "journal";
+    return t === "messages" || t === "evolution" || t === "coeurs" ? (t as MemberTab) : "accueil";
   });
   // L'intro ne s'affiche que si le serveur dit explicitement « pas encore vue »
   // (undefined = données pas encore chargées → on n'affiche rien, pas de flash).
@@ -108,7 +113,7 @@ export function BbcClientApp(props: BbcClientAppProps) {
     { k: "accueil", label: "Accueil", d: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" },
     { k: "evolution", label: "Évolution", d: "M3 12h4l2-7 4 14 2-7h6" },
     { k: "coeurs", label: "Cœurs", d: "M12 20.3S4.6 15.7 2.6 11.3C1.4 8.7 2.9 5.6 6 5.6c1.9 0 3.2 1.2 4 2.2.8-1 2.1-2.2 4-2.2 3.1 0 4.6 3.1 3.4 5.7C19.4 15.7 12 20.3 12 20.3z" },
-    { k: "conseils", label: "Conseils", d: "M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.2 1 2V17h6v-1.5c0-.8.3-1.4 1-2A6 6 0 0 0 12 3zM9 21h6" },
+    { k: "journal", label: "Journal", d: TRACE_ONGLET_JOURNAL },
     // Pas de `badge` : il n'était jamais rendu, et un vrai compteur de non-lus
     // suppose un `read_at` côté membre qui n'existe pas encore. Mieux vaut rien
     // qu'une promesse morte.
@@ -276,10 +281,10 @@ export function BbcClientApp(props: BbcClientAppProps) {
                 <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 6 }}>mes mensurations</div>
                 <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 2 }}>suis ton évolution</div>
               </button>
-              <button type="button" onClick={() => setTab("conseils")} style={{ textAlign: "center", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "16px 12px", cursor: "pointer", color: "var(--ls-bbc-text)" }}>
-                <div style={{ fontSize: 22 }} aria-hidden="true">💡</div>
-                <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 6 }}>mes conseils</div>
-                <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 2 }}>assiette & routine</div>
+              <button type="button" onClick={() => setTab("journal")} style={{ textAlign: "center", background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 16, padding: "16px 12px", cursor: "pointer", color: "var(--ls-bbc-text)" }}>
+                <div style={{ fontSize: 22 }} aria-hidden="true">🥗</div>
+                <div style={{ fontSize: 13.5, fontWeight: 700, marginTop: 6 }}>mon journal</div>
+                <div style={{ fontSize: 11, color: "var(--ls-bbc-muted)", marginTop: 2 }}>repas, eau & défis</div>
               </button>
             </div>
           </>
@@ -287,8 +292,8 @@ export function BbcClientApp(props: BbcClientAppProps) {
           <MemberEvolution token={token ?? ""} metrics={metrics} measurements={measurements} visitDates={visitDates} />
         ) : tab === "coeurs" ? (
           <MemberCoeurs heartsCount={heartsCount} clientName={clientName} clientId={clientId} coachId={coachId} bareme={clubSettings?.hearts_bareme} />
-        ) : tab === "conseils" ? (
-          <MemberConseils coachAdvice={coachAdvice} coachName={coachName} />
+        ) : tab === "journal" ? (
+          <JournalMembre token={token} format="bbc" coachPrenom={coachName} motDuBilan={coachAdvice} />
         ) : (
           <MemberMessages token={token ?? ""} coachName={coachName} />
         )}

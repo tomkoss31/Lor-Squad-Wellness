@@ -24,7 +24,9 @@ import { getSupabaseClient } from '../../services/supabaseClient'
 import { useClientXp, recordClientXp } from '../../features/client-xp/useClientXp'
 import { EvolutionTab, type EvolutionMetricPoint, type EvolutionMeasurement } from './tabs/EvolutionTab'
 import { ProduitsTab, type PwaProduct } from './tabs/ProduitsTab'
-import { ConseilsTab, type PwaSportAlert } from './tabs/ConseilsTab'
+import { JournalMembre } from '../journal/JournalMembre'
+import { TRACE_ONGLET_JOURNAL } from '../journal/JournalIcone'
+import type { AlerteSport as PwaSportAlert } from '../journal/JournalFeuilles'
 import { MessagesTab } from './tabs/MessagesTab'
 import { RecommanderTab } from './tabs/RecommanderTab'
 import { ProfilScreen } from './ProfilScreen'
@@ -88,7 +90,9 @@ const MOODS: Array<{ key: string; label: string; color: string }> = [
   { key: 'dur', label: 'Difficile', color: 'var(--coral)' },
 ]
 
-type TabKey = 'accueil' | 'evolution' | 'produits' | 'conseils' | 'messages' | 'recommander'
+// 21/09/2026 : « Journal » (journal nutritionnel) remplace « Conseils » — les
+// points d'attention, l'assiette et le mot du coach y sont repris.
+type TabKey = 'accueil' | 'evolution' | 'produits' | 'journal' | 'messages' | 'recommander'
 
 export interface PwaClientAppProps {
   token: string
@@ -175,7 +179,6 @@ export function PwaClientApp({
   products,
   coachAdvice,
   sportAlerts,
-  lastAdviceDate,
   email,
   heightCm,
   objective,
@@ -272,7 +275,7 @@ export function PwaClientApp({
   // XP de découverte d'onglet (cap lifetime côté serveur → 1× par onglet).
   useEffect(() => {
     if (tab === 'evolution') void recordClientXp(token, 'tab_evolution')
-    else if (tab === 'conseils') void recordClientXp(token, 'tab_conseils')
+    else if (tab === 'journal') void recordClientXp(token, 'tab_conseils') // même clé : l'onglet a pris la place de Conseils
     else if (tab === 'produits') void recordClientXp(token, 'tab_pv')
   }, [tab, token])
 
@@ -332,7 +335,7 @@ export function PwaClientApp({
     { key: 'accueil', label: 'Accueil', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg> },
     { key: 'evolution', label: 'Évolution', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2-7 4 14 2-7h6" /></svg> },
     { key: 'produits', label: 'Produits', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><path d="M3 6h18M16 10a4 4 0 0 1-8 0" /></svg> },
-    { key: 'conseils', label: 'Conseils', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0-4 10.5c.7.6 1 1.2 1 2V17h6v-1.5c0-.8.3-1.4 1-2A6 6 0 0 0 12 3z" /><path d="M9 21h6" /></svg> },
+    { key: 'journal', label: 'Journal', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={TRACE_ONGLET_JOURNAL} /></svg> },
     { key: 'messages', label: 'Messages', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> },
     { key: 'recommander', label: 'Club VIP', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M19 8v6M22 11h-6" /></svg> },
   ]
@@ -580,8 +583,8 @@ export function PwaClientApp({
           <EvolutionTab token={token} ageYears={ageYears} metrics={metrics} measurements={measurements} />
         ) : tab === 'produits' ? (
           <ProduitsTab products={products} onTalkToCoach={() => setTab('messages')} />
-        ) : tab === 'conseils' ? (
-          <ConseilsTab coachName={coachName} coachAdvice={coachAdvice} sportAlerts={sportAlerts} lastAdviceDate={lastAdviceDate} />
+        ) : tab === 'journal' ? (
+          <JournalMembre token={token} format="std" coachPrenom={coachName} motDuBilan={coachAdvice} alertesSport={sportAlerts} />
         ) : tab === 'messages' ? (
           <MessagesTab token={token} coachName={coachName} />
         ) : (

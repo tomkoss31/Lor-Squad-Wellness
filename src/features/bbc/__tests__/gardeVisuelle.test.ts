@@ -66,7 +66,6 @@ const BUDGET: Record<string, { micro: number; petits: number }> = {
   "src/features/bbc/BbcScanner.tsx": { micro: 0, petits: 1 },
   "src/features/bbc/atelier/AtelierBbcPage.tsx": { micro: 1, petits: 0 },
   "src/features/bbc/member/MemberCoeurs.tsx": { micro: 4, petits: 0 },
-  "src/features/bbc/member/MemberConseils.tsx": { micro: 3, petits: 0 },
   "src/features/bbc/member/MemberEvolution.tsx": { micro: 3, petits: 1 },
   "src/features/bbc/member/MemberMensurations.tsx": { micro: 5, petits: 0 },
   "src/features/bbc/member/MemberMessages.tsx": { micro: 3, petits: 0 },
