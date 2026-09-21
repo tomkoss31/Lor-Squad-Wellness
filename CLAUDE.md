@@ -1012,7 +1012,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 83 (au 21/09/2026)
+## ⚡ Edge Functions — les 82 (au 21/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -1021,7 +1021,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `client-app-data` | fetch front (app client) | Migration RLS → service_role |
 | `client-app-confirm-calendar` | ⚠️ aucun appelant trouvé le 18/09 | Confirmation RDV client — à trancher (lot 3) |
 | `client-app-mark-onboarded` | fetch front (app client) | Marque PWA onboardé |
-| `client-anniversary-check` | cron 0 7 * * * | Notifs anniv client / programme |
+| `client-anniversary-check` | cron `4 7 * * *` (9 h 04 Paris) | Points XP de la cliente : anniversaire +50, 1 / 3 / 6 mois depuis son 1er bilan +50 / +100 / +150. En erreur 500 chaque matin de mai au 21/09 (RPC `exec_anniversary_query` absente) : réparée le 21/09, points adoucis, 0 point jamais donné avant |
 | `generate-auto-login-token` | fetch front (coach) | Lien magique app client |
 | `consume-auto-login-token` | fetch front (app client) | Auto-login PWA |
 | `generate-distributor-invite-token` | fetch front (coach) | Invite distri |
@@ -1032,7 +1032,6 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `submit-prospect-lead` | fetch front (form Welcome) | Création lead anon |
 | `submit-online-bilan` | fetch front (form bilan online) | Création Lead chantier #1 |
 | `submit-testimonial` | fetch front (form public) | Création témoignage modéré |
-| `request-testimonial` | fetch front (coach) | Demande témoignage client |
 | `get-testimonial-context` | fetch front (form public) | Pré-remplit contexte témoignage |
 | `send-push` | fetch front + Edge interne | Envoi Web Push |
 | `morning-suivis-digest` | cron 0 7 * * * | Digest matin suivis |
@@ -1100,7 +1099,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `pv-month-end-reminder` | plus de cron depuis le 18/09 (supprimé) | Rappel PV de fin de mois — feature masquée (niveau complet), fonction gardée |
 | `rank-threshold-notifier` | plus de cron depuis le 18/09 (supprimé) | Notif « seuil de rang approché / atteint » — masquée, fonction gardée |
 
-> **83 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; le partage public `/partage/:token` et ses 2 fonctions ont été
+> **82 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
 > fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
 > front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
