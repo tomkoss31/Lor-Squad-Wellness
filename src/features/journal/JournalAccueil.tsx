@@ -28,6 +28,7 @@ import {
   litres,
   niveauDe,
   protJour,
+  resume,
   verresObjectif,
   type Aliment,
   type Creneau,
@@ -198,6 +199,7 @@ export function JournalAccueil({ token, format, coachPrenom, onOuvrirJournal, al
           onReprendreVeille={() => { setFeuille(null); void agir(() => journalMembre.reprendreVeille(token, e.jour, feuille.creneau), "Repris d'hier"); }}
           onLireRepas={(texte) => noaly.lireRepas(token, feuille.creneau, texte)}
           onAjouterLot={(lignes) => { setFeuille(null); void agir(() => journalMembre.ajouterLot(token, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}
+          onAjouterHabituel={(h) => { setFeuille(null); void agir(() => journalMembre.ajouterHabituel(token, e.jour, feuille.creneau, h), `Noté · ${resume([{ libelle: h.libelle, quantite: h.quantite }])}`); }}
         />
       ) : null}
       {feuille?.type === "conseils" ? (

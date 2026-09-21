@@ -6,16 +6,20 @@ import {
   creneauDeLHeure,
   defisDuJour,
   eauAtteinte,
+  frequenceHabituel,
+  habituelsDuCreneau,
   litres,
   niveauDe,
   normaliser,
   planFinDeJournee,
   protAliment,
+  protHabituel,
   resume,
   suggestions,
   verresObjectif,
   type Aliment,
   type EtatJour,
+  type Habituel,
   type SemaineCoach,
 } from "../journalCalculs";
 
@@ -199,5 +203,44 @@ describe("« À retenir » (coach)", () => {
     expect(r[1].texte).toBe("objectif atteint 1 jour sur 2");
     expect(r[2]).toMatchObject({ faible: true, gras: "Encas de l'après-midi : jamais noté" });
     expect(r[3].texte).toBe("Rien de noté vendredi, samedi, dimanche et lundi");
+  });
+});
+
+describe("ses habituels (bloc B, 6)", () => {
+  const H = (x: Partial<Habituel> & { libelle: string }): Habituel => ({
+    aliment: null, grammes: null, quantite: 1, prot_100g: null, prot_g: 0, jours: 2, ...x,
+  });
+  const poulet = H({ aliment: "poulet", libelle: "Poulet (blanc), cuit", grammes: 150, prot_g: 45.2, jours: 6 });
+  const burrata = H({ libelle: "Salade tomate burrata", grammes: 250, prot_100g: 6, prot_g: 15 });
+  const riz = H({ aliment: "riz", libelle: "Riz blanc, cuit", grammes: 150, prot_g: 4.4 });
+
+  it("ce qui est déjà noté à ce repas n'est pas reproposé (aliment, ou plat estimé au même nom)", () => {
+    const e = jour({
+      habituels: { dej: [poulet, burrata, riz] },
+      lignes: [
+        { id: "a", creneau: "dej", aliment: "poulet", libelle: "Poulet (blanc), cuit", grammes: 150, quantite: 1, prot_g: 45.2, origine: "membre" },
+        { id: "b", creneau: "dej", aliment: null, libelle: " salade tomate BURRATA", grammes: 250, quantite: 1, prot_g: 15, prot_100g: 6, origine: "noaly" },
+        { id: "c", creneau: "din", aliment: "riz", libelle: "Riz blanc, cuit", grammes: 150, quantite: 1, prot_g: 4.4, origine: "membre" },
+      ],
+    });
+    // Le riz du dîner n'empêche pas le riz du déjeuner.
+    expect(habituelsDuCreneau(e, "dej").map((h) => h.libelle)).toEqual(["Riz blanc, cuit"]);
+    expect(habituelsDuCreneau(e, "pdj")).toEqual([]);
+    expect(habituelsDuCreneau(jour(), "dej")).toEqual([]);
+  });
+
+  it("« 5 fois en 2 semaines », et « tous les matins » quand c'est chaque jour", () => {
+    expect(frequenceHabituel(5, "dej")).toBe("5 fois en 2 semaines");
+    expect(frequenceHabituel(14, "pdj")).toBe("tous les matins");
+    expect(frequenceHabituel(13, "din")).toBe("tous les soirs");
+    expect(frequenceHabituel(13, "enc2")).toBe("tous les jours");
+  });
+
+  it("les protéines suivent le catalogue d'aujourd'hui ; un plat estimé garde l'estimation de Noaly", () => {
+    expect(protHabituel(poulet, CATALOGUE)).toBe(45.2); // 30,1 × 150 / 100
+    expect(protHabituel(burrata, CATALOGUE)).toBe(15);
+    expect(protHabituel(H({ aliment: "f1demi", libelle: "Shake F1 + ½ sachet PDM", quantite: 2, prot_g: 36 }), CATALOGUE)).toBe(36);
+    // Un aliment absent du catalogue chargé : la valeur figée de la ligne.
+    expect(protHabituel(H({ aliment: "disparu", libelle: "Disparu", grammes: 100, prot_g: 12 }), CATALOGUE)).toBe(12);
   });
 });

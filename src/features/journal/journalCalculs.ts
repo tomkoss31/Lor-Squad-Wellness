@@ -130,6 +130,19 @@ export interface Remarque {
   coach?: string | null;
 }
 
+/** Un habituel (bloc B, 6) : ce qu'elle note souvent à ce repas, avec SA quantité la plus fréquente. */
+export interface Habituel {
+  /** null = un plat estimé par Noaly : il revient avec son estimation. */
+  aliment: string | null;
+  libelle: string;
+  grammes: number | null;
+  quantite: number;
+  prot_100g: number | null;
+  prot_g: number;
+  /** Le nombre de jours, sur les 14 d'avant, où elle l'a noté à ce repas. */
+  jours: number;
+}
+
 export interface EtatJour {
   jour: string;
   aujourdhui: string;
@@ -143,6 +156,8 @@ export interface EtatJour {
   remarque: Remarque | null;
   xp_total: number;
   gains?: Array<{ cle: string; xp: number }>;
+  /** Ses habituels, par repas (serveur : `_journal_habituels`). */
+  habituels?: Partial<Record<Creneau, Habituel[]>>;
 }
 
 // ─── L'eau ────────────────────────────────────────────────────────────────────
@@ -280,6 +295,30 @@ function nomCourt(libelle: string): string {
 }
 
 /** Une ligne de repas en une phrase : « Poulet (blanc), riz blanc, haricots verts ». */
+// ─── Ses habituels (bloc B, 6 — maquette Jt3RNaarpnav5XRGzhrTwz) ─────────────
+const cleHabituel = (x: { aliment: string | null; libelle: string }) =>
+  x.aliment ?? `~${x.libelle.trim().toLowerCase()}`;
+
+/** Les habituels d'un repas, sans ce qui y est déjà noté ce jour-là (pas de doublon par mégarde). */
+export function habituelsDuCreneau(e: EtatJour, creneau: Creneau): Habituel[] {
+  const deja = new Set(e.lignes.filter((l) => l.creneau === creneau).map(cleHabituel));
+  return (e.habituels?.[creneau] ?? []).filter((h) => !deja.has(cleHabituel(h)));
+}
+
+/** « 5 fois en 2 semaines », ou « tous les matins » quand c'est (presque) chaque jour. */
+export function frequenceHabituel(jours: number, creneau: Creneau): string {
+  if (jours >= 13) return creneau === "pdj" ? "tous les matins" : creneau === "din" ? "tous les soirs" : "tous les jours";
+  return `${jours} fois en 2 semaines`;
+}
+
+/** Ses protéines, aux valeurs ACTUELLES du catalogue (ou selon l'estimation de Noaly). */
+export function protHabituel(h: Habituel, aliments: Aliment[]): number {
+  const a = h.aliment ? aliments.find((x) => x.cle === h.aliment) : undefined;
+  if (a) return protAliment(a, h.grammes, h.quantite);
+  if (h.aliment == null && h.prot_100g != null && h.grammes != null) return Math.round((h.prot_100g * h.grammes) / 100 * 10) / 10;
+  return h.prot_g;
+}
+
 export function resume(lignes: Array<{ libelle: string; quantite: number }>): string {
   return lignes
     .map((l, i) => {
