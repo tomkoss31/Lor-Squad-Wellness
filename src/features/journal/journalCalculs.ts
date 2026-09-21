@@ -301,6 +301,100 @@ function nomCourt(libelle: string): string {
 }
 
 /** Une ligne de repas en une phrase : « Poulet (blanc), riz blanc, haricots verts ». */
+// ─── Ta semaine (bloc B, 7 — maquette Jt3RNaarpnav5XRGzhrTwz) ────────────────
+export interface JourSemaine {
+  jour: string;
+  /** Les protéines du jour, club compris. */
+  prot: number;
+  /** Noté par ELLE (le shake pré-rempli au club ne suffit pas). */
+  note: boolean;
+  eau_ok: boolean;
+  /** Les repas remplis ce jour-là, club compris. */
+  creneaux: Creneau[];
+}
+
+export interface SemaineMembre {
+  lundi: string;
+  aujourdhui: string;
+  objectifs: Objectifs;
+  jours: JourSemaine[];
+}
+
+export interface BilanSemaine {
+  joursNotes: number;
+  /** Protéines par jour noté ; null si rien n'est noté. */
+  moyenne: number | null;
+  joursEau: number;
+  meilleur: JourSemaine | null;
+  /** UNE chose à travailler, calculée (jamais d'IA) ; null = rien à redire ou pas assez de jours. */
+  aTravailler: string | null;
+}
+
+const SUJET_CRENEAU: Record<Creneau, string> = {
+  pdj: "Le petit-déjeuner",
+  enc1: "L'encas du matin",
+  dej: "Le déjeuner",
+  enc2: "L'encas de l'après-midi",
+  din: "Le dîner",
+  aut: "Le grignotage",
+};
+/** À égalité, les encas d'abord : c'est là que se gagnent les protéines. */
+const ORDRE_A_TRAVAILLER: Creneau[] = ["enc2", "enc1", "din", "dej", "pdj"];
+export const JOUR_LETTRE = ["L", "M", "M", "J", "V", "S", "D"];
+const JOURS_LONGS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const MOIS_COURTS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+
+const dateUTC = (iso: string) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+};
+
+/** « lundi », « mardi »… d'une date AAAA-MM-JJ. */
+export function nomJourLong(iso: string): string {
+  return JOURS_LONGS[dateUTC(iso).getUTCDay()];
+}
+
+/** « 14 → 20 sept. », ou « 28 sept. → 4 oct. » à cheval sur deux mois. */
+export function libelleSemaine(lundi: string): string {
+  const a = dateUTC(lundi);
+  const b = new Date(a.getTime() + 6 * 86_400_000);
+  return a.getUTCMonth() === b.getUTCMonth()
+    ? `${a.getUTCDate()} → ${b.getUTCDate()} ${MOIS_COURTS[b.getUTCMonth()]}`
+    : `${a.getUTCDate()} ${MOIS_COURTS[a.getUTCMonth()]} → ${b.getUTCDate()} ${MOIS_COURTS[b.getUTCMonth()]}`;
+}
+
+/** La carte passe en tête du journal le dimanche soir (18 h) et le lundi ; en bas le reste de la semaine. */
+export function semaineEnTete(aujourdhui: string, heure: number): boolean {
+  const j = dateUTC(aujourdhui).getUTCDay();
+  return j === 1 || (j === 0 && heure >= 18);
+}
+
+export function bilanSemaine(s: SemaineMembre): BilanSemaine {
+  const notes = s.jours.filter((j) => j.note);
+  const joursEau = s.jours.filter((j) => j.eau_ok).length;
+  if (!notes.length) return { joursNotes: 0, moyenne: null, joursEau, meilleur: null, aTravailler: null };
+  const moyenne = notes.reduce((t, j) => t + Number(j.prot), 0) / notes.length;
+  const meilleur = notes.reduce((a, j) => (Number(j.prot) > Number(a.prot) ? j : a));
+  const obj = s.objectifs.proteines;
+  let aTravailler: string | null = null;
+  // Pas de leçon sur 1 ou 2 jours : il faut au moins 3 jours notés.
+  if (notes.length >= 3) {
+    if (obj != null && moyenne < obj) {
+      const compte = (c: Creneau) => notes.filter((j) => j.creneaux.includes(c)).length;
+      const pire = [...ORDRE_A_TRAVAILLER].sort((a, b) => compte(a) - compte(b))[0];
+      const n = compte(pire);
+      aTravailler = n === 0
+        ? `${SUJET_CRENEAU[pire]} : pas noté cette semaine. C'est souvent lui qui manque pour tes ${obj} g.`
+        : n < notes.length
+          ? `${SUJET_CRENEAU[pire]}, noté ${n} jour${n > 1 ? "s" : ""} sur ${notes.length}. C'est souvent lui qui manque pour tes ${obj} g.`
+          : `Tes portions : il te manque ${Math.round(obj - moyenne)} g de protéines par jour en moyenne.`;
+    } else if (joursEau < 4) {
+      aTravailler = `L'eau : ton objectif atteint ${joursEau} jour${joursEau > 1 ? "s" : ""} sur 7.`;
+    }
+  }
+  return { joursNotes: notes.length, moyenne, joursEau, meilleur, aTravailler };
+}
+
 // ─── Les kcal (bloc B, 9) : discrètes, jamais un objectif ──────────────────
 /** Les kcal connues d'un ensemble de lignes ; `estime` dès qu'une ligne est estimée ou sans kcal. */
 export function kcalDe(lignes: Array<{ aliment: string | null; kcal?: number | null }>): { kcal: number; estime: boolean; connu: boolean } {

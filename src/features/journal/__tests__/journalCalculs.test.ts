@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   aRetenir,
+  bilanSemaine,
+  libelleSemaine,
+  semaineEnTete,
+  type SemaineMembre,
   chercher,
   creneauANoter,
   creneauDeLHeure,
@@ -261,5 +265,62 @@ describe("les kcal, discrètes (bloc B, 9)", () => {
     expect(texteKcal(452.6, true)).toBe("≈ 453 kcal");
     expect(texteKcal(774, true, true)).toBe("≈ 770 kcal");
     expect(texteKcal(1184, false, true)).toBe("≈ 1 180 kcal");
+  });
+});
+
+describe("ta semaine (bloc B, 7)", () => {
+  const J = (jour: string, prot: number, note: boolean, eau_ok: boolean, creneaux: string[]) =>
+    ({ jour, prot, note, eau_ok, creneaux }) as SemaineMembre["jours"][number];
+  const semaine = (jours: SemaineMembre["jours"], proteines: number | null = 83): SemaineMembre => ({
+    lundi: "2026-09-14", aujourdhui: "2026-09-21", objectifs: { poids: 69, coef: 1.2, proteines, eau_l: 2.3 }, jours,
+  });
+  // La semaine de la maquette : 5 jours notés, 74 g en moyenne, l'eau 3 jours, l'encas de l'après-midi 1 fois.
+  const maquette = semaine([
+    J("2026-09-14", 78, true, true, ["pdj", "dej", "din"]),
+    J("2026-09-15", 91, true, true, ["pdj", "dej", "enc2", "din"]),
+    J("2026-09-16", 64, true, true, ["pdj", "dej", "din"]),
+    J("2026-09-17", 0, false, false, []),
+    J("2026-09-18", 70, true, false, ["pdj", "enc1", "dej", "din"]),
+    J("2026-09-19", 18, false, false, ["pdj"]), // le shake du club seul : pas « noté par elle »
+    J("2026-09-20", 68, true, false, ["pdj", "enc1", "dej", "din"]),
+  ]);
+
+  it("trois chiffres, le meilleur jour, et l'encas de l'après-midi à travailler", () => {
+    const b = bilanSemaine(maquette);
+    expect(b.joursNotes).toBe(5);
+    expect(Math.round(b.moyenne!)).toBe(74);
+    expect(b.joursEau).toBe(3);
+    expect(b.meilleur?.jour).toBe("2026-09-15");
+    expect(b.aTravailler).toBe("L'encas de l'après-midi, noté 1 jour sur 5. C'est souvent lui qui manque pour tes 83 g.");
+  });
+
+  it("objectif tenu : on parle de l'eau si elle manque, sinon de rien", () => {
+    const bien = (eau: boolean) => semaine([0, 1, 2, 3, 4].map((i) => J(`2026-09-1${4 + i}`, 90, true, eau, ["pdj", "dej", "din"])));
+    expect(bilanSemaine(bien(false)).aTravailler).toBe("L'eau : ton objectif atteint 0 jour sur 7.");
+    expect(bilanSemaine(bien(true)).aTravailler).toBeNull();
+  });
+
+  it("moins de 3 jours notés : pas de leçon ; rien de noté : pas de bilan", () => {
+    const deux = semaine([J("2026-09-14", 40, true, false, ["pdj"]), J("2026-09-15", 40, true, false, ["pdj"])]);
+    expect(bilanSemaine(deux).aTravailler).toBeNull();
+    expect(bilanSemaine(semaine([J("2026-09-14", 18, false, false, ["pdj"])]))).toMatchObject({ joursNotes: 0, moyenne: null, meilleur: null });
+  });
+
+  it("tous les repas notés mais pas assez de protéines : ce sont les portions", () => {
+    const tout = ["pdj", "enc1", "dej", "enc2", "din"];
+    const b = bilanSemaine(semaine([0, 1, 2].map((i) => J(`2026-09-1${4 + i}`, 60, true, true, tout))));
+    expect(b.aTravailler).toBe("Tes portions : il te manque 23 g de protéines par jour en moyenne.");
+  });
+
+  it("en tête le dimanche soir et le lundi, en bas le reste de la semaine", () => {
+    expect(semaineEnTete("2026-09-21", 9)).toBe(true); // lundi
+    expect(semaineEnTete("2026-09-20", 19)).toBe(true); // dimanche 19 h
+    expect(semaineEnTete("2026-09-20", 12)).toBe(false); // dimanche midi
+    expect(semaineEnTete("2026-09-23", 20)).toBe(false); // mercredi
+  });
+
+  it("« 14 → 20 sept. », et à cheval sur deux mois", () => {
+    expect(libelleSemaine("2026-09-14")).toBe("14 → 20 sept.");
+    expect(libelleSemaine("2026-09-28")).toBe("28 sept. → 4 oct.");
   });
 });

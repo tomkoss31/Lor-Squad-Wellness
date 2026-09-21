@@ -9,7 +9,7 @@
 // =============================================================================
 
 import { getSupabaseClient } from "../../services/supabaseClient";
-import type { Activite, Aliment, Creneau, EtatJour, Habituel, Humeur, SemaineCoach } from "./journalCalculs";
+import type { Activite, Aliment, Creneau, EtatJour, Habituel, Humeur, SemaineCoach, SemaineMembre } from "./journalCalculs";
 
 // ─── Le catalogue ─────────────────────────────────────────────────────────────
 // ~115 aliments, publics, qui changent rarement : chargés une fois par session.
@@ -82,6 +82,8 @@ async function appeler<T>(fn: string, args: Record<string, unknown>): Promise<T>
 export const journalMembre = {
   jour: (token: string, jour: string | null) =>
     appeler<EtatJour>("journal_jour", { p_token: token, p_jour: jour }),
+  /** Ta semaine (bloc B, 7) : la semaine en cours ; le lundi, celle qui vient de finir. */
+  semaine: (token: string) => appeler<SemaineMembre>("journal_semaine", { p_token: token, p_lundi: null }),
   ajouter: (token: string, jour: string, creneau: Creneau, aliment: string, grammes: number | null, quantite = 1) =>
     appeler<EtatJour>("journal_ajouter", {
       p_token: token, p_jour: jour, p_creneau: creneau, p_aliment: aliment, p_grammes: grammes, p_quantite: quantite,

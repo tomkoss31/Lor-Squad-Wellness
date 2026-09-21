@@ -47,7 +47,7 @@ export interface AlerteSport {
 }
 
 // ─── Le cadre commun ──────────────────────────────────────────────────────────
-function Feuille({ titre, surTitre, surTitreNoaly, onFermer, children }: {
+export function Feuille({ titre, surTitre, surTitreNoaly, onFermer, children }: {
   titre: string; surTitre?: string; surTitreNoaly?: boolean; onFermer: () => void; children: ReactNode;
 }) {
   useEffect(() => {

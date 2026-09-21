@@ -498,6 +498,44 @@
 /* Coach */
 .jr-coefs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
 .jr-coefs.deux { grid-template-columns: repeat(2, 1fr); }
+
+/* Ta semaine (bloc B, 7) : un jour vide est un tiret, jamais du rouge */
+.jr-sem { display: flex; flex-direction: column; gap: 10px; width: 100%; text-align: left; border-color: var(--jr-acc-line); color: var(--jr-tx); }
+.jr-j7s { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.jr-j7 { display: flex; flex-direction: column; align-items: center; gap: 5px; font-family: var(--jr-fm); font-size: 11px; color: var(--jr-mut); }
+.jr-j7 i { width: 30px; height: 30px; border-radius: 50%; border: 1.5px dashed var(--jr-ln2); display: grid; place-items: center; }
+.jr-j7.note i { border: 1.5px solid var(--jr-acc); background: var(--jr-acc-soft); color: var(--jr-acc-tx); }
+.jr-j7.ok i { border: 1.5px solid var(--jr-win); background: var(--jr-win); color: var(--jr-acc-ink); }
+.jr-j7.avenir i { border-style: dotted; opacity: 0.5; }
+.jr-sem-resume { font-size: 13px; line-height: 1.45; color: var(--jr-mut); }
+.jr-sem-resume b { color: var(--jr-tx); }
+.jr-trois { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.jr-chiffre { background: var(--jr-s2); border-radius: 12px; padding: 10px 8px; text-align: center; }
+.jr-chiffre b { display: block; font-family: var(--jr-fd); font-weight: 400; font-size: 24px; line-height: 1; }
+.jr-chiffre b small { font-family: var(--jr-fm); font-size: 11px; color: var(--jr-mut); margin-left: 2px; }
+.jr-chiffre span { display: block; font-size: 11px; line-height: 1.3; color: var(--jr-mut); margin-top: 5px; }
+.jr-graphe { background: var(--jr-s2); border-radius: 14px; padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+.jr-barres { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; height: 150px; padding-top: 18px; }
+.jr-obj-ligne { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--jr-mut); }
+.jr-bcol { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.jr-bcol i { display: block; width: 100%; max-width: 30px; border-radius: 7px 7px 3px 3px; background: var(--jr-acc); }
+.jr-bcol.ok i { background: var(--jr-win); }
+.jr-bcol.vide i { background: transparent; border: 1.5px dashed var(--jr-ln2); }
+.jr-bcol b {
+  position: relative; z-index: 1; min-height: 14px; line-height: 14px; padding: 0 3px; border-radius: 4px;
+  font-family: var(--jr-fm); font-size: 11px; font-weight: 700; background: var(--jr-s2);
+}
+.jr-bcol small { font-family: var(--jr-fm); font-size: 11px; line-height: 14px; color: var(--jr-mut); }
+.jr-bravo {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--jr-win-soft); border-radius: 14px; padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--jr-win) 45%, transparent); font-size: 13px; line-height: 1.45;
+}
+.jr-bravo svg { color: var(--jr-win-tx); margin-top: 1px; flex: none; }
+.jr-atravail {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--jr-s2); border: 1px solid var(--jr-ln);
+  border-radius: 14px; padding: 11px 12px; font-size: 13px; line-height: 1.45;
+}
+.jr-atravail svg { color: var(--jr-acc-tx); margin-top: 1px; flex: none; }
 .jr-coef {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 54px;
   border: 1px solid var(--jr-ln2); background: transparent; border-radius: 12px; padding: 4px 2px;
