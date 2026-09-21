@@ -13,6 +13,15 @@
 //     des détails qui changent l'effet ». Rien n'est écrit ici : la membre
 //     relit, retire, puis valide.
 //
+//   ⏱ Où passent les secondes (mesuré le 21/09, journaux de la fonction) : l'IA
+//     2,6-3,2 s ; le démarrage 0,3-1,2 s (une instance NEUVE à chaque appel :
+//     inutile de « réveiller » la fonction à l'avance) ; le jeton 0,2-0,7 s ;
+//     les lectures ~0,3 s ; la trace ~0,2 s. D'où : le catalogue se charge
+//     PENDANT la vérification du jeton, et la trace part APRÈS la réponse.
+//     Haiku 4.5 essayé : 0,5 s de gagné seulement, protéines surestimées
+//     (burrata 20 g au lieu de ~15), et plus cher (consigne trop courte pour
+//     son cache) → on garde Sonnet 5.
+//
 //   • conseil — « Le mot de Noaly » : 2 ou 3 phrases qui DISENT le plan de fin
 //     de journée calculé par l'app (Noaly rédige, elle ne calcule pas). Gardé
 //     sur la journée (journal_jours.conseil_noaly) tant que la journée ne
@@ -39,12 +48,42 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 const MODEL = "claude-sonnet-5";
+// Les modèles qu'on sait appeler ici, avec leur prix ($ le million de tokens) et
+// le réglage d'effort (Haiku 4.5 ne le connaît pas). Un ESSAI réservé au
+// service_role peut en choisir un autre que MODEL (21/09, Thomas : « plus léger
+// c'est-à-dire ? ») : comparer vitesse et résultat sur les mêmes repas. Une
+// membre ne choisit jamais le modèle.
 const REPAS_PAR_JOUR = Number(Deno.env.get("NOALY_JOURNAL_REPAS_JOUR") ?? 25);
 const CONSEILS_PAR_JOUR = Number(Deno.env.get("NOALY_JOURNAL_CONSEILS_JOUR") ?? 8);
-// Claude Sonnet 5 : 2 $ / 10 $ le million de tokens ; cache lu à 0,1×, écrit à 1,25×.
-const PRIX_ENTREE = 2;
-const PRIX_SORTIE = 10;
+const MODELES: Record<string, { entree: number; sortie: number; effort: boolean }> = {
+  "claude-sonnet-5": { entree: 2, sortie: 10, effort: true },
+  "claude-haiku-4-5-20251001": { entree: 1, sortie: 5, effort: false },
+};
+// Cache lu à 0,1×, écrit à 1,25× le prix d'entrée.
 const USD_TO_EUR = 0.92;
+
+/**
+ * L'appelant porte-t-il une vraie clé service_role ? Cette fonction tourne sans
+ * vérification de jeton à l'entrée (verify_jwt = false) : lire le rôle inscrit
+ * dans le jeton laisserait passer un jeton fabriqué à la main. Plusieurs clés
+ * service_role coexistent (celle du Vault n'est pas celle de l'environnement) :
+ * hors égalité stricte, c'est l'API d'administration qui vérifie la signature.
+ * Appelée seulement quand un essai de modèle est demandé.
+ */
+async function estServiceRole(authHeader: string): Promise<boolean> {
+  const jeton = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!jeton) return false;
+  if (SERVICE_KEY && jeton === SERVICE_KEY) return true;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?per_page=1`, {
+      headers: { apikey: jeton, Authorization: `Bearer ${jeton}` },
+      signal: AbortSignal.timeout(5000),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -154,17 +193,18 @@ async function plafondAtteint(sb: SupabaseClient, clientId: string, feature: str
   return (count ?? 0) >= max;
 }
 
-async function tracer(sb: SupabaseClient, feature: string, usage: Anthropic.Usage, clientId: string) {
+async function tracer(sb: SupabaseClient, feature: string, usage: Anthropic.Usage, clientId: string, modele: string) {
+  const prix = MODELES[modele] ?? MODELES[MODEL];
   const neuf = usage.input_tokens ?? 0;
   const ecrit = usage.cache_creation_input_tokens ?? 0;
   const lu = usage.cache_read_input_tokens ?? 0;
   const sortie = usage.output_tokens ?? 0;
-  const usd = (neuf * PRIX_ENTREE + ecrit * PRIX_ENTREE * 1.25 + lu * PRIX_ENTREE * 0.1 + sortie * PRIX_SORTIE) / 1e6;
+  const usd = (neuf * prix.entree + ecrit * prix.entree * 1.25 + lu * prix.entree * 0.1 + sortie * prix.sortie) / 1e6;
   const { error } = await sb.from("ai_usage_log").insert({
     user_id: null,
     client_id: clientId,
     feature,
-    model: MODEL,
+    model: modele,
     input_tokens: neuf + ecrit + lu,
     output_tokens: sortie,
     cost_eur: Number((usd * USD_TO_EUR).toFixed(4)),
@@ -173,6 +213,13 @@ async function tracer(sb: SupabaseClient, feature: string, usage: Anthropic.Usag
 }
 
 const INDISPONIBLE = { error: "ai_error", message: "Noaly ne répond pas pour le moment." };
+
+/** Termine un travail APRÈS la réponse (la trace des coûts n'a pas à faire attendre la membre). */
+async function enFond(travail: Promise<unknown>): Promise<void> {
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime;
+  if (runtime?.waitUntil) runtime.waitUntil(travail);
+  else await travail;
+}
 
 // ─── Mode lire_repas ─────────────────────────────────────────────────────────
 const Repas = z.object({
@@ -212,24 +259,35 @@ La liste (clé | nom | mesure | repère) :
 ${liste}`;
 }
 
-async function lireRepas(sb: SupabaseClient, clientId: string, body: Record<string, unknown>) {
+async function lireRepas(
+  sb: SupabaseClient, clientId: string, body: Record<string, unknown>, modele: string, essai: boolean, catalogueEnRoute: Promise<Catalogue>,
+) {
   const texte = String(body.texte ?? "").replace(/\s+/g, " ").trim();
   if (texte.length < 2) return json({ error: "texte_vide", message: "Écris ce que tu as mangé." }, 400);
   if (texte.length > 400) return json({ error: "texte_long", message: "Un repas à la fois, en quelques mots." }, 400);
   const creneau = CRENEAUX.includes(body.creneau as Creneau) ? (body.creneau as Creneau) : null;
 
-  if (await plafondAtteint(sb, clientId, "journal_repas", REPAS_PAR_JOUR)) {
+  // Les deux lectures en même temps : chaque aller-retour vers la base compte
+  // dans l'attente de la membre (mesuré le 21/09 : l'IA ne fait que ~2,5 s des 4 à 6).
+  const tLectures = Date.now();
+  const [plafond, cat] = await Promise.all([
+    plafondAtteint(sb, clientId, "journal_repas", REPAS_PAR_JOUR),
+    catalogueEnRoute,
+  ]);
+  const msLectures = Date.now() - tLectures;
+  if (plafond) {
     return json({ error: "cap_reached", message: "Noaly a beaucoup calculé aujourd'hui : choisis dans la liste, elle revient demain." }, 429);
   }
-  const cat = await chargerCatalogue(sb);
 
+  const format = zodOutputFormat(Repas);
+  const t0 = Date.now();
   let reponse;
   try {
     reponse = await anthropic!.messages.parse({
-      model: MODEL,
+      model: modele,
       max_tokens: 1500,
       thinking: { type: "disabled" },
-      output_config: { effort: "low", format: zodOutputFormat(Repas) },
+      output_config: MODELES[modele]?.effort ? { effort: "low", format } : { format },
       system: [{ type: "text", text: systemeRepas(cat.texte), cache_control: { type: "ephemeral" } }],
       messages: [{
         role: "user",
@@ -240,7 +298,10 @@ async function lireRepas(sb: SupabaseClient, clientId: string, body: Record<stri
     console.warn("[journal-noaly] lire_repas :", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : String(e));
     return json(INDISPONIBLE, 502);
   }
-  await tracer(sb, "journal_repas", reponse.usage, clientId);
+  const duree = Date.now() - t0;
+  await enFond(tracer(sb, "journal_repas", reponse.usage, clientId, modele));
+  // Le chronomètre de chaque étape, dans les journaux de la fonction.
+  console.log(`[journal-noaly] lire_repas ms lectures=${msLectures} ia=${duree}`);
 
   const sortie = reponse.parsed_output;
   if (!sortie || reponse.stop_reason === "refusal") return json(INDISPONIBLE, 502);
@@ -291,7 +352,11 @@ async function lireRepas(sb: SupabaseClient, clientId: string, body: Record<stri
       lignes.push({ aliment: a.cle, nom: a.nom, grammes: g, quantite: 1, prot_g: protAliment(a, g, 1), prot_100g: null, estime });
     }
   }
-  return json({ lignes: lignes.slice(0, 12), non_reconnus: nonReconnus.filter(Boolean).slice(0, 8) });
+  return json({
+    lignes: lignes.slice(0, 12),
+    non_reconnus: nonReconnus.filter(Boolean).slice(0, 8),
+    ...(essai ? { essai: { modele, duree_ms: duree, usage: reponse.usage } } : {}),
+  });
 }
 
 // ─── Mode conseil (« Le mot de Noaly ») ──────────────────────────────────────
@@ -323,7 +388,7 @@ interface EtatJour {
   humeur: string | null;
 }
 
-async function conseil(sb: SupabaseClient, token: string, clientId: string, prenomCompte: string | null, body: Record<string, unknown>) {
+async function conseil(sb: SupabaseClient, token: string, clientId: string, prenomCompte: string | null, body: Record<string, unknown>, modele: string) {
   const jour = typeof body.jour === "string" && /^\d{4}-\d{2}-\d{2}$/.test(body.jour) ? body.jour : null;
   const { data, error } = await sb.rpc("journal_jour", { p_token: token, p_jour: jour });
   if (error || !data) return json({ error: "journal_indisponible" }, 400);
@@ -377,10 +442,10 @@ async function conseil(sb: SupabaseClient, token: string, clientId: string, pren
   let reponse;
   try {
     reponse = await anthropic!.messages.create({
-      model: MODEL,
+      model: modele,
       max_tokens: 600,
       thinking: { type: "disabled" },
-      output_config: { effort: "low" },
+      ...(MODELES[modele]?.effort ? { output_config: { effort: "low" as const } } : {}),
       system: SYSTEME_CONSEIL,
       messages: [{
         role: "user",
@@ -391,7 +456,7 @@ async function conseil(sb: SupabaseClient, token: string, clientId: string, pren
     console.warn("[journal-noaly] conseil :", e instanceof Anthropic.APIError ? `${e.status} ${e.message}` : String(e));
     return json(INDISPONIBLE, 502);
   }
-  await tracer(sb, "journal_conseil", reponse.usage, clientId);
+  await enFond(tracer(sb, "journal_conseil", reponse.usage, clientId, modele));
 
   const texte = reponse.content
     .filter((b): b is Anthropic.TextBlock => b.type === "text")
@@ -422,12 +487,21 @@ serve(async (req: Request) => {
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
   const token = String(body.token ?? "").trim();
+  // Le catalogue (données publiques) se charge PENDANT la vérification du jeton.
+  const catalogueEnRoute = chargerCatalogue(sb);
+  catalogueEnRoute.catch(() => undefined); // un jeton refusé ne doit pas laisser de promesse en erreur
+  const tAcces = Date.now();
   const qui = await membre(sb, token);
+  console.log(`[journal-noaly] ${String(body.mode)} ms acces=${Date.now() - tAcces}`);
   if (!qui) return json({ error: "token invalide" }, 401);
 
+  // Un essai de modèle n'est possible qu'avec la clé service_role (jamais depuis l'app).
+  const essai = typeof body.modele === "string" && body.modele in MODELES && (await estServiceRole(req.headers.get("Authorization") ?? ""));
+  const modele = essai ? String(body.modele) : MODEL;
+
   try {
-    if (body.mode === "lire_repas") return await lireRepas(sb, qui.clientId, body);
-    if (body.mode === "conseil") return await conseil(sb, token, qui.clientId, qui.prenom, body);
+    if (body.mode === "lire_repas") return await lireRepas(sb, qui.clientId, body, modele, essai, catalogueEnRoute);
+    if (body.mode === "conseil") return await conseil(sb, token, qui.clientId, qui.prenom, body, modele);
     return json({ error: "mode inconnu" }, 400);
   } catch (e) {
     console.error("[journal-noaly]", e instanceof Error ? e.message : String(e));
