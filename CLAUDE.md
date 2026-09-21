@@ -181,8 +181,22 @@ fiche BBC (`BbcCrm`) et section repliable de l'onglet « Mesures » de `ClientDe
 - **L'humeur** : `client_mood_log` avait été supprimée alors que l'Accueil standard l'appelait
   (l'humeur n'était plus enregistrée). `record_client_mood` / `get_client_mood_today` écrivent
   maintenant dans `journal_jours` : l'humeur de l'Accueil ET du journal = la même donnée.
-- Reste à faire (lots 2-3) : Noaly (texte libre → aliments, conseils rédigés), photo, push 20 h
-  si rien n'est noté, et le mail de lancement (`docs/campagnes/journal-nutritionnel/`).
+- **Lots 2 et 3, la partie invisible (21/09, migration `20261215570000`)** — la photo attendra
+  (Thomas). Edge **`journal-noaly`** (Claude **Sonnet 5**, sans réflexion, effort bas) :
+  `lire_repas` transforme un repas écrit en lignes DU CATALOGUE (l'IA choisit l'aliment et la
+  quantité, **jamais** les protéines : `journal_ajouter_lot` les recalcule, origine `noaly`, tout
+  ou rien) ; `conseil` rédige « le mot de Noaly » à partir du plan calculé par l'app, gardé sur la
+  journée (`journal_jours.conseil_noaly` + `conseil_empreinte`). Plafonds 25 repas / 8 conseils
+  par 24 h, traces `ai_usage_log` (`journal_repas` ≈ 0,2 c€ cache chaud, `journal_conseil` ≈ 0,3 c€).
+  Edge **`journal-rappel`** : notification de 20 h si rien n'est noté ce jour-là (pré-rempli du
+  club exclu, eau ou sport noté = déjà noté), seulement à celles qui ont noté dans les 7 jours
+  d'avant ; tri en base `journal_rappel_cibles()` (rend des jetons : service_role seulement),
+  anti-doublon `journal_rappels_envoyes`, `{dry_run:true}` pour compter sans envoyer.
+  ⚠️ **Le cron n'est PAS posé** : il attend la validation du texte par Thomas (maquette v8,
+  artifact KFJaEaKqMuQNatZop4xztg) — `16 18,19 * * *` UTC, la fonction ne travaille qu'à 20 h Paris.
+  Le front du lot 2 (« Écris ton repas », « Le mot de Noaly ») attend la même validation.
+- Reste à faire : le front des lots 2-3 et l'accueil v8 (après validation), la photo, le mail de
+  lancement (`docs/campagnes/journal-nutritionnel/`).
 
 ---
 
@@ -948,7 +962,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 80 (au 18/09/2026)
+## ⚡ Edge Functions — les 82 (au 21/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -1017,6 +1031,8 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `update-colis-lead-action` | fetch (funnel `/colis`) | Affine le choix final du funnel colis |
 | `client-app-save-measurement` | fetch (PWA cliente) | PWA v2 (07/2026) : enregistre une session de mensurations de la cliente |
 | `client-app-level-up-notify` | fetch (PWA cliente) | PWA v2 : prévient le coach quand la cliente passe un niveau |
+| `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
+| `journal-rappel` | cron `16 18,19 * * *` UTC — **pas encore posé** (attend le texte validé par Thomas) | Journal : notification de 20 h si rien n'est noté ce jour-là. Service_role seulement ; `{dry_run:true}` compte sans envoyer |
 | `create-club-card-payment` | fetch (site du club) | Le site du club vend ses cartes de visites (paiement) |
 | `create-shop-checkout` | fetch (boutique HL SKIN) | Checkout de la boutique (10/07/2026) |
 | `confirm-shop-payment` | fetch (boutique HL SKIN) | Confirmation du paiement boutique, sans webhook |
@@ -1033,7 +1049,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `pv-month-end-reminder` | plus de cron depuis le 18/09 (supprimé) | Rappel PV de fin de mois — feature masquée (niveau complet), fonction gardée |
 | `rank-threshold-notifier` | plus de cron depuis le 18/09 (supprimé) | Notif « seuil de rang approché / atteint » — masquée, fonction gardée |
 
-> **80 fonctions au 18/09/2026** (le partage public `/partage/:token` et ses 2 fonctions ont été
+> **82 fonctions au 21/09/2026** (+ `journal-noaly` et `journal-rappel` ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
 > fait foi ; toute nouvelle fonction = une ligne ici). Cinq ne sont citées nulle part dans le
 > front : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `send-newsletter-email`
