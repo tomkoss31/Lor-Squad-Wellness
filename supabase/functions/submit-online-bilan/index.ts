@@ -209,33 +209,50 @@ serve(async (req) => {
     return json({ success: false, error: "Au moins un objectif requis." }, 400);
   }
 
-  const age = body.age != null ? Number(body.age) : null;
+  // La colonne est un entier : « 45,5 » ferait planter l'insert en 500.
+  const age = body.age != null ? Math.round(Number(body.age)) : null;
   if (age != null && (!Number.isFinite(age) || age < 16 || age > 99)) {
     return json({ success: false, error: "Âge invalide." }, 400);
   }
 
-  const heightCm = body.height_cm != null ? Number(body.height_cm) : null;
-  if (heightCm != null && (!Number.isFinite(heightCm) || heightCm < 100 || heightCm > 220)) {
-    return json({ success: false, error: "Taille invalide." }, 400);
-  }
-
-  const weightLossKg = body.weight_loss_target_kg != null
-    ? Number(body.weight_loss_target_kg)
-    : null;
-  if (weightLossKg != null && (!Number.isFinite(weightLossKg) || weightLossKg < 1 || weightLossKg > 50)) {
-    return json({ success: false, error: "Objectif kilos invalide." }, 400);
-  }
+  // Taille, poids actuel, kilos à perdre : FACULTATIFS, saisis à la main sur un
+  // téléphone. Les refuser faisait perdre un bilan entier (cinq écrans remplis)
+  // derrière un message incompréhensible. Le 21/09/2026, « 60 kg à perdre »
+  // renvoyait 400 « Objectif kilos invalide » et personne ne pouvait finir.
+  // On borne donc à ce que la base accepte (CHECK de online_bilans) au lieu de
+  // refuser, et on garde la valeur saisie dans le payload (`hors_plage`) pour
+  // que le coach la voie :
+  //   · kilos à perdre au-dessus du maximum → ramenés au maximum ;
+  //   · taille, poids actuel hors plage, ou kilos sous le minimum → ignorés ;
+  //   · tout ce qui n'est pas un nombre → ignoré.
+  const horsPlage: Record<string, number> = {};
+  const facultatif = (
+    nom: string,
+    brut: unknown,
+    min: number,
+    max: number,
+    opts: { entier: boolean; borner: boolean },
+  ): number | null => {
+    if (brut == null || (typeof brut === "string" && brut.trim() === "")) return null;
+    const n = Number(brut);
+    if (!Number.isFinite(n)) return null;
+    const v = opts.entier ? Math.round(n) : Math.round(n * 10) / 10;
+    if (v >= min && v <= max) return v;
+    horsPlage[nom] = n;
+    return opts.borner && v > max ? max : null;
+  };
+  const heightCm = facultatif("height_cm", body.height_cm, 100, 220, { entier: true, borner: false });
+  const weightLossKg = facultatif(
+    "weight_loss_target_kg", body.weight_loss_target_kg, 1, 50, { entier: true, borner: true },
+  );
+  // Poids actuel optionnel (chantier poids 2026-06-03). Jamais bloquant côté public.
+  const currentWeightKg = facultatif(
+    "current_weight_kg", body.current_weight_kg, 20, 400, { entier: false, borner: false },
+  );
 
   const motivation = body.motivation_score != null ? Number(body.motivation_score) : null;
   if (motivation != null && (!Number.isFinite(motivation) || motivation < 1 || motivation > 10)) {
     return json({ success: false, error: "Score motivation invalide." }, 400);
-  }
-
-  // Poids actuel optionnel (chantier poids 2026-06-03). Jamais bloquant côté
-  // public : on valide la plage seulement s'il est fourni.
-  const currentWeightKg = body.current_weight_kg != null ? Number(body.current_weight_kg) : null;
-  if (currentWeightKg != null && (!Number.isFinite(currentWeightKg) || currentWeightKg < 20 || currentWeightKg > 400)) {
-    return json({ success: false, error: "Poids actuel invalide." }, 400);
   }
 
   const city = (body.city ?? "").trim() || null;
@@ -367,7 +384,12 @@ serve(async (req) => {
       weight_loss_target_kg: weightLossKg,
       current_weight_kg: currentWeightKg,
       motivation_score: motivation,
-      payload: body.payload ?? {},
+      payload: Object.keys(horsPlage).length > 0
+        ? {
+          ...(body.payload && typeof body.payload === "object" && !Array.isArray(body.payload) ? body.payload : {}),
+          hors_plage: horsPlage,
+        }
+        : (body.payload ?? {}),
       user_agent: userAgent,
       ip_country: ipCountry,
       assigned_to_user_id: coachUserId,
