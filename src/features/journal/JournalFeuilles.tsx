@@ -17,9 +17,12 @@ import {
   chercher,
   eauAtteinte,
   formatLitres,
+  frequenceHabituel,
+  habituelsDuCreneau,
   litres,
   planFinDeJournee,
   protAliment,
+  protHabituel,
   protJour,
   resume,
   suggestions,
@@ -28,6 +31,7 @@ import {
   type Aliment,
   type Creneau,
   type EtatJour,
+  type Habituel,
   type Humeur,
   type Ligne,
   type LignePlan,
@@ -174,11 +178,35 @@ export function NoalyTravaille({ titre, etapes }: { titre: string; etapes: strin
 // ─── Ajouter ──────────────────────────────────────────────────────────────────
 const fmtProt = (g: number) => (g >= 10 ? String(Math.round(g)) : String(Math.round(g * 10) / 10).replace(".", ","));
 
-export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onReprendreVeille, onLireRepas, onAjouterLot }: {
+/** Un habituel : un toucher et c'est noté, avec SA quantité (bloc B, 6). */
+function BoutonHabituel({ h, creneau, aliments, occupe, onClick }: {
+  h: Habituel; creneau: Creneau; aliments: Aliment[]; occupe: boolean; onClick: () => void;
+}) {
+  const a = h.aliment ? aliments.find((x) => x.cle === h.aliment) : undefined;
+  const quantite = h.grammes ? `${Math.round(h.grammes)} g` : h.quantite > 1 ? `× ${h.quantite}` : "1 portion";
+  return (
+    <button type="button" className="jr-hab" disabled={occupe} onClick={onClick}>
+      <span className="jr-grow">
+        <b>
+          {a?.nom ?? h.libelle}
+          {a?.herbalife ? <span className="jr-herb">Herbalife</span> : null}
+          {h.aliment == null ? <span className="jr-tag nly">estimé</span> : null}
+        </b>
+        <small>{quantite} · {frequenceHabituel(h.jours, creneau)}</small>
+      </span>
+      <span className="jr-g">{fmtProt(protHabituel(h, aliments))} g</span>
+      <span className="jr-hab-plus" aria-hidden="true"><JournalIcone nom="plus" taille={18} /></span>
+    </button>
+  );
+}
+
+export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onReprendreVeille, onLireRepas, onAjouterLot, onAjouterHabituel }: {
   creneau: Creneau; etat: EtatJour; aliments: Aliment[]; occupe: boolean;
   onFermer: () => void;
   onAjouter: (a: Aliment, grammes: number | null, quantite: number) => void;
   onReprendreVeille: () => void;
+  /** Un habituel, noté d'un toucher (bloc B, 6) — absent : pas de section « Tes habituels ». */
+  onAjouterHabituel?: (h: Habituel) => void;
   /** Noaly lit un repas écrit (edge journal-noaly) — absent : pas d'écriture libre. */
   onLireRepas?: (texte: string) => Promise<PropositionNoaly>;
   onAjouterLot?: (lignes: LigneProposee[]) => void;
@@ -196,7 +224,13 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
   const champ = useRef<HTMLInputElement>(null);
   const veille = etat.jour === etat.aujourdhui && !etat.lignes.some((l) => l.creneau === creneau)
     ? etat.veille.filter((l) => l.creneau === creneau) : [];
-  const idees = useMemo(() => suggestions(aliments, creneau), [aliments, creneau]);
+  const habituels = useMemo(() => (onAjouterHabituel ? habituelsDuCreneau(etat, creneau) : []), [onAjouterHabituel, etat, creneau]);
+  // Un habituel n'est pas reproposé plus bas parmi les idées.
+  const idees = useMemo(() => {
+    const s = suggestions(aliments, creneau);
+    const pris = new Set(habituels.map((h) => h.aliment));
+    return { herbalife: s.herbalife.filter((a) => !pris.has(a.cle)), autres: s.autres.filter((a) => !pris.has(a.cle)) };
+  }, [aliments, creneau, habituels]);
   const trouves = useMemo(() => chercher(aliments, q), [aliments, q]);
   const titre = `Ajouter : ${NOM_CRENEAU[creneau].toLowerCase()}`;
 
@@ -333,6 +367,15 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
 
   return (
     <Feuille titre={titre} onFermer={onFermer}>
+      {habituels.length && onAjouterHabituel && !q.trim() ? (
+        <>
+          <div className="jr-sec jr-sec-l">Tes habituels<em>un toucher et c'est noté</em></div>
+          {habituels.map((h) => (
+            <BoutonHabituel key={`${h.aliment ?? h.libelle}-${h.grammes}-${h.quantite}`} h={h} creneau={creneau} aliments={aliments}
+              occupe={occupe} onClick={() => onAjouterHabituel(h)} />
+          ))}
+        </>
+      ) : null}
       {veille.length ? (
         <button type="button" className="jr-hier" disabled={occupe} onClick={onReprendreVeille}>
           <JournalIcone nom="refaire" taille={20} />

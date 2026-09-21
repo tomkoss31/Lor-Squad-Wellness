@@ -9,7 +9,7 @@
 // =============================================================================
 
 import { getSupabaseClient } from "../../services/supabaseClient";
-import type { Activite, Aliment, Creneau, EtatJour, Humeur, SemaineCoach } from "./journalCalculs";
+import type { Activite, Aliment, Creneau, EtatJour, Habituel, Humeur, SemaineCoach } from "./journalCalculs";
 
 // ─── Le catalogue ─────────────────────────────────────────────────────────────
 // ~115 aliments, publics, qui changent rarement : chargés une fois par session.
@@ -99,6 +99,13 @@ export const journalMembre = {
         ? { aliment: l.aliment, grammes: l.grammes, quantite: l.quantite }
         : { libelle: l.nom, grammes: l.grammes, prot_100g: l.prot_100g })),
     }),
+  /** Un habituel : un aliment du catalogue avec SA quantité, ou un plat estimé par Noaly (sans rappeler Noaly). */
+  ajouterHabituel: (token: string, jour: string, creneau: Creneau, h: Habituel): Promise<EtatJour> =>
+    h.aliment
+      ? journalMembre.ajouter(token, jour, creneau, h.aliment, h.grammes, h.quantite)
+      : journalMembre.ajouterLot(token, jour, creneau, [
+          { aliment: null, nom: h.libelle, grammes: h.grammes, quantite: 1, prot_g: h.prot_g, prot_100g: h.prot_100g, estime: true },
+        ]),
   reprendreVeille: (token: string, jour: string, creneau: Creneau) =>
     appeler<EtatJour>("journal_reprendre_veille", { p_token: token, p_jour: jour, p_creneau: creneau }),
   eau: (token: string, jour: string, verres: number, boissonClub: boolean | null) =>

@@ -397,6 +397,7 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           onReprendreVeille={() => { fermer(); void agir(() => journalMembre.reprendreVeille(token!, e.jour, feuille.creneau), "Repris d'hier"); }}
           onLireRepas={(texte) => noaly.lireRepas(token!, feuille.creneau, texte)}
           onAjouterLot={(lignes) => { fermer(); void agir(() => journalMembre.ajouterLot(token!, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}
+          onAjouterHabituel={(h) => { fermer(); void agir(() => journalMembre.ajouterHabituel(token!, e.jour, feuille.creneau, h), `Noté · ${resume([{ libelle: h.libelle, quantite: h.quantite }])}`); }}
         />
       ) : null}
       {feuille?.type === "repas" ? (
