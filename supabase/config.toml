@@ -112,8 +112,6 @@ verify_jwt = false
 verify_jwt = false
 [functions.get-testimonial-context]
 verify_jwt = false
-[functions.request-testimonial]
-verify_jwt = false
 [functions.get-online-bilan-results]
 verify_jwt = false
 [functions.qualif-bootstrap]
