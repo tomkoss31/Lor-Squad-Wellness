@@ -231,6 +231,7 @@ const Repas = z.object({
       grammes: z.number().nullable(),
       quantite: z.number().int().nullable(),
       prot_100g: z.number().nullable(),
+      kcal_100g: z.number().nullable(),
       estime: z.boolean(),
     }),
   ),
@@ -242,10 +243,10 @@ function systemeRepas(liste: string): string {
 
 Chaque aliment devient une ligne, avec \`texte\` = le morceau de sa phrase qui lui correspond.
 
-1. S'il est dans la liste ci-dessous — le même aliment, pas un cousin —, prends sa clé EXACTE dans \`cle\` (ses chiffres sont officiels) et son nom dans \`nom\` ; \`prot_100g\` = null.
+1. S'il est dans la liste ci-dessous — le même aliment, pas un cousin —, prends sa clé EXACTE dans \`cle\` (ses chiffres sont officiels) et son nom dans \`nom\` ; \`prot_100g\` = null et \`kcal_100g\` = null.
    - Aliment « pesé » : \`grammes\` = le poids tel qu'on le mange (la liste est en poids CUIT, prêt à manger), \`quantite\` = null. Convertis les unités naturelles avec les repères de la liste (« 2 œufs » → 100 g). Un poids donné cru : pâtes, riz, semoule, quinoa, boulgour, lentilles, pois chiches → × 2,5 ; viande, poisson → × 0,75.
    - Produit « à la portion » (Herbalife) : \`quantite\` de 1 à 5, \`grammes\` = null.
-2. Sinon, estime-le toi-même : \`cle\` = null, \`nom\` = son nom court en français (« Burrata », « Maïs doux », « Pizza au thon »), \`grammes\` = le poids mangé, \`prot_100g\` = ses protéines pour 100 g telles qu'on le mange, d'après les tables de composition françaises (CIQUAL) et sa recette habituelle.
+2. Sinon, estime-le toi-même : \`cle\` = null, \`nom\` = son nom court en français (« Burrata », « Maïs doux », « Pizza au thon »), \`grammes\` = le poids mangé, \`prot_100g\` = ses protéines pour 100 g telles qu'on le mange, d'après les tables de composition françaises (CIQUAL) et sa recette habituelle ; \`kcal_100g\` = ses kilocalories pour 100 g, même source.
    - Un plat préparé (pizza, lasagnes, quiche, burger, sandwich, wrap, plat traiteur…) = UNE ligne dont les protéines tiennent compte de sa garniture.
    - Une assiette faite d'aliments séparés (« salade maïs, tomate, burrata ») = une ligne par aliment.
 
@@ -313,6 +314,7 @@ async function lireRepas(
     quantite: number;
     prot_g: number;
     prot_100g: number | null;
+    kcal_100g: number | null;
     estime: boolean;
   }> = [];
   const nonReconnus = [...sortie.non_reconnus];
@@ -335,12 +337,14 @@ async function lireRepas(
       }
       g = Math.min(2000, Math.round(g));
       const p = Math.round(p100 * 100) / 100;
-      lignes.push({ aliment: null, nom: nom.charAt(0).toUpperCase() + nom.slice(1), grammes: g, quantite: 1, prot_g: arrondi((p * g) / 100), prot_100g: p, estime });
+      const k100 = l.kcal_100g;
+      const kcal100 = k100 != null && Number.isFinite(k100) && k100 >= 0 && k100 <= 900 ? Math.round(k100 * 10) / 10 : null;
+      lignes.push({ aliment: null, nom: nom.charAt(0).toUpperCase() + nom.slice(1), grammes: g, quantite: 1, prot_g: arrondi((p * g) / 100), prot_100g: p, kcal_100g: kcal100, estime });
       continue;
     }
     if (a.prot_portion != null) {
       const q = Math.min(5, Math.max(1, Math.round(l.quantite ?? 1)));
-      lignes.push({ aliment: a.cle, nom: a.nom, grammes: null, quantite: q, prot_g: protAliment(a, null, q), prot_100g: null, estime: l.estime });
+      lignes.push({ aliment: a.cle, nom: a.nom, grammes: null, quantite: q, prot_g: protAliment(a, null, q), prot_100g: null, kcal_100g: null, estime: l.estime });
     } else {
       let g = l.grammes;
       let estime = l.estime;
@@ -349,7 +353,7 @@ async function lireRepas(
         estime = true;
       }
       g = Math.min(2000, Math.round(g));
-      lignes.push({ aliment: a.cle, nom: a.nom, grammes: g, quantite: 1, prot_g: protAliment(a, g, 1), prot_100g: null, estime });
+      lignes.push({ aliment: a.cle, nom: a.nom, grammes: g, quantite: 1, prot_g: protAliment(a, g, 1), prot_100g: null, kcal_100g: null, estime });
     }
   }
   return json({

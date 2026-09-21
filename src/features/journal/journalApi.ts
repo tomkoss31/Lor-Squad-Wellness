@@ -97,14 +97,14 @@ export const journalMembre = {
       p_token: token, p_jour: jour, p_creneau: creneau,
       p_lignes: lignes.map((l) => (l.aliment
         ? { aliment: l.aliment, grammes: l.grammes, quantite: l.quantite }
-        : { libelle: l.nom, grammes: l.grammes, prot_100g: l.prot_100g })),
+        : { libelle: l.nom, grammes: l.grammes, prot_100g: l.prot_100g, kcal_100g: l.kcal_100g ?? null })),
     }),
   /** Un habituel : un aliment du catalogue avec SA quantité, ou un plat estimé par Noaly (sans rappeler Noaly). */
   ajouterHabituel: (token: string, jour: string, creneau: Creneau, h: Habituel): Promise<EtatJour> =>
     h.aliment
       ? journalMembre.ajouter(token, jour, creneau, h.aliment, h.grammes, h.quantite)
       : journalMembre.ajouterLot(token, jour, creneau, [
-          { aliment: null, nom: h.libelle, grammes: h.grammes, quantite: 1, prot_g: h.prot_g, prot_100g: h.prot_100g, estime: true },
+          { aliment: null, nom: h.libelle, grammes: h.grammes, quantite: 1, prot_g: h.prot_g, prot_100g: h.prot_100g, kcal_100g: h.kcal_100g ?? null, estime: true },
         ]),
   reprendreVeille: (token: string, jour: string, creneau: Creneau) =>
     appeler<EtatJour>("journal_reprendre_veille", { p_token: token, p_jour: jour, p_creneau: creneau }),
@@ -125,6 +125,8 @@ export interface LigneProposee {
   quantite: number;
   prot_g: number;
   prot_100g: number | null;
+  /** Les kcal pour 100 g d'un plat estimé par Noaly (bloc B, 9). */
+  kcal_100g?: number | null;
   /** La quantité (ou la ligne entière) est estimée : la membre pourra corriger. */
   estime: boolean;
 }
@@ -165,6 +167,9 @@ export const journalCoach = {
   semaine: (clientId: string) => appeler<SemaineCoach>("journal_semaine_coach", { p_client_id: clientId }),
   reglerCoef: (clientId: string, coef: number) =>
     appeler<SemaineCoach>("journal_regler_coef", { p_client_id: clientId, p_coef: coef }),
+  /** Montrer ou masquer les kcal dans son journal (bloc B, 9). */
+  reglerKcal: (clientId: string, visibles: boolean) =>
+    appeler<SemaineCoach>("journal_regler_kcal", { p_client_id: clientId, p_visibles: visibles }),
   envoyerRemarque: (clientId: string, texte: string, changements: string[]) =>
     appeler<SemaineCoach>("journal_envoyer_remarque", { p_client_id: clientId, p_texte: texte, p_changements: changements }),
 };
