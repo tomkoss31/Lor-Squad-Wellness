@@ -19,6 +19,7 @@ import {
   formatLitres,
   frequenceHabituel,
   habituelsDuCreneau,
+  kcalDe,
   litres,
   planFinDeJournee,
   protAliment,
@@ -26,6 +27,7 @@ import {
   protJour,
   resume,
   suggestions,
+  texteKcal,
   variantes,
   type Activite,
   type Aliment,
@@ -424,6 +426,8 @@ export function FeuilleRepas({ creneau, etat, onFermer, onModifier, onAjouter }:
   creneau: Creneau; etat: EtatJour; onFermer: () => void; onModifier: (l: Ligne) => void; onAjouter: () => void;
 }) {
   const lignes = etat.lignes.filter((l) => l.creneau === creneau);
+  const kcalOn = etat.kcal_visibles !== false;
+  const k = kcalDe(lignes);
   return (
     <Feuille titre={`${Math.round(protJour(lignes))} g de protéines`} surTitre={NOM_CRENEAU[creneau]} onFermer={onFermer}>
       <div className="jr-liste">
@@ -435,11 +439,13 @@ export function FeuilleRepas({ creneau, etat, onFermer, onModifier, onAjouter }:
               {l.quantite > 1 ? ` · × ${l.quantite}` : ""}
               {l.origine === "club" ? <span className="jr-tag">pris au club</span> : null}
               {l.aliment == null ? <span className="jr-tag nly">estimé par Noaly</span> : null}
+              {kcalOn && l.kcal != null ? <span className="jr-sous">{texteKcal(l.kcal, l.aliment == null)}{l.aliment == null ? " (estimé)" : ""}</span> : null}
             </span>
             <small>{Math.round(l.prot_g)} g</small>
           </button>
         ))}
       </div>
+      {kcalOn && k.connu ? <div className="jr-tiny">Ce repas : {texteKcal(k.kcal, k.estime)}. Une indication : ton objectif reste les protéines et l'eau.</div> : null}
       <div className="jr-tiny">Touche un aliment pour changer la quantité ou le retirer.</div>
       <button type="button" className="jr-cta" onClick={onAjouter}>
         <JournalIcone nom="plus" taille={18} />

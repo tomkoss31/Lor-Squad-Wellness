@@ -8,6 +8,7 @@ import {
   eauAtteinte,
   frequenceHabituel,
   habituelsDuCreneau,
+  kcalDe,
   litres,
   niveauDe,
   normaliser,
@@ -16,6 +17,7 @@ import {
   protHabituel,
   resume,
   suggestions,
+  texteKcal,
   verresObjectif,
   type Aliment,
   type EtatJour,
@@ -242,5 +244,22 @@ describe("ses habituels (bloc B, 6)", () => {
     expect(protHabituel(H({ aliment: "f1demi", libelle: "Shake F1 + ½ sachet PDM", quantite: 2, prot_g: 36 }), CATALOGUE)).toBe(36);
     // Un aliment absent du catalogue chargé : la valeur figée de la ligne.
     expect(protHabituel(H({ aliment: "disparu", libelle: "Disparu", grammes: 100, prot_g: 12 }), CATALOGUE)).toBe(12);
+  });
+});
+
+describe("les kcal, discrètes (bloc B, 9)", () => {
+  it("additionne les kcal connues ; « estimé » dès qu'un plat est estimé ou sans kcal", () => {
+    expect(kcalDe([{ aliment: "f1demi", kcal: 157 }, { aliment: "skyr", kcal: 90 }])).toEqual({ kcal: 247, estime: false, connu: true });
+    expect(kcalDe([{ aliment: "poulet", kcal: 212 }, { aliment: null, kcal: 261 }])).toEqual({ kcal: 473, estime: true, connu: true });
+    // Les chips du club n'ont pas de kcal : le total reste une indication (≈).
+    expect(kcalDe([{ aliment: "poulet", kcal: 212 }, { aliment: "chipsbbq", kcal: null }])).toEqual({ kcal: 212, estime: true, connu: true });
+    expect(kcalDe([{ aliment: null, kcal: null }]).connu).toBe(false);
+  });
+
+  it("« 157 kcal », « ≈ 453 kcal », et la journée à 10 près", () => {
+    expect(texteKcal(157, false)).toBe("157 kcal");
+    expect(texteKcal(452.6, true)).toBe("≈ 453 kcal");
+    expect(texteKcal(774, true, true)).toBe("≈ 770 kcal");
+    expect(texteKcal(1184, false, true)).toBe("≈ 1 180 kcal");
   });
 });

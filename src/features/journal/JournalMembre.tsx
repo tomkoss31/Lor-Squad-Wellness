@@ -38,7 +38,9 @@ import {
   litres,
   niveauDe,
   protJour,
+  kcalDe,
   resume,
+  texteKcal,
   verresObjectif,
   type Aliment,
   type Creneau,
@@ -198,6 +200,9 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
   const humeur = HUMEURS.find((h) => h.cle === e.humeur) ?? null;
   const activite = ACTIVITES.find((a) => a.cle === e.activite) ?? null;
   const journeeRemplie = !!activite || !!humeur;
+  // Les kcal (bloc B, 9) : en gris, sauf si sa coach les a masquées.
+  const kcalOn = e.kcal_visibles !== false;
+  const kcalJ = kcalDe(e.lignes);
 
   const poserVerres = (v: number) => {
     setEtat({ ...e, verres: v }); // tout de suite à l'écran, la base suit
@@ -322,9 +327,12 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
         </div>
       )}
 
-      {/* Mes repas : une ligne chacun */}
+      {/* Mes repas : une ligne chacun (les kcal en gris, si sa coach ne les a pas masquées) */}
       <section className="jr-card" style={{ paddingTop: 12, paddingBottom: 6 }} aria-label="Mes repas">
-        <div className="jr-eye">Mes repas</div>
+        <div className="jr-row" style={{ justifyContent: "space-between" }}>
+          <span className="jr-eye">Mes repas</span>
+          {kcalOn && kcalJ.connu ? <span className="jr-kcal">{texteKcal(kcalJ.kcal, true, true)}</span> : null}
+        </div>
         <div className="jr-repas">
           {[...CRENEAUX_REPAS, ...(e.lignes.some((x) => x.creneau === "aut") ? (["aut"] as Creneau[]) : [])].map((c) => {
             const ls = e.lignes.filter((x) => x.creneau === c);
@@ -336,7 +344,10 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
                     <b>{NOM_CRENEAU[c]}</b>
                     <small>{resume(ls)}{ls.some((x) => x.origine === "club") ? " · pris au club" : ""}</small>
                   </span>
-                  <span className="jr-g">{Math.round(protJour(ls))} g</span>
+                  <span className="jr-mp">
+                    <span className="jr-g">{Math.round(protJour(ls))} g</span>
+                    {kcalOn && kcalDe(ls).connu ? <span className="jr-kcal">{texteKcal(kcalDe(ls).kcal, kcalDe(ls).estime)}</span> : null}
+                  </span>
                   <span className="jr-chev"><JournalIcone nom="droite" taille={18} /></span>
                 </button>
               );

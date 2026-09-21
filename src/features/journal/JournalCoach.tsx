@@ -132,6 +132,25 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
         <div className="jr-tiny" style={{ marginTop: 8 }}>
           1 L par 30 kg{obj.poids == null ? " (2 L tant qu'aucun bilan n'est pesé)" : ""}. {prenom} voit son objectif changer tout de suite dans son journal.
         </div>
+        {/* Les kcal (bloc B, 9) : affichées en gris par défaut ; la coach peut les masquer. */}
+        <div className="jr-obj" style={{ marginTop: 12 }}>
+          <span><JournalIcone nom="info" taille={16} />Les kcal dans son journal</span>
+        </div>
+        <div className="jr-coefs deux" role="group" aria-label="Les kcal dans son journal">
+          {[
+            { visibles: true, titre: "Affichées", sous: "en gris, sans objectif" },
+            { visibles: false, titre: "Masquées", sous: "protéines et eau seulement" },
+          ].map((o) => {
+            const on = (s.kcal_visibles !== false) === o.visibles;
+            return (
+              <button key={o.titre} type="button" className={`jr-coef${on ? " on" : ""}`} aria-pressed={on} disabled={occupe || on}
+                onClick={() => void agir(() => journalCoach.reglerKcal(clientId, o.visibles), o.visibles ? `Kcal affichées pour ${prenom}` : `Kcal masquées pour ${prenom}`)}>
+                <b>{o.titre}</b>
+                <small>{o.sous}</small>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       {/* Les 7 derniers jours */}

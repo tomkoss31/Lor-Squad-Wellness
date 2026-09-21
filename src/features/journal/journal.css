@@ -270,6 +270,9 @@
 .jr-ligne small { display: block; font-size: 12px; color: var(--jr-hint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .jr-ligne small.hier { color: var(--jr-mut); }
 .jr-g { font-family: var(--jr-fm); font-size: 13px; font-weight: 700; color: var(--jr-acc-tx); white-space: nowrap; }
+/* Les kcal (bloc B, 9) : en gris, jamais une couleur de victoire ni d'alerte */
+.jr-mp { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.jr-kcal { font-family: var(--jr-fm); font-size: 11px; color: var(--jr-hint); white-space: nowrap; }
 .jr-chev { color: var(--jr-hint); display: flex; }
 .jr-plus {
   width: 36px; height: 36px; border-radius: 11px; border: 1px dashed var(--jr-ln2);
@@ -494,6 +497,7 @@
 
 /* Coach */
 .jr-coefs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.jr-coefs.deux { grid-template-columns: repeat(2, 1fr); }
 .jr-coef {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 54px;
   border: 1px solid var(--jr-ln2); background: transparent; border-radius: 12px; padding: 4px 2px;

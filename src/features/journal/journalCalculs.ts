@@ -111,6 +111,9 @@ export interface Ligne {
   /** Les protéines pour 100 g d'une ligne estimée (corriger son poids recalcule le total). */
   prot_100g?: number | null;
   origine: "membre" | "club" | "noaly" | "coach";
+  /** Ses kcal (bloc B, 9), calculées par le serveur : catalogue, ou estimation de Noaly ; null = inconnues. */
+  kcal?: number | null;
+  kcal_100g?: number | null;
 }
 
 export type LigneVeille = Omit<Ligne, "id" | "origine">;
@@ -141,6 +144,7 @@ export interface Habituel {
   prot_g: number;
   /** Le nombre de jours, sur les 14 d'avant, où elle l'a noté à ce repas. */
   jours: number;
+  kcal_100g?: number | null;
 }
 
 export interface EtatJour {
@@ -158,6 +162,8 @@ export interface EtatJour {
   gains?: Array<{ cle: string; xp: number }>;
   /** Ses habituels, par repas (serveur : `_journal_habituels`). */
   habituels?: Partial<Record<Creneau, Habituel[]>>;
+  /** false = sa coach a masqué les kcal (bloc B, 9) ; visibles par défaut. */
+  kcal_visibles?: boolean;
 }
 
 // ─── L'eau ────────────────────────────────────────────────────────────────────
@@ -295,6 +301,27 @@ function nomCourt(libelle: string): string {
 }
 
 /** Une ligne de repas en une phrase : « Poulet (blanc), riz blanc, haricots verts ». */
+// ─── Les kcal (bloc B, 9) : discrètes, jamais un objectif ──────────────────
+/** Les kcal connues d'un ensemble de lignes ; `estime` dès qu'une ligne est estimée ou sans kcal. */
+export function kcalDe(lignes: Array<{ aliment: string | null; kcal?: number | null }>): { kcal: number; estime: boolean; connu: boolean } {
+  let kcal = 0;
+  let connu = false;
+  let estime = false;
+  for (const l of lignes) {
+    if (l.kcal == null) { estime = true; continue; }
+    kcal += l.kcal;
+    connu = true;
+    if (l.aliment == null) estime = true;
+  }
+  return { kcal, estime, connu };
+}
+
+/** « 157 kcal », « ≈ 453 kcal » (un plat estimé dedans), « ≈ 770 kcal » (la journée, à 10 près). */
+export function texteKcal(kcal: number, estime: boolean, journee = false): string {
+  const n = journee ? Math.round(kcal / 10) * 10 : Math.round(kcal);
+  return `${estime || journee ? "≈ " : ""}${String(n).replace(/\B(?=(\d{3})+(?!\d))/g, "\u202f")} kcal`;
+}
+
 // ─── Ses habituels (bloc B, 6 — maquette Jt3RNaarpnav5XRGzhrTwz) ─────────────
 const cleHabituel = (x: { aliment: string | null; libelle: string }) =>
   x.aliment ?? `~${x.libelle.trim().toLowerCase()}`;
@@ -417,6 +444,8 @@ export interface JourCoach {
 export interface SemaineCoach {
   aujourdhui: string;
   objectifs: Objectifs;
+  /** false = kcal masquées pour elle (réglage de la coach, bloc B, 9). */
+  kcal_visibles?: boolean;
   jours: JourCoach[];
   remarque: Remarque | null;
 }
