@@ -23,6 +23,7 @@ import "./journal.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JournalIcone } from "./JournalIcone";
 import { FeuilleAjout, FeuilleConseils, FeuilleJournee, FeuilleModifier, FeuilleRepas, type AlerteSport } from "./JournalFeuilles";
+import { CarteSemaine, FeuilleSemaine } from "./JournalSemaine";
 import { chargerAliments, journalMembre, noaly, prevenirCoachNiveau, signalerXp } from "./journalApi";
 import {
   ACTIVITES,
@@ -38,9 +39,12 @@ import {
   litres,
   niveauDe,
   protJour,
+  bilanSemaine,
   kcalDe,
   resume,
+  semaineEnTete,
   texteKcal,
+  type SemaineMembre,
   verresObjectif,
   type Aliment,
   type Creneau,
@@ -102,6 +106,9 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
   const [montee, setMontee] = useState<{ badge: string; niveau: number; titre: string; hint: string } | null>(null);
   const niveauVu = useRef<number | null>(null);
   const minuteur = useRef<number | undefined>(undefined);
+  // Ta semaine (bloc B, 7)
+  const [semaine, setSemaine] = useState<SemaineMembre | null>(null);
+  const [semaineOuverte, setSemaineOuverte] = useState(false);
 
   const dire = useCallback((txt: string) => {
     setMessage(txt);
@@ -125,13 +132,38 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
 
   useEffect(() => { void charger(); }, [charger]);
 
+  const chargerSemaine = useCallback(async () => {
+    if (!token) return;
+    try {
+      setSemaine(await journalMembre.semaine(token));
+    } catch {
+      /* la carte « Ta semaine » reste cachée : le journal du jour, lui, marche */
+    }
+  }, [token]);
+  useEffect(() => { void chargerSemaine(); }, [chargerSemaine]);
+
+  // La notification du dimanche ouvre son bilan (`?semaine=1`), une seule fois.
+  useEffect(() => {
+    if (!semaine) return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("semaine") !== "1") return;
+    setSemaineOuverte(true);
+    p.delete("semaine");
+    const q = p.toString();
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${q ? `?${q}` : ""}${window.location.hash}`);
+  }, [semaine]);
+
   // Retour sur l'app (iOS gèle les onglets cachés) : la journée a pu bouger —
   // un pointage au club, minuit passé, une remarque de la coach.
   useEffect(() => {
-    const revoir = () => { if (document.visibilityState === "visible") void charger(); };
+    const revoir = () => {
+      if (document.visibilityState !== "visible") return;
+      void charger();
+      void chargerSemaine();
+    };
     document.addEventListener("visibilitychange", revoir);
     return () => document.removeEventListener("visibilitychange", revoir);
-  }, [charger]);
+  }, [charger, chargerSemaine]);
 
   // Le niveau affiché : on repère la montée (BBC : le journal la fête et prévient
   // la coach ; standard : l'app le fait déjà, on lui signale seulement l'XP).
@@ -203,6 +235,13 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
   // Les kcal (bloc B, 9) : en gris, sauf si sa coach les a masquées.
   const kcalOn = e.kcal_visibles !== false;
   const kcalJ = kcalDe(e.lignes);
+  // Ta semaine : en tête le dimanche soir et le lundi, en bas le reste de la semaine ;
+  // seulement sur la journée d'aujourd'hui, et s'il y a au moins un jour noté.
+  const bilan = semaine ? bilanSemaine(semaine) : null;
+  const carteSemaine = semaine && bilan && bilan.joursNotes > 0 && e.jour === e.aujourdhui ? (
+    <CarteSemaine s={semaine} bilan={bilan} onOuvrir={() => { setSemaineOuverte(true); void chargerSemaine(); }} />
+  ) : null;
+  const semaineEnHaut = semaine ? semaineEnTete(semaine.aujourdhui, new Date().getHours()) : false;
 
   const poserVerres = (v: number) => {
     setEtat({ ...e, verres: v }); // tout de suite à l'écran, la base suit
@@ -211,6 +250,8 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
 
   return (
     <div className="jr" data-format={format}>
+      {semaineEnHaut ? carteSemaine : null}
+
       {/* ‹ le jour › */}
       <div className="jr-row">
         <button type="button" className="jr-nav-jour" aria-label="Jour précédent" disabled={e.jour <= decaler(e.aujourdhui, -6) || occupe}
@@ -398,6 +439,9 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           <JournalIcone nom="etincelle" taille={18} />Mes conseils du jour
         </button>
       ) : null}
+
+      {!semaineEnHaut ? carteSemaine : null}
+      {semaineOuverte && semaine && bilan ? <FeuilleSemaine s={semaine} bilan={bilan} onFermer={() => setSemaineOuverte(false)} /> : null}
 
       <div className={`jr-toast${message ? " on" : ""}`} role="status" aria-live="polite">{message}</div>
 

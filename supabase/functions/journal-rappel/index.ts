@@ -17,6 +17,13 @@
 // Réservée au cron (clé service_role) : la clé anon est publique.
 // `{ "dry_run": true }` compte les cibles sans rien envoyer, à toute heure.
 //
+// Mode « semaine » (bloc B, 7 — validé par Thomas le 21/09) : `{ "mode": "semaine" }`,
+// cron `journal-semaine` `10 17,18 * * 0` (UTC) = dimanche 19 h 10 à Paris.
+// « Camille, ta semaine en 3 chiffres » à celles qui ont noté au moins 3 jours
+// dans la semaine ; tri `journal_semaine_cibles()`, anti-doublon
+// `journal_semaines_envoyees` (écrit AVANT l'envoi). Le lien ouvre son bilan
+// de la semaine (`?tab=journal&semaine=1`).
+//
 // Déploiement : supabase functions deploy journal-rappel
 // =============================================================================
 
@@ -27,6 +34,9 @@ function parisHour(d: Date): number {
   return Number(
     new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Paris", hour: "2-digit", hour12: false }).format(d),
   );
+}
+function parisJourSemaine(d: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Paris", weekday: "short" }).format(d);
 }
 function parisDateStr(d: Date): string {
   return new Intl.DateTimeFormat("fr-CA", { timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -55,14 +65,17 @@ serve(async (req) => {
   }
 
   let dryRun = false;
+  let mode: "jour" | "semaine" = "jour";
   try {
     const body = await req.json();
     dryRun = body?.dry_run === true;
+    if (body?.mode === "semaine") mode = "semaine";
   } catch {
     // corps vide : l'appel du cron
   }
 
   const now = new Date();
+  if (mode === "semaine") return await semaine(now, dryRun);
   if (!dryRun && parisHour(now) !== 20) {
     return jsonResponse({ ok: true, skipped: "pas 20 h à Paris" });
   }
@@ -90,3 +103,35 @@ serve(async (req) => {
   }
   return jsonResponse({ ok: true, cibles: liste.length, envoyes });
 });
+
+/** Dimanche 19 h à Paris : « ta semaine en 3 chiffres ». */
+async function semaine(now: Date, dryRun: boolean): Promise<Response> {
+  if (!dryRun && !(parisHour(now) === 19 && parisJourSemaine(now) === "Sun")) {
+    return jsonResponse({ ok: true, skipped: "pas dimanche 19 h à Paris" });
+  }
+  const sb = getServiceClient({ reessais: true });
+  const { data: cibles, error } = await sb.rpc("journal_semaine_cibles");
+  if (error) return jsonResponse({ error: error.message }, 500);
+  const liste = (cibles ?? []) as Array<{
+    client_id: string; jeton: string; prenom: string | null; lundi: string;
+    jours_notes: number; moy_prot: number; jours_eau: number;
+  }>;
+  if (dryRun) return jsonResponse({ ok: true, dry_run: true, mode: "semaine", cibles: liste.length });
+
+  let envoyes = 0;
+  for (const c of liste) {
+    // Le marqueur d'abord : si deux passages se croisent, un seul gagne.
+    const { error: dejaFait } = await sb.from("journal_semaines_envoyees").insert({ client_id: c.client_id, lundi: c.lundi });
+    if (dejaFait) continue;
+    const prenom = c.prenom?.trim().split(/\s+/)[0];
+    const eau = c.jours_eau > 0 ? ` · l'eau ${c.jours_eau} jour${c.jours_eau > 1 ? "s" : ""} sur 7` : "";
+    const res = await sendPushToClient(sb, c.client_id, {
+      title: prenom ? `${prenom}, ta semaine en 3 chiffres` : "Ta semaine en 3 chiffres",
+      body: `${c.jours_notes} jours notés · ${c.moy_prot} g de protéines par jour${eau}. Touche pour voir ton bilan.`,
+      url: `/client/${c.jeton}?tab=journal&semaine=1`,
+      type: "journal_semaine",
+    });
+    if (res.sent) envoyes++;
+  }
+  return jsonResponse({ ok: true, mode: "semaine", cibles: liste.length, envoyes });
+}
