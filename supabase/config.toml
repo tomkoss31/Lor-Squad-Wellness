@@ -100,6 +100,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.client-app-level-up-notify]
 verify_jwt = false
+[functions.journal-noaly]
+verify_jwt = false  # journal nutritionnel (21/09) : le jeton de la membre est vérifié dans la fonction
 
 # ── Formulaires et pages publiques : le visiteur n'a pas de compte ──────────
 [functions.submit-online-bilan]

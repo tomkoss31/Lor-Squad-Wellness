@@ -185,7 +185,17 @@ export function PwaClientApp({
   startDate,
 }: PwaClientAppProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
-  const [tab, setTab] = useState<TabKey>('accueil')
+  // Les notifications ouvrent l'app sur le bon onglet, comme dans l'espace BBC :
+  // ?tab=messages (réponse du coach), ?tab=journal (rappel de 20 h), ?tab=refer
+  // (parrainage). Sans ça, on atterrissait sur l'Accueil et la notification
+  // semblait vide. ?tab=conseils = les vieux liens : l'onglet est devenu le journal.
+  const [tab, setTab] = useState<TabKey>(() => {
+    if (typeof window === 'undefined') return 'accueil'
+    const t = new URLSearchParams(window.location.search).get('tab')
+    if (t === 'conseils') return 'journal'
+    if (t === 'refer') return 'recommander'
+    return t === 'evolution' || t === 'produits' || t === 'journal' || t === 'messages' || t === 'recommander' ? t : 'accueil'
+  })
   const [profilOpen, setProfilOpen] = useState(false)
   const [screen, setScreen] = useState<ScreenKey>('app')
   // Barrière notifs : hard-force à la connexion (Thomas 2026-07-24). Échappatoire
