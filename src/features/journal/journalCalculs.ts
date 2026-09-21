@@ -43,6 +43,15 @@ export const INDICE_CRENEAU: Record<Creneau, string> = {
   aut: "grignotage, boisson",
 };
 /** Les idées proposées dépendent du créneau : jamais de poulet au petit-déj. */
+/** « Noter mon déjeuner » : le repas dit comme on le dit. */
+export const COURT_CRENEAU: Record<Creneau, string> = {
+  pdj: "petit-déj",
+  enc1: "encas",
+  dej: "déjeuner",
+  enc2: "encas",
+  din: "dîner",
+  aut: "grignotage",
+};
 export const GROUPE: Record<Creneau, Groupe | null> = {
   pdj: "pdj",
   enc1: "enc",
@@ -93,11 +102,14 @@ export interface Aliment {
 export interface Ligne {
   id: string;
   creneau: Creneau;
-  aliment: string;
+  /** null = une ligne estimée par Noaly, hors catalogue (burrata, pizza au thon…). */
+  aliment: string | null;
   libelle: string;
   grammes: number | null;
   quantite: number;
   prot_g: number;
+  /** Les protéines pour 100 g d'une ligne estimée (corriger son poids recalcule le total). */
+  prot_100g?: number | null;
   origine: "membre" | "club" | "noaly" | "coach";
 }
 
@@ -302,14 +314,43 @@ export interface LignePlan {
   prot: number;
 }
 
-export function planFinDeJournee(e: EtatJour, aliments: Aliment[]): { lignes: LignePlan[]; total: number; manque: number } {
+/**
+ * Le créneau de l'heure qu'il est, sur le téléphone de la membre :
+ * avant 10 h le petit-déj, puis l'encas du matin, le déjeuner (11 h 30),
+ * l'encas de l'après-midi (14 h 30) et le dîner (18 h 30).
+ */
+export function creneauDeLHeure(d: Date): Creneau {
+  const m = d.getHours() * 60 + d.getMinutes();
+  if (m < 10 * 60) return "pdj";
+  if (m < 11 * 60 + 30) return "enc1";
+  if (m < 14 * 60 + 30) return "dej";
+  if (m < 18 * 60 + 30) return "enc2";
+  return "din";
+}
+
+/**
+ * Ce que la carte de l'accueil propose de noter : le repas de l'heure s'il
+ * est vide, sinon le suivant encore vide ; null quand tout est noté jusqu'au
+ * dîner (la carte propose alors les conseils du jour).
+ */
+export function creneauANoter(lignes: Array<{ creneau: Creneau }>, maintenant: Date): Creneau | null {
+  const i = CRENEAUX_REPAS.indexOf(creneauDeLHeure(maintenant));
+  return CRENEAUX_REPAS.slice(i).find((c) => !lignes.some((l) => l.creneau === c)) ?? null;
+}
+
+/**
+ * Avec `maintenant`, le plan d'aujourd'hui ne propose que des repas encore à
+ * venir : à 16 h, plus d'encas du matin ni de déjeuner (maquette v8).
+ */
+export function planFinDeJournee(e: EtatJour, aliments: Aliment[], maintenant?: Date): { lignes: LignePlan[]; total: number; manque: number } {
   const parCle = new Map(aliments.map((a) => [a.cle, a]));
   let total = protJour(e.lignes);
   const objectif = e.objectifs.proteines;
   const manque = objectif == null ? 0 : Math.max(0, Math.round(objectif - total));
   const lignes: LignePlan[] = [];
   if (objectif == null) return { lignes, total, manque };
-  for (const c of ["enc1", "dej", "enc2", "din"] as Creneau[]) {
+  const depuis = maintenant && e.jour === e.aujourdhui ? CRENEAUX_REPAS.indexOf(creneauDeLHeure(maintenant)) : 0;
+  for (const c of (["enc1", "dej", "enc2", "din"] as Creneau[]).filter((x) => CRENEAUX_REPAS.indexOf(x) >= depuis)) {
     if (total >= objectif) break;
     if (e.lignes.some((l) => l.creneau === c)) continue;
     const idee = PLAN[c];

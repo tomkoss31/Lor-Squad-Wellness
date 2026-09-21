@@ -61,6 +61,7 @@ function lisible(message: string): string {
   if (/jour hors du journal/.test(message)) return "Ce jour n'est plus modifiable : le journal se corrige sur 7 jours.";
   if (/quantite invalide/.test(message)) return "Quantité invalide : indique un poids entre 1 et 2 000 g.";
   if (/aliment inconnu/.test(message)) return "Cet aliment n'est plus dans la liste.";
+  if (/estimation invalide|lignes invalides/.test(message)) return "Une ligne de Noaly n'est pas passée : retire-la ou choisis dans la liste.";
   if (/non autorise/.test(message)) return "Tu n'as pas accès au journal de cette personne.";
   if (/Failed to fetch|NetworkError|network/i.test(message)) return "Pas de réseau. Réessaie dans un instant.";
   return "Ça n'a pas marché. Réessaie dans un instant.";
@@ -90,6 +91,14 @@ export const journalMembre = {
       p_token: token, p_ligne: ligne, p_aliment: aliment, p_grammes: grammes, p_quantite: quantite,
     }),
   retirer: (token: string, ligne: string) => appeler<EtatJour>("journal_retirer", { p_token: token, p_ligne: ligne }),
+  /** Les lignes que Noaly a lues dans un repas écrit, relues par la membre (tout ou rien). */
+  ajouterLot: (token: string, jour: string, creneau: Creneau, lignes: LigneProposee[]) =>
+    appeler<EtatJour>("journal_ajouter_lot", {
+      p_token: token, p_jour: jour, p_creneau: creneau,
+      p_lignes: lignes.map((l) => (l.aliment
+        ? { aliment: l.aliment, grammes: l.grammes, quantite: l.quantite }
+        : { libelle: l.nom, grammes: l.grammes, prot_100g: l.prot_100g })),
+    }),
   reprendreVeille: (token: string, jour: string, creneau: Creneau) =>
     appeler<EtatJour>("journal_reprendre_veille", { p_token: token, p_jour: jour, p_creneau: creneau }),
   eau: (token: string, jour: string, verres: number, boissonClub: boolean | null) =>
@@ -98,6 +107,50 @@ export const journalMembre = {
     appeler<EtatJour>("journal_activite", { p_token: token, p_jour: jour, p_activite: activite }),
   humeur: (token: string, jour: string, humeur: Humeur | null) =>
     appeler<EtatJour>("journal_humeur", { p_token: token, p_jour: jour, p_humeur: humeur }),
+};
+
+// ─── Noaly (edge `journal-noaly`, Claude Sonnet 5) ────────────────────────────
+/** Une ligne proposée : du catalogue (aliment) ou estimée par Noaly (aliment null). */
+export interface LigneProposee {
+  aliment: string | null;
+  nom: string;
+  grammes: number | null;
+  quantite: number;
+  prot_g: number;
+  prot_100g: number | null;
+  /** La quantité (ou la ligne entière) est estimée : la membre pourra corriger. */
+  estime: boolean;
+}
+export interface PropositionNoaly {
+  lignes: LigneProposee[];
+  non_reconnus: string[];
+}
+
+async function appelerNoaly<T>(corps: Record<string, unknown>): Promise<T> {
+  const sb = await getSupabaseClient();
+  if (!sb) throw new Error("Connexion indisponible. Réessaie dans un instant.");
+  const { data, error } = await sb.functions.invoke("journal-noaly", { body: corps });
+  if (error) {
+    let message = "Noaly ne répond pas pour le moment : choisis dans la liste.";
+    try {
+      const reponse = (error as { context?: Response }).context;
+      const detail = reponse ? await reponse.json() : null;
+      if (detail?.error === "cap_reached" && detail.message) message = detail.message;
+    } catch {
+      /* le message par défaut suffit */
+    }
+    throw new Error(message);
+  }
+  return data as T;
+}
+
+export const noaly = {
+  /** « 150 g de poulet, des carottes et des pâtes » → des lignes à relire. Rien n'est écrit. */
+  lireRepas: (token: string, creneau: Creneau, texte: string) =>
+    appelerNoaly<PropositionNoaly>({ token, mode: "lire_repas", creneau, texte }),
+  /** « Le mot de Noaly » : elle dit le plan calculé par l'app (gardé sur la journée côté serveur). */
+  conseil: async (token: string, jour: string, plan: Array<{ creneau: Creneau; aliment: string; grammes: number | null }>) =>
+    (await appelerNoaly<{ texte: string }>({ token, mode: "conseil", jour, plan })).texte,
 };
 
 // ─── Côté coach (son RLS) ─────────────────────────────────────────────────────

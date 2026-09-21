@@ -159,13 +159,27 @@ Un rendez-vous terminé reste en tête du « Matin » **une heure** (fenêtre de
 
 ---
 
-## 🥗 Le journal nutritionnel (lot 1, 21/09/2026)
+## 🥗 Le journal nutritionnel (lots 1 à 3, 21/09/2026)
 
-Maquette v7 validée par Thomas (artifact 6yR2eSaMs5BNZ1uRwfT7kf). L'onglet **« Journal »
-remplace « Conseils »** dans les DEUX espaces membre (`BbcClientApp` format `bbc`,
-`PwaClientApp` format `std`) ; `?tab=conseils` mène au journal. Côté coach : 4e volet de la
-fiche BBC (`BbcCrm`) et section repliable de l'onglet « Mesures » de `ClientDetailPage` (pas de
-6e onglet). Code : `src/features/journal/` (calculs purs + tests, feuilles, volet coach).
+Maquette v7 validée par Thomas (artifact 6yR2eSaMs5BNZ1uRwfT7kf), puis **v8** (KFJaEaKqMuQNatZop4xztg :
+« ok pour V8 et l'ensemble des demandes »). L'onglet **« Journal » remplace « Conseils »** dans les
+DEUX espaces membre (`BbcClientApp` format `bbc`, `PwaClientApp` format `std`) ; `?tab=conseils`
+mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section repliable de l'onglet
+« Mesures » de `ClientDetailPage` (pas de 6e onglet). Code : `src/features/journal/`.
+- **L'accueil (v8)** : la carte **« Mon journal »** (`JournalAccueil`) remplace le gros bloc du
+  poids dans les deux espaces — anneau des protéines, eau en un geste, « Noter mon déjeuner »
+  selon l'heure (`creneauANoter`) ; le poids reste en UNE ligne dessous. Les feuilles sont celles
+  de l'onglet (une seule implémentation, ouverte depuis deux endroits).
+- **Noaly = le rose du site en BBC** (`--ls-bbc-noaly*`, bbc-tokens.css, `--pink #F5178F` de
+  ClubLandingPage.css) : bouton ROND au centre de la barre dans une bosse de verre (`.bbc-mnav`,
+  même bosse que le ＋ coach), sa fenêtre (`MemberNoaly`), « Écris ton repas », « Le mot de Noaly ».
+  L'orange reste la couleur des gestes de la membre. **Barre BBC à 4 onglets** : Accueil · Journal ·
+  Noaly · Évolution · Messages — les Cœurs s'ouvrent depuis leur carte de l'accueil (bouton
+  « ‹ Accueil »), `?tab=coeurs` marche toujours. En standard, Noaly garde ses couleurs La Base 360.
+- ⚠️ **Piège vécu** : une animation CSS en `both` qui finit sur `translateY(0)` garde une
+  transformation, et un élément transformé devient le repère des `position: fixed` qu'il contient.
+  Les feuilles ouvertes depuis l'Accueil standard se posaient en bas de la PAGE. L'Accueil
+  standard est en `lbRise … backwards` ; ne pas remettre `both`.
 - **Règles de Thomas, dans le code** : protéines = poids du DERNIER bilan pesé × coefficient
   réglé par la coach (1,2 · 1,4 · 1,5 · 2 — `journal_reglages`) ; eau = 1 L / 30 kg ; la
   boisson du club (40 cl) et le shake du club sont pré-remplis au pointage (une fois) ; le shake
@@ -181,22 +195,27 @@ fiche BBC (`BbcCrm`) et section repliable de l'onglet « Mesures » de `ClientDe
 - **L'humeur** : `client_mood_log` avait été supprimée alors que l'Accueil standard l'appelait
   (l'humeur n'était plus enregistrée). `record_client_mood` / `get_client_mood_today` écrivent
   maintenant dans `journal_jours` : l'humeur de l'Accueil ET du journal = la même donnée.
-- **Lots 2 et 3, la partie invisible (21/09, migration `20261215570000`)** — la photo attendra
-  (Thomas). Edge **`journal-noaly`** (Claude **Sonnet 5**, sans réflexion, effort bas) :
-  `lire_repas` transforme un repas écrit en lignes DU CATALOGUE (l'IA choisit l'aliment et la
-  quantité, **jamais** les protéines : `journal_ajouter_lot` les recalcule, origine `noaly`, tout
-  ou rien) ; `conseil` rédige « le mot de Noaly » à partir du plan calculé par l'app, gardé sur la
-  journée (`journal_jours.conseil_noaly` + `conseil_empreinte`). Plafonds 25 repas / 8 conseils
-  par 24 h, traces `ai_usage_log` (`journal_repas` ≈ 0,2 c€ cache chaud, `journal_conseil` ≈ 0,3 c€).
-  Edge **`journal-rappel`** : notification de 20 h si rien n'est noté ce jour-là (pré-rempli du
-  club exclu, eau ou sport noté = déjà noté), seulement à celles qui ont noté dans les 7 jours
-  d'avant ; tri en base `journal_rappel_cibles()` (rend des jetons : service_role seulement),
-  anti-doublon `journal_rappels_envoyes`, `{dry_run:true}` pour compter sans envoyer.
-  ⚠️ **Le cron n'est PAS posé** : il attend la validation du texte par Thomas (maquette v8,
-  artifact KFJaEaKqMuQNatZop4xztg) — `16 18,19 * * *` UTC, la fonction ne travaille qu'à 20 h Paris.
-  Le front du lot 2 (« Écris ton repas », « Le mot de Noaly ») attend la même validation.
-- Reste à faire : le front des lots 2-3 et l'accueil v8 (après validation), la photo, le mail de
-  lancement (`docs/campagnes/journal-nutritionnel/`).
+- **Noaly dans le journal** (lot 2, migrations `20261215570000` + `20261215580000`) — la photo
+  attendra (Thomas). Edge **`journal-noaly`** (Claude **Sonnet 5**, sans réflexion, effort bas) :
+  `lire_repas` transforme un repas écrit en lignes. Un aliment DU CATALOGUE garde ses chiffres
+  officiels (l'IA ne choisit que l'aliment et la quantité) ; ce que le catalogue ne connaît pas
+  (burrata, pizza au thon…) est **ESTIMÉ** par l'IA (Thomas : « une pizza thon vs une pizza
+  artichaut… autant utiliser l'IA pour être juste ») → ligne sans `aliment`, avec `prot_100g`
+  (0 à 90, contrôlé en base) : elle se corrige au poids et le total suit ; affichée « estimé par
+  Noaly ». Des poids de repère fixes dans le prompt (demi-pizza 225 g…) pour des estimations
+  stables. `journal_ajouter_lot` écrit tout ou rien (origine `noaly`). `conseil` rédige « le mot de
+  Noaly » à partir du plan calculé par l'app (**selon l'heure** : à 16 h, plus d'encas du matin),
+  gardé sur la journée (`journal_jours.conseil_noaly` + `conseil_empreinte`) ; en panne → les
+  conseils calculés. Plafonds 25 repas / 8 conseils par 24 h, traces `ai_usage_log`
+  (`journal_repas` ≈ 0,2 c€ cache chaud, `journal_conseil` ≈ 0,3 c€).
+- **Le rappel de 20 h** (lot 3, cron `journal-rappel` `16 18,19 * * *` UTC, migration
+  `20261215590000`, texte validé v8) : edge **`journal-rappel`**, seulement à celles qui ont noté
+  dans les 7 jours d'avant et rien ce jour-là (pré-rempli du club exclu ; eau ou sport noté =
+  déjà noté) ; tri `journal_rappel_cibles()` (rend des jetons : service_role seulement),
+  anti-doublon `journal_rappels_envoyes`, `{dry_run:true}` pour compter sans envoyer. Le lien
+  `?tab=journal` est lu par les deux espaces (le standard ignorait `?tab=` jusqu'au 21/09).
+- Reste à faire : la photo, le mail de lancement (`docs/campagnes/journal-nutritionnel/`, captures
+  à refaire : l'accueil a changé), la recette iPhone de Thomas avant `main`.
 
 ---
 
@@ -1031,8 +1050,8 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `update-colis-lead-action` | fetch (funnel `/colis`) | Affine le choix final du funnel colis |
 | `client-app-save-measurement` | fetch (PWA cliente) | PWA v2 (07/2026) : enregistre une session de mensurations de la cliente |
 | `client-app-level-up-notify` | fetch (PWA cliente) | PWA v2 : prévient le coach quand la cliente passe un niveau |
-| `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
-| `journal-rappel` | cron `16 18,19 * * *` UTC — **pas encore posé** (attend le texte validé par Thomas) | Journal : notification de 20 h si rien n'est noté ce jour-là. Service_role seulement ; `{dry_run:true}` compte sans envoyer |
+| `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, ou estimées par Noaly hors catalogue, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
+| `journal-rappel` | cron `16 18,19 * * *` UTC (20 h 16 Paris) | Journal : notification de 20 h si rien n'est noté ce jour-là. Service_role seulement ; `{dry_run:true}` compte sans envoyer |
 | `create-club-card-payment` | fetch (site du club) | Le site du club vend ses cartes de visites (paiement) |
 | `create-shop-checkout` | fetch (boutique HL SKIN) | Checkout de la boutique (10/07/2026) |
 | `confirm-shop-payment` | fetch (boutique HL SKIN) | Confirmation du paiement boutique, sans webhook |

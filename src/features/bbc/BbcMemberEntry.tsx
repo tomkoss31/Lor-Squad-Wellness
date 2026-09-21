@@ -101,10 +101,10 @@ export function BbcMemberEntry({ firstName, clubName, openHours, token, onDone }
       {screen === "landing" ? (
         <div style={{ position: "relative", minHeight: "100vh", display: "flex", flexDirection: "column", padding: "calc(56px + env(safe-area-inset-top)) 26px calc(30px + env(safe-area-inset-bottom))" }}>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
-            <div style={{ width: 104, height: 104, borderRadius: 28, background: "radial-gradient(circle at 50% 38%, #12160f, #0a0c0a)", border: "1px solid rgba(197,248,42,.22)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 34px -6px rgba(197,248,42,.4)" }}>
+            <div style={{ width: 104, height: 104, borderRadius: 28, background: "radial-gradient(circle at 50% 38%, #12160f, #0a0c0a)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 22%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 34px -6px color-mix(in srgb, var(--ls-bbc-lime) 40%, transparent)" }}>
               <span style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 38, color: "var(--ls-bbc-lime)" }}>BBC</span>
             </div>
-            <span style={{ padding: "6px 18px", borderRadius: 100, background: "rgba(197,248,42,.06)", border: "1px solid rgba(197,248,42,.2)", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", whiteSpace: "nowrap" }}>
+            <span style={{ padding: "6px 18px", borderRadius: 100, background: "color-mix(in srgb, var(--ls-bbc-lime) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-lime) 20%, transparent)", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 9.5, fontWeight: 600, letterSpacing: "0.28em", textTransform: "uppercase", color: "var(--ls-bbc-muted)", whiteSpace: "nowrap" }}>
               breakfast budget club
             </span>
           </div>
@@ -205,5 +205,5 @@ const ctaStyle: CSSProperties = {
   textTransform: "uppercase",
   letterSpacing: "0.02em",
   fontSize: 16,
-  boxShadow: "0 6px 22px -6px rgba(197,248,42,.4)",
+  boxShadow: "0 6px 22px -6px color-mix(in srgb, var(--ls-bbc-lime) 40%, transparent)",
 };
