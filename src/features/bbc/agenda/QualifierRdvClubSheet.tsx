@@ -60,6 +60,8 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
   const prenom = rdv.prenom || "Elle";
   const suivi = rdv.source === "suivi";
   const finDeCarte = /carte/i.test(rdv.nature);
+  /** Sa prochaine pesée, calée depuis sa fiche du club (22/09). */
+  const pesee = /pes/i.test(rdv.nature);
 
   async function repondre(q: Qualification) {
     if (envoi) return;
@@ -135,8 +137,8 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                   {onBilan ? (
                     <Choix
                       emoji="✅"
-                      titre={finDeCarte ? "Venue · faire son bilan des 10" : "Venue · faire son bilan"}
-                      sous={finDeCarte ? "La check-list en 9 points : scan, carte suivante, recos." : "Le suivi s'ouvre tout de suite, avec ses derniers chiffres."}
+                      titre={finDeCarte ? "Venue · faire son bilan des 10" : pesee ? "Venue · faire sa pesée" : "Venue · faire son bilan"}
+                      sous={finDeCarte ? "La check-list en 9 points : scan, carte suivante, recos." : pesee ? "Sa fiche s'ouvre : « Son corps » a la balance et ses chiffres de départ." : "Le suivi s'ouvre tout de suite, avec ses derniers chiffres."}
                       onClick={onBilan}
                       victoire
                     />

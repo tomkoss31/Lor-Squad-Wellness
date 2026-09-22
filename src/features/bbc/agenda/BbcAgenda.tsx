@@ -41,6 +41,7 @@ import { CalerRdvSheet } from "./CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
 import { JourDuClubSheet, type RituelDuJour } from "./JourDuClubSheet";
 import { GuideAgendaSheet } from "./GuideAgendaSheet";
+import { NotifsAgendaSheet } from "./NotifsAgendaSheet";
 import { qualifierRdvClub } from "./qualifierRdvClub";
 import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
@@ -101,9 +102,11 @@ interface Props {
   onMembreCree?: (clientId: string, prenom: string) => void;
   /** Livraison C : « elle démarre en suivi classique » → le bilan standard, tout de suite. */
   onSuiviClassique?: (rdv: RdvClub) => void;
+  /** Venue à sa pesée (22/09) : BBC ouvre sa fiche du club. Sans (app standard) → son suivi standard. */
+  onPesee?: (clientId: string) => void;
 }
 
-export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas, onMembreCree, onSuiviClassique }: Props) {
+export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-area-inset-top, 0px)", fabBas, onMembreCree, onSuiviClassique, onPesee }: Props) {
   // L'heure est VIVANTE (18/09) : la tablette du comptoir ne se ferme jamais.
   // Sans ça, « Auj. » et le liseré du jour restaient sur le jour du montage —
   // au petit-déjeuner suivant, l'agenda s'ouvrait encore sur la veille.
@@ -145,6 +148,8 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
   // si le navigateur refuse le stockage, on ne la montre pas plutôt que de la
   // remontrer à chaque visite.
   const [guide, setGuide] = useState(false);
+  /** « Me prévenir » (22/09) : les notifications de l'agenda, au choix de chaque coach. */
+  const [notifs, setNotifs] = useState(false);
   const [guideVu, setGuideVu] = useState(() => {
     try {
       return localStorage.getItem(CLE_GUIDE) === "1";
@@ -311,6 +316,10 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             </button>
           ))}
         </div>
+        {/* Ses notifications à elle (22/09) : le choix est à la coach, la personne a toujours sa confirmation. */}
+        <button type="button" onClick={() => setNotifs(true)} aria-label="Me prévenir : les notifications de l'agenda" title="Me prévenir" style={boutonGuide}>
+          🔔
+        </button>
         {/* Le mode d'emploi : toujours là, jamais imposé (étape 10). */}
         <button type="button" onClick={ouvrirGuide} aria-label="L'agenda, mode d'emploi" title="Mode d'emploi" style={boutonGuide}>
           ?
@@ -503,6 +512,7 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
       ) : null}
 
       {guide ? <GuideAgendaSheet coachs={coachs} couleur={couleur} userId={userId} peutEnvoyer={peutRegler} onClose={() => setGuide(false)} /> : null}
+      {notifs ? <NotifsAgendaSheet userId={userId} onClose={() => setNotifs(false)} /> : null}
 
       {/* ── Le club, ce jour-là : qui ouvre, heures, fermeture, rituels ─── */}
       {jourClub && !affecter ? (
@@ -573,8 +583,9 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
               ? () => {
                   const r = qualif;
                   setQualif(null);
-                  // Fin de carte → le bilan des 10 ; sinon son suivi, dans l'app standard.
+                  // Fin de carte → le bilan des 10 ; sa pesée → sa fiche du club ; sinon son suivi, dans l'app standard.
                   if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: nomComplet(r) });
+                  else if (/pes/i.test(r.nature) && onPesee) onPesee(r.clientId!);
                   else navigate(`/clients/${r.clientId}/follow-up/new`);
                 }
               : null

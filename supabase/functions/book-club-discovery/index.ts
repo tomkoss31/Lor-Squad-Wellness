@@ -276,18 +276,24 @@ serve(async (req: Request) => {
     // agenda best-effort — la résa est déjà enregistrée
   }
 
-  // Les coachs du club = les admins actifs. Servent UNIQUEMENT au push (3).
+  // Les coachs à prévenir. Servent UNIQUEMENT au push (3).
   // Le mail de lead, lui, ne part plus qu'à la boîte partagée (« sinon on
   // reçoit trop de mail », Thomas 2026-08-09) : le push est le canal
   // individuel, l'email le canal collectif.
+  // Depuis le 22/09, chacune selon SON réglage (`users.notif_agenda`, la cloche
+  // de l'agenda : « le choix est au coach ») : les admins actifs sauf « aucune »,
+  // et toute coach qui suit « tout le club ». Par défaut (« miens »), ce sont
+  // exactement les admins, comme avant. Un seul club aujourd'hui : « tout le
+  // club » ne filtre pas par club.
   let clubStaff: Array<{ id: string }> = [];
   try {
-    const { data: admins } = await sb
+    const { data: coachs } = await sb
       .from("users")
-      .select("id")
-      .eq("role", "admin")
-      .eq("active", true);
-    clubStaff = (admins ?? []) as Array<{ id: string }>;
+      .select("id, notif_agenda")
+      .eq("active", true)
+      .or("role.eq.admin,notif_agenda.eq.club");
+    clubStaff = ((coachs ?? []) as Array<{ id: string; notif_agenda: string | null }>)
+      .filter((u) => (u.notif_agenda ?? "miens") !== "aucun");
   } catch (_e) {
     // best-effort — la résa est déjà enregistrée
   }

@@ -11,7 +11,7 @@
 import type { BbcMember } from "./useBbcMembers";
 import { nextPalier } from "./useBbcHearts";
 
-export type ActionEtape = "bilan" | "carte" | "coeurs" | "appels";
+export type ActionEtape = "bilan" | "carte" | "pesee" | "coeurs" | "appels";
 
 export interface EtapeMembre {
   cle: string;
@@ -22,7 +22,14 @@ export interface EtapeMembre {
   fort?: boolean;
 }
 
-export function prochaineEtape(m: BbcMember): EtapeMembre[] {
+/** « jeu. 2 oct. à 7 h 30 » — la date d'une pesée déjà calée. */
+function quand(iso: string): string {
+  const d = new Date(iso);
+  const jour = d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+  return `${jour} à ${d.getHours()} h${d.getMinutes() ? ` ${String(d.getMinutes()).padStart(2, "0")}` : ""}`;
+}
+
+export function prochaineEtape(m: BbcMember, maintenant: number = Date.now()): EtapeMembre[] {
   const out: EtapeMembre[] = [];
   const c = m.card;
   const carteVive = !!c && !c.expired;
@@ -34,6 +41,15 @@ export function prochaineEtape(m: BbcMember): EtapeMembre[] {
   }
   if (!carteVive) {
     out.push({ cle: "carte", titre: c?.expired ? "Renouveler sa carte" : "Lui donner une carte", detail: "Sans carte active, ses visites ne comptent vers aucun bilan.", action: "carte", fort: out.length === 0 });
+    // Thomas, 22/09 : « comment je prends RDV pour sa prochaine pesée ? Elles n'ont
+    // pas repris de carte ». Sans carte, elle ne vient plus d'elle-même.
+    const calee = m.nextFollowUp && new Date(m.nextFollowUp).getTime() > maintenant ? m.nextFollowUp : null;
+    out.push({
+      cle: "pesee",
+      titre: calee ? `Sa pesée : ${quand(calee)}` : "Caler sa prochaine pesée",
+      detail: calee ? "Déjà calée. Touche pour la déplacer." : "Sans carte, elle ne vient plus d'elle-même : 30 min chez sa coach gardent le lien.",
+      action: "pesee",
+    });
   }
   if (m.pendingHearts > 0) {
     out.push({ cle: "recos", titre: `${m.pendingHearts} reco${m.pendingHearts > 1 ? "s" : ""} à valider`, detail: "Un cœur ne compte que si la personne a démarré.", action: "coeurs" });
