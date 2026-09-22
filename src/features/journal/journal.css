@@ -611,3 +611,114 @@
   .jr-orbe::before, .jr-orbe svg, .jr-travail small span { animation: none; }
   .jr-barre i { animation: none; width: 45%; }
 }
+
+/* ── Co-pilote › Journal : l'aperçu du coach (22/09/2026, maquette validée) ────
+   La liste de toutes les clientes, EN TÊTE et en couleur celles qui notent
+   vraiment. Lime = les victoires (elles tiennent leur journal), teal = la
+   structure ; le gris dit « pas encore ». Mêmes jetons que le format coach.  */
+.jr-ap { width: 100%; max-width: 720px; margin: 0 auto; padding: 14px clamp(16px, 4vw, 26px) 40px; }
+.jr-ap-retour {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  min-height: 44px; padding: 0 6px 0 0; border: 0; background: transparent;
+  color: var(--jr-mut); font-size: 13px; font-weight: 600; text-decoration: none;
+}
+.jr-ap-entete { display: flex; flex-direction: column; gap: 4px; }
+.jr-ap-titre {
+  margin: 0; font-family: var(--jr-fd); font-weight: 400; font-size: 32px; line-height: 1;
+  letter-spacing: 0.02em; text-transform: uppercase; color: var(--jr-tx); text-wrap: balance;
+}
+.jr-ap-sous { margin: 2px 0 0; font-size: 13px; line-height: 1.45; color: var(--jr-mut); }
+.jr-ap-recherche {
+  display: flex; align-items: center; gap: 10px; min-height: 50px; padding: 0 14px;
+  border-radius: 14px; background: var(--jr-s2); border: 1px solid var(--jr-ln); color: var(--jr-hint);
+}
+.jr-ap-recherche:focus-within { border-color: var(--jr-acc-line); }
+.jr-ap-recherche input {
+  flex: 1; min-width: 0; min-height: 48px; border: 0; outline: none; background: transparent;
+  color: var(--jr-tx); font-family: var(--jr-fb); font-size: 16px; /* 16 px : sinon iOS zoome */
+}
+.jr-ap-recherche input::placeholder { color: var(--jr-hint); }
+.jr-ap-groupe { display: flex; flex-direction: column; gap: 8px; }
+.jr-ap-tete { display: flex; align-items: center; gap: 8px; margin: 8px 2px 0; }
+.jr-ap-win { color: var(--jr-win-tx); }
+.jr-ap-win::before { content: ""; width: 7px; height: 7px; border-radius: 999px; background: var(--jr-win); }
+.jr-ap-compte { background: var(--jr-win-soft); color: var(--jr-win-tx); padding: 3px 9px; }
+.jr-ap-n { font-family: var(--jr-fm); font-size: 11px; font-weight: 700; color: var(--jr-hint); }
+.jr-ap-rang {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 12px;
+  border-radius: 14px; border: 1px solid var(--jr-ln); background: var(--jr-s1); text-align: left;
+  transition: border-color 0.15s var(--jr-ease), transform 0.15s var(--jr-ease);
+}
+.jr-ap-rang:active { transform: scale(0.99); }
+.jr-ap-rang.tient {
+  border-color: color-mix(in srgb, var(--jr-win) 42%, var(--jr-ln2));
+  background: color-mix(in srgb, var(--jr-win) 7%, var(--jr-s1));
+}
+.jr-ap-rang.pas .jr-ap-nom { color: var(--jr-mut); font-weight: 500; }
+.jr-ap-av {
+  width: 40px; height: 40px; border-radius: 999px; flex: none; display: grid; place-items: center;
+  font-family: var(--jr-fm); font-weight: 700; font-size: 14px; background: var(--jr-s2); color: var(--jr-hint);
+}
+.jr-ap-rang.tient .jr-ap-av { background: var(--jr-win-soft); color: var(--jr-win-tx); }
+.jr-ap-nom {
+  display: block; font-size: 15px; font-weight: 600; color: var(--jr-tx);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.jr-ap-info { display: block; margin-top: 3px; font-size: 12px; color: var(--jr-hint); }
+.jr-ap-sem { display: flex; gap: 3px; margin-top: 6px; }
+.jr-ap-case {
+  width: 17px; height: 17px; border-radius: 5px; background: var(--jr-s3); display: grid; place-items: center;
+  font-family: var(--jr-fm); font-size: 11px; line-height: 1; color: var(--jr-hint);
+}
+.jr-ap-case.note { background: var(--jr-win); }
+.jr-ap-case.club { background: color-mix(in srgb, var(--jr-acc) 50%, transparent); }
+.jr-ap-fin { margin-left: auto; flex: none; text-align: right; }
+.jr-ap-g { display: block; font-family: var(--jr-fd); font-size: 24px; line-height: 1; color: var(--jr-win-tx); }
+.jr-ap-g.vide { color: var(--jr-hint); }
+.jr-ap-gl {
+  display: block; margin-top: 3px; font-family: var(--jr-fm); font-size: 11px;
+  letter-spacing: 0.04em; text-transform: uppercase; color: var(--jr-hint);
+}
+.jr-ap-vide { display: flex; flex-direction: column; gap: 10px; font-size: 13px; line-height: 1.5; color: var(--jr-mut); }
+.jr-ap-reessayer {
+  align-self: flex-start; min-height: 44px; padding: 0 16px; border-radius: 12px;
+  border: 1px solid var(--jr-acc-line); background: var(--jr-acc-soft); color: var(--jr-acc-tx);
+  font-size: 13px; font-weight: 700;
+}
+.jr-ap-legende { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 6px 2px 0; font-size: 11px; color: var(--jr-hint); }
+.jr-ap-legende span { display: inline-flex; align-items: center; gap: 6px; }
+.jr-ap-legende i { width: 11px; height: 11px; border-radius: 3px; background: var(--jr-s3); }
+.jr-ap-legende i.note { background: var(--jr-win); }
+.jr-ap-legende i.club { background: color-mix(in srgb, var(--jr-acc) 50%, transparent); }
+.jr-ap-fiche {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 48px;
+  border-radius: 14px; border: 1px solid var(--jr-ln2); background: var(--jr-s2);
+  color: var(--jr-acc-tx); font-size: 14px; font-weight: 700; text-decoration: none;
+}
+/* La carte du Co-pilote */
+.jr-ap-carte {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 76px; padding: 14px 16px;
+  border-radius: 18px; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--jr-win) 36%, var(--jr-ln2));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--jr-win) 9%, var(--jr-s1)), var(--jr-s1));
+}
+.jr-ap-carte-ic {
+  width: 44px; height: 44px; border-radius: 13px; flex: none; display: grid; place-items: center;
+  background: var(--jr-win-soft); color: var(--jr-win-tx);
+}
+.jr-ap-carte-t { display: block; font-size: 15px; font-weight: 700; color: var(--jr-tx); }
+.jr-ap-carte-s { display: block; margin-top: 2px; font-size: 13px; color: var(--jr-mut); }
+.jr-ap-carte-s b { color: var(--jr-win-tx); font-weight: 800; }
+.jr-ap-pile { display: flex; margin-top: 8px; padding-left: 2px; }
+.jr-ap-pile span {
+  width: 26px; height: 26px; margin-left: -6px; border-radius: 999px; border: 2px solid var(--jr-s1);
+  display: grid; place-items: center; background: var(--jr-win-soft); color: var(--jr-win-tx);
+  font-family: var(--jr-fm); font-size: 11px; font-weight: 700;
+}
+.jr-ap-pile span:first-child { margin-left: 0; }
+.jr-ap-pile span.plus { background: var(--jr-s2); color: var(--jr-mut); }
+.jr-ap-chev { flex: none; color: var(--jr-mut); display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) {
+  .jr-ap-rang { transition: none; }
+  .jr-ap-rang:active { transform: none; }
+}

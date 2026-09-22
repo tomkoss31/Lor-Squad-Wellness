@@ -33,6 +33,7 @@ import { useTimeContext } from "./hooks/useTimeContext";
 // remplace l'écran du jour complet. « La seule chose dont j'ai besoin, c'est le
 // rendez-vous d'aujourd'hui — juste un rappel de l'agenda. »
 import { RdvDuJour } from "./components/RdvDuJour";
+import { JournalApercuCarte } from "../../journal/JournalApercuCarte";
 import { BandeauDemarrage } from "./components/BandeauDemarrage";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
@@ -240,6 +241,11 @@ export function CoPiloteV5Page() {
           combien de temps, avec qui. `RdvDuJour` lit `useCopiloteData`, qui
           dérive tout d'`AppContext` (aucune requête en plus). */}
       <RdvDuJour data={data} now={now} />
+
+      {/* Le journal de ses clientes (22/09/2026, maquette validée par Thomas) :
+          « N le tiennent ces 7 derniers jours » → /co-pilote/journal. Un seul
+          appel léger (journal_apercu_coach), partagé avec l'écran et gardé 2 min. */}
+      <JournalApercuCarte />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.

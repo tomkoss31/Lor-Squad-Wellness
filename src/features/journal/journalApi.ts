@@ -167,6 +167,8 @@ export const noaly = {
 // ─── Côté coach (son RLS) ─────────────────────────────────────────────────────
 export const journalCoach = {
   semaine: (clientId: string) => appeler<SemaineCoach>("journal_semaine_coach", { p_client_id: clientId }),
+  /** Co-pilote › Journal (22/09) : celles qui tiennent leur journal, 7 derniers jours. Brut : lu par `normaliserApercu`. */
+  apercu: () => appeler<unknown>("journal_apercu_coach", {}),
   reglerCoef: (clientId: string, coef: number) =>
     appeler<SemaineCoach>("journal_regler_coef", { p_client_id: clientId, p_coef: coef }),
   /** Montrer ou masquer les kcal dans son journal (bloc B, 9). */
