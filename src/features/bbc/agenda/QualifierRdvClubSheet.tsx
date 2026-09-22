@@ -18,7 +18,8 @@
 // =============================================================================
 
 import { useState, type CSSProperties } from "react";
-import { aQualifier, contactDe, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
+import { aQualifier, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
+import { ContactRdv } from "./ContactRdv";
 import type { Qualification, ResultatQualif } from "./qualifierRdvClub";
 
 type Etape = "choix" | "reflechit" | "pasvenue" | "lapin" | "replanifier";
@@ -56,7 +57,6 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
   const urgent = aQualifier(rdv, maintenant);
   const debut = new Date(rdv.debut);
   const quand = `${libelleJour(debut)} · ${heureDe(rdv.debut)} · ${coachPrenom}`;
-  const { tel, mail } = contactDe(rdv);
   const prenom = rdv.prenom || "Elle";
   const suivi = rdv.source === "suivi";
   const finDeCarte = /carte/i.test(rdv.nature);
@@ -101,25 +101,9 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                   <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: couleur }} />
                   {libelleNature(rdv)}
                 </span>
-                {rdv.telephone ? ` · ${rdv.telephone}` : " · pas de téléphone"}
               </div>
-              {tel ? (
-                <div style={{ display: "flex", gap: 8 }}>
-                  <a href={`tel:${tel}`} style={lienAction}>
-                    📞 Appeler
-                  </a>
-                  <a href={`sms:${tel}`} style={lienAction}>
-                    💬 SMS
-                  </a>
-                </div>
-              ) : mail ? (
-                // Réservation du site laissée avec un mail : on écrit, on n'appelle pas.
-                <div style={{ display: "flex", gap: 8 }}>
-                  <a href={`mailto:${mail}`} style={lienAction}>
-                    ✉️ Lui écrire
-                  </a>
-                </div>
-              ) : null}
+              {/* Les mêmes coordonnées que le CRM (22/09) : Mélanie devait repasser par le CRM standard. */}
+              <ContactRdv rdv={rdv} />
 
               {marque ? (
                 <div style={encart}>
@@ -213,6 +197,7 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
           ) : etape === "replanifier" ? (
             <>
               <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", lineHeight: 1.5 }}>Le suivi reste dans l'agenda, à la même heure, un autre jour. Pas de SMS : c'est toi qui la préviens.</div>
+              <ContactRdv rdv={rdv} />
               <div style={etiquette}>je la replanifie dans</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {JOURS_RELANCE.map((n) => (
@@ -282,7 +267,6 @@ const puce: CSSProperties = { minHeight: 44, padding: "0 13px", borderRadius: 11
 const boutonLime: CSSProperties = { width: "100%", minHeight: 52, border: 0, borderRadius: 14, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 800, cursor: "pointer" };
 const boutonFantome: CSSProperties = { width: "100%", minHeight: 46, borderRadius: 13, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13.5, fontWeight: 700, cursor: "pointer" };
 const lienBas: CSSProperties = { width: "100%", minHeight: 44, border: 0, background: "transparent", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 };
-const lienAction: CSSProperties = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 44, borderRadius: 12, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, textDecoration: "none" };
 function alerte(ton: "coral" | "amber"): CSSProperties {
   const c = ton === "coral" ? "var(--ls-bbc-coral)" : "var(--ls-bbc-amber)";
   return { padding: "11px 13px", borderRadius: 13, fontSize: 13, lineHeight: 1.5, background: `color-mix(in srgb, ${c} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 40%, transparent)`, color: "var(--ls-bbc-text)" };
