@@ -3,10 +3,14 @@
 // l'email Supabase (qui pose des tokens dans l'URL hash).
 // Supabase les intercepte automatiquement et crée une session
 // "recovery" → on peut appeler auth.updateUser({password}) direct.
+//
+// 22/09/2026 : habillée au langage de l'entrée (maquette Fbk2bRMgzC4bMLYAm91nLM) — même
+// fond vert, « LA BASE » que /bienvenue, /welcome, /login. La logique ne change pas.
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getSupabaseClient } from "../services/supabaseClient";
+import "../components/bienvenue/bienvenue.css";
 
 type Phase = "checking" | "ready" | "updating" | "success" | "error";
 
@@ -127,252 +131,109 @@ export function ResetPasswordPage() {
     }
   }
 
+  const expire = phase === "error" && errorMsg.includes("expiré");
+  const formulaire = phase === "ready" || phase === "updating" || (phase === "error" && !expire);
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#0a0c0a",
-        color: "#F0EDE8",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        fontFamily: "DM Sans, sans-serif",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <style>{`
-        @keyframes reset-blob-1 { 0%{transform:translate(0,0) scale(1)}100%{transform:translate(60px,40px) scale(1.1)} }
-        @keyframes reset-blob-2 { 0%{transform:translate(0,0) scale(1)}100%{transform:translate(-70px,-30px) scale(1.1)} }
-        @keyframes reset-in { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-      `}</style>
-
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: "-14%", left: "-10%",
-          width: 480, height: 480,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, #2DD4BF 0%, transparent 70%)",
-          filter: "blur(90px)",
-          opacity: 0.3,
-          pointerEvents: "none",
-          animation: "reset-blob-1 32s ease-in-out infinite alternate",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          bottom: "-16%", right: "-8%",
-          width: 460, height: 460,
-          borderRadius: "50%",
-          background: "radial-gradient(circle, #c5f82a 0%, transparent 70%)",
-          filter: "blur(90px)",
-          opacity: 0.26,
-          pointerEvents: "none",
-          animation: "reset-blob-2 36s ease-in-out infinite alternate",
-        }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 1,
-          maxWidth: 420,
-          width: "100%",
-          background: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 20,
-          padding: 28,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
-          animation: "reset-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both",
-        }}
-      >
-        <h1
-          style={{
-            fontFamily: "'Anton', 'Syne', sans-serif",
-            fontSize: 22,
-            fontWeight: 700,
-            margin: 0,
-            marginBottom: 8,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Nouveau mot de passe
-        </h1>
+    <div className="bv" data-v="coaching">
+      <div className="bv-lueur" aria-hidden="true" />
+      <main className="bv-col">
+        <div className="bv-marque">LA BASE</div>
 
         {phase === "checking" ? (
-          <p style={{ fontSize: 13, color: "rgba(240,237,232,0.6)" }}>Vérification du lien…</p>
+          <p className="bv-p" aria-live="polite" style={{ textAlign: "center", marginTop: 40 }}>
+            Vérification du lien…
+          </p>
         ) : null}
 
         {phase === "success" ? (
-          <div
-            style={{
-              background: "rgba(45,212,191,0.14)",
-              border: "1px solid rgba(45,212,191,0.4)",
-              borderRadius: 12,
-              padding: 16,
-              fontSize: 13,
-              color: "#2DD4BF",
-              lineHeight: 1.55,
-            }}
-          >
-            <strong>Mot de passe mis à jour !</strong>
-            <div style={{ color: "rgba(240,237,232,0.75)", marginTop: 10 }}>
-              <strong style={{ color: "#F0EDE8" }}>Client ?</strong> Si tu as encore
-              l'icône <strong>La Base 360</strong> sur ton écran d'accueil (ou le lien
-              que ton coach t'a envoyé), rouvre-la simplement. Sinon, connecte-toi
-              ci-dessous avec ton nouveau mot de passe.
+          <>
+            <div className="bv-ok" role="status">
+              <div className="bv-eye">C'est fait</div>
+              <h1 className="bv-h1" style={{ fontSize: 34, marginTop: 6 }}>
+                Mot de passe
+                <br />
+                mis à jour
+              </h1>
+              {/* Bug signalé sur la cliente Maeva (2026-07-16) : l'écran ne proposait qu'un
+                  bouton « coach », laissant une cliente sans icône ni lien bloquée après un
+                  reset réussi. /login gère aussi les identifiants client (→ /client/:token). */}
+              <p>
+                <b>Cliente ?</b> Si tu as l'icône de ton espace sur ton écran d'accueil (ou le lien que ton coach
+                t'a envoyé), rouvre-la simplement. Sinon, connecte-toi avec ton nouveau mot de passe.
+              </p>
             </div>
-            {/* Bug signalé sur la cliente Maeva (2026-07-16) : cet écran ne
-                proposait qu'un bouton "coach", laissant un client sans icône/lien
-                fonctionnel bloqué après un reset réussi. /login gère pourtant déjà
-                les identifiants client depuis le hotfix PWA login (2026-04-24,
-                loginWithSupabaseCredentials → kind "client" → redirige vers
-                /client/:token) — on l'expose maintenant explicitement ici. */}
-            <button
-              type="button"
-              onClick={() => navigate("/login", { replace: true })}
-              style={{
-                marginTop: 14,
-                width: "100%",
-                background: "linear-gradient(135deg, #c5f82a, #6D8C0B)",
-                color: "#0a0c0a",
-                border: "none",
-                borderRadius: 12,
-                padding: "12px 16px",
-                fontFamily: "'Anton', 'Syne', sans-serif",
-                fontSize: 13.5,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              Me connecter avec mon nouveau mot de passe
+            <button type="button" className="bv-cta" onClick={() => navigate("/login", { replace: true })}>
+              Me connecter <span aria-hidden="true">→</span>
             </button>
-          </div>
+          </>
         ) : null}
 
-        {phase === "ready" || phase === "updating" || (phase === "error" && !errorMsg.includes("expiré")) ? (
+        {formulaire ? (
           <>
-            <p style={{ fontSize: 13, color: "rgba(240,237,232,0.6)", marginBottom: 18, lineHeight: 1.55 }}>
-              Choisis ton nouveau mot de passe. Minimum 8 caractères.
-            </p>
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <label>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(240,237,232,0.5)" }}>
-                  Nouveau mot de passe
-                </span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Au moins 8 caractères"
-                  autoComplete="new-password"
-                  required
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    marginTop: 6,
-                    padding: "12px 14px",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#F0EDE8",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </label>
-              <label>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "rgba(240,237,232,0.5)" }}>
-                  Confirmer
-                </span>
-                <input
-                  type="password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Retape le mot de passe"
-                  autoComplete="new-password"
-                  required
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    marginTop: 6,
-                    padding: "12px 14px",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.04)",
-                    color: "#F0EDE8",
-                    fontSize: 14,
-                    fontFamily: "DM Sans, sans-serif",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </label>
-              {errorMsg && !errorMsg.includes("expiré") ? (
-                <div
-                  style={{
-                    background: "rgba(251,113,133,0.12)",
-                    border: "1px solid rgba(251,113,133,0.4)",
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 12.5,
-                    color: "#FCA5A5",
-                  }}
-                >
-                  {errorMsg}
+            <div className="bv-eye">Nouveau mot de passe</div>
+            <h1 className="bv-h1">
+              Choisis-en
+              <br />
+              un nouveau
+            </h1>
+            <p className="bv-p">Minimum 8 caractères.</p>
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="bv-champ">
+                <label htmlFor="rp-mdp1">Nouveau mot de passe</label>
+                <div className="bv-saisie">
+                  <input
+                    id="rp-mdp1"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Au moins 8 caractères"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="bv-champ">
+                <label htmlFor="rp-mdp2">Retape-le</label>
+                <div className="bv-saisie">
+                  <input
+                    id="rp-mdp2"
+                    type="password"
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    placeholder="Le même"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
+              </div>
+              {errorMsg && !expire ? (
+                <div className="bv-erreur" role="alert">
+                  <p>{errorMsg}</p>
                 </div>
               ) : null}
-              <button
-                type="submit"
-                disabled={phase === "updating"}
-                style={{
-                  background: "linear-gradient(135deg, #c5f82a, #6D8C0B)",
-                  color: "#0a0c0a",
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "13px 16px",
-                  fontFamily: "'Anton', 'Syne', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: phase === "updating" ? "wait" : "pointer",
-                  marginTop: 4,
-                  boxShadow: "0 4px 14px rgba(197,248,42,0.28)",
-                }}
-              >
-                {phase === "updating" ? "Mise à jour…" : "Mettre à jour le mot de passe"}
+              <button type="submit" className="bv-cta" disabled={phase === "updating"}>
+                {phase === "updating" ? "Mise à jour…" : (
+                  <>
+                    Mettre à jour <span aria-hidden="true">→</span>
+                  </>
+                )}
               </button>
             </form>
           </>
         ) : null}
 
-        {phase === "error" && errorMsg.includes("expiré") ? (
-          <div
-            style={{
-              background: "rgba(251,113,133,0.12)",
-              border: "1px solid rgba(251,113,133,0.4)",
-              borderRadius: 12,
-              padding: 14,
-              fontSize: 13,
-              color: "#FCA5A5",
-              lineHeight: 1.55,
-            }}
-          >
-            {errorMsg}
-            <br />
-            <br />
-            <a href="/forgot-password" style={{ color: "#c5f82a", fontWeight: 600, textDecoration: "none" }}>
-              → Demander un nouveau lien
-            </a>
+        {expire ? (
+          <div className="bv-invalide" role="alert">
+            <div className="bv-eye" style={{ color: "var(--bv-alerte)" }}>Nouveau mot de passe</div>
+            <h1 className="bv-h1" style={{ fontSize: 30, marginTop: 6 }}>Ce lien ne marche plus</h1>
+            <p>{errorMsg}</p>
+            <Link to="/forgot-password" className="bv-lien-seul" style={{ alignSelf: "flex-start", paddingLeft: 0 }}>
+              Demander un nouveau lien ›
+            </Link>
           </div>
         ) : null}
-      </div>
+      </main>
     </div>
   );
 }

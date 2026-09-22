@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { appareilDepuisUA, ICONE_ACCUEIL, MAISON_DE, ORDRE_MAISONS } from "../bienvenue";
+import { appareilDepuisUA, GESTES_MAISONS, ICONE_ACCUEIL, MAISON_DE, ORDRE_MAISONS } from "../bienvenue";
+
+describe("les gestes des maisons sur l'accueil", () => {
+  it("le coaching mène à Découvrir, le club à son site, le bar à sa commande (hors de l'app)", () => {
+    expect(GESTES_MAISONS.nutrition.href).toBe("/decouvrir");
+    expect(GESTES_MAISONS.bbc.href).toBe("/club");
+    expect(GESTES_MAISONS.shakes.externe).toBe(true);
+    expect(GESTES_MAISONS.shakes.href.startsWith("https://")).toBe(true);
+  });
+});
 
 describe("les trois maisons", () => {
   it("une membre du club voit d'abord son club, une cliente en coaching son coaching", () => {

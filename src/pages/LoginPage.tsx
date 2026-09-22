@@ -1,20 +1,23 @@
-// LoginPage V5 — refonte identité v2 « premium performance » (2026-07).
+// =============================================================================
+// LoginPage — /login, la connexion de TOUT LE MONDE : cliente, membre du club,
+// coach. `loginWithCredentials` cherche un profil coach, et à défaut le jeton de
+// la cliente, puis redirige (Co-pilote, ou /client/<jeton>).
 //
-// Passe de l'ancienne charte « Vital Fusion » (claire, emerald/cyan/violet,
-// Sora/Inter) à l'identité v2 sombre : fond #0a0c0a, accent lime #c5f82a,
-// titres Anton, labels JetBrains Mono, corps DM Sans — cohérent avec
-// /bienvenue-distri et la Salle des Opérations.
+// Refaite le 22/09/2026 (maquette Fbk2bRMgzC4bMLYAm91nLM, « bon travail, bravo »)
+// au langage de la page du lien d'accès : même fond vert, « LA BASE », les trois
+// maisons. Téléphone : les trois logos en petit, puis le formulaire. Ordinateur :
+// les maisons à gauche, le formulaire à droite.
 //
-// Sobriété demandée par Thomas : compteur « X coachs en ligne » simulé,
-// greeting selon l'heure et emojis retirés. On garde toute la logique auth :
-// loginWithCredentials, redirect selon rôle, reconnaissance « returning user ».
-//
-// Convention thème : cette page est volontairement TOUJOURS sombre (écran
-// d'entrée signature), palette locale --dw-* (comme BienvenueDistriPage).
+// La logique d'avant ne change pas : reconnaissance « tu reviens » (dernier email
+// et prénom gardés sur l'appareil), « Pas {prénom} ? », redirection selon le rôle,
+// « Recevoir un lien » (mot de passe oublié).
+// =============================================================================
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
+import { FamilleLogos, MaisonsEntree } from "../components/bienvenue/TroisMaisons";
+import "../components/bienvenue/bienvenue.css";
 
 const LAST_EMAIL_KEY = "ls_last_login_email";
 const LAST_FIRSTNAME_KEY = "ls_last_login_firstname";
@@ -45,6 +48,7 @@ export function LoginPage() {
 
   const isReturning = Boolean(initialLastEmail);
   const knownFirstName = initialLastFirstName;
+  const revient = isReturning && Boolean(knownFirstName);
 
   // Capture currentUser dans localStorage dès qu'il est dispo (après login OU
   // si user déjà loggué revient sur /login).
@@ -107,348 +111,142 @@ export function LoginPage() {
     window.location.href = "/welcome";
   }
 
-  const title =
-    isReturning && knownFirstName
-      ? `Content de te revoir, ${knownFirstName}`
-      : "Ton espace t'attend";
-
   return (
-    <div className="lp-root">
-      <style>{`
-        .lp-root {
-          --dw-bg: #0a0c0a;
-          --dw-card: #14171a;
-          --dw-card-2: #1a1e22;
-          --dw-border: rgba(255,255,255,0.10);
-          --dw-text: #F1EFE8;
-          --dw-muted: #9AA0A6;
-          --dw-dim: #6b7280;
-          --dw-lime: #c5f82a;
-          --dw-teal: #2DD4BF;
-          min-height: 100vh;
-          min-height: 100dvh;
-          display: flex;
-          background: var(--dw-bg);
-          color: var(--dw-text);
-          font-family: 'DM Sans', sans-serif;
-          position: relative;
-          overflow: hidden;
-        }
-        .lp-back {
-          position: absolute;
-          top: 20px;
-          left: 22px;
-          z-index: 5;
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 13px;
-          border-radius: 999px;
-          border: 1px solid var(--dw-border);
-          background: color-mix(in srgb, var(--dw-card) 70%, transparent);
-          color: var(--dw-muted);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.04em;
-          cursor: pointer;
-          text-decoration: none;
-          transition: border-color .15s, color .15s;
-        }
-        .lp-back:hover { border-color: var(--dw-lime); color: var(--dw-text); }
-
-        /* ─── Panneau visuel gauche (brand) ─── */
-        .lp-visual {
-          flex: 0 0 44%;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px;
-          border-right: 1px solid var(--dw-border);
-        }
-        .lp-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(90px);
-          pointer-events: none;
-          will-change: transform;
-        }
-        .lp-blob-lime {
-          top: -12%; left: -10%; width: 460px; height: 460px;
-          background: radial-gradient(circle, var(--dw-lime) 0%, transparent 70%);
-          opacity: 0.16;
-          animation: lp-float-1 34s ease-in-out infinite alternate;
-        }
-        .lp-blob-teal {
-          bottom: -16%; right: -8%; width: 420px; height: 420px;
-          background: radial-gradient(circle, var(--dw-teal) 0%, transparent 70%);
-          opacity: 0.14;
-          animation: lp-float-2 40s ease-in-out infinite alternate;
-        }
-        @keyframes lp-float-1 { to { transform: translate(50px, 40px) scale(1.1); } }
-        @keyframes lp-float-2 { to { transform: translate(-40px, -30px) scale(1.12); } }
-        .lp-grain {
-          position: absolute; inset: 0; pointer-events: none;
-          opacity: 0.05; mix-blend-mode: overlay;
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-        }
-        .lp-visual-inner { position: relative; z-index: 1; text-align: center; max-width: 360px; }
-        .lp-eyebrow {
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 10px; font-weight: 600; letter-spacing: 0.22em;
-          text-transform: uppercase; color: var(--dw-lime);
-          display: inline-flex; align-items: center; gap: 8px;
-          margin-bottom: 22px;
-        }
-        .lp-eyebrow::before {
-          content: ""; width: 7px; height: 7px; border-radius: 999px;
-          background: var(--dw-lime); box-shadow: 0 0 8px var(--dw-lime);
-        }
-        .lp-wordmark {
-          font-family: 'Anton', 'Syne', sans-serif;
-          text-transform: uppercase;
-          font-size: clamp(40px, 6vw, 62px);
-          line-height: 0.92;
-          letter-spacing: 0.01em;
-          margin: 0;
-          color: var(--dw-text);
-        }
-        .lp-wordmark span { color: var(--dw-lime); }
-        .lp-tagline {
-          margin: 18px 0 0;
-          font-size: 14px;
-          line-height: 1.6;
-          color: var(--dw-muted);
-        }
-
-        /* ─── Formulaire droite ─── */
-        .lp-form-side {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 28px;
-        }
-        .lp-form-inner { width: 100%; max-width: 380px; }
-        .lp-form-eyebrow {
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 10px; font-weight: 600; letter-spacing: 0.18em;
-          text-transform: uppercase; color: var(--dw-muted);
-          margin-bottom: 12px;
-        }
-        .lp-title {
-          font-family: 'Anton', 'Syne', sans-serif;
-          text-transform: uppercase; letter-spacing: 0.01em;
-          font-size: 30px; line-height: 1.02; margin: 0 0 8px; color: var(--dw-text);
-        }
-        .lp-sub { margin: 0 0 26px; font-size: 14px; color: var(--dw-muted); line-height: 1.55; }
-
-        .lp-field { position: relative; }
-        .lp-input {
-          width: 100%; box-sizing: border-box;
-          padding: 20px 14px 8px;
-          border-radius: 12px;
-          border: 1px solid var(--dw-border);
-          background: var(--dw-card-2);
-          color: var(--dw-text);
-          font-size: 15px; font-family: 'DM Sans', sans-serif;
-          outline: none; transition: border-color .15s;
-        }
-        .lp-input:focus { border-color: var(--dw-lime); }
-        .lp-input:-webkit-autofill { -webkit-text-fill-color: var(--dw-text); -webkit-box-shadow: 0 0 0 40px var(--dw-card-2) inset; }
-        .lp-label {
-          position: absolute; left: 14px; top: 15px;
-          color: var(--dw-muted); font-size: 14px; pointer-events: none;
-          transition: all .15s; font-family: 'DM Sans', sans-serif;
-        }
-        .lp-input:focus + .lp-label,
-        .lp-input:not(:placeholder-shown) + .lp-label {
-          top: 7px; font-size: 9.5px; letter-spacing: 0.12em;
-          text-transform: uppercase; color: var(--dw-lime);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-        }
-        .lp-pw-eye {
-          position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-          background: none; border: none; cursor: pointer;
-          color: var(--dw-dim);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 9.5px; font-weight: 600; letter-spacing: 0.08em;
-          text-transform: uppercase; padding: 6px 8px;
-        }
-        .lp-pw-eye:hover { color: var(--dw-lime); }
-
-        .lp-error {
-          padding: 10px 12px; border-radius: 10px;
-          background: rgba(251,113,133,0.12); color: #FCA5A5;
-          font-size: 13px; line-height: 1.5;
-          animation: lp-shake .3s;
-        }
-        @keyframes lp-shake {
-          0%,100% { transform: translateX(0); }
-          25% { transform: translateX(-4px); }
-          75% { transform: translateX(4px); }
-        }
-
-        .lp-submit {
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-          width: 100%; min-height: 50px; padding: 14px 20px;
-          border-radius: 12px; border: none; cursor: pointer;
-          background: var(--dw-lime); color: #0a0c0a;
-          font-family: 'Anton', 'Syne', sans-serif;
-          text-transform: uppercase; letter-spacing: 0.02em;
-          font-size: 15px; font-weight: 700;
-          box-shadow: 0 4px 16px rgba(197,248,42,0.28);
-          transition: filter .15s;
-        }
-        .lp-submit:hover:not(:disabled) { filter: brightness(1.05); }
-        .lp-submit:disabled { background: rgba(197,248,42,0.22); color: var(--dw-dim); cursor: default; box-shadow: none; }
-
-        .lp-magic-link {
-          display: block; width: 100%; margin-top: 16px;
-          background: none; border: none; cursor: pointer;
-          color: var(--dw-muted);
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          font-size: 11px; letter-spacing: 0.04em; text-align: center;
-        }
-        .lp-magic-link:hover { color: var(--dw-lime); }
-        .lp-magic-link strong { color: var(--dw-text); font-weight: 600; }
-
-        .lp-trust {
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-          margin-top: 24px; font-size: 11px; color: var(--dw-dim);
-          font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.03em;
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .lp-blob, .lp-error { animation: none !important; }
-        }
-        @media (max-width: 880px) {
-          .lp-root { flex-direction: column; }
-          .lp-visual { flex: 0 0 auto; border-right: none; border-bottom: 1px solid var(--dw-border); padding: 64px 28px 32px; }
-          .lp-wordmark { font-size: 44px; }
-          .lp-tagline { display: none; }
-          .lp-form-side { padding: 28px 24px 48px; }
-        }
-      `}</style>
-
-      {/* Bouton retour / "Pas Prénom ?" */}
-      {isReturning && knownFirstName ? (
-        <button type="button" className="lp-back" onClick={handleNotMe}>
-          ← Pas {knownFirstName} ?
-        </button>
-      ) : (
-        <a href="/welcome" className="lp-back" aria-label="Retour à l'accueil">
-          ← Accueil
-        </a>
-      )}
-
-      {/* ─── Visuel gauche (brand) ─── */}
-      <div className="lp-visual" aria-hidden="true">
-        <div className="lp-blob lp-blob-lime" />
-        <div className="lp-blob lp-blob-teal" />
-        <div className="lp-grain" />
-        <div className="lp-visual-inner">
-          <span className="lp-eyebrow">Depuis 2022</span>
-          <h1 className="lp-wordmark">
-            La Base<br /><span>360</span>
-          </h1>
-          {/* Cette page sert AUSSI aux clients : il n'existe pas d'écran de
-              connexion séparé pour la PWA. `signInWithPassword` cherche un
-              profil coach, et à défaut le jeton client, puis redirige vers
-              /client/:token. Or la phrase promettait « ton cockpit coach, tes
-              clients » — un client lisait donc, en se connectant à son propre
-              suivi, la promesse faite à son coach (audit 2026-08-11).
-              La nouvelle phrase parle aux deux sans mentir à personne. */}
-          <p className="lp-tagline">
-            Le club performance nutrition. Ton suivi, tes résultats, ton coach — au même endroit.
-          </p>
-        </div>
-      </div>
-
-      {/* ─── Formulaire droite ─── */}
-      <div className="lp-form-side">
-        <div className="lp-form-inner">
-          <div className="lp-form-eyebrow">Connexion</div>
-          <h1 className="lp-title">{title}</h1>
-          <p className="lp-sub">Identifie-toi pour ouvrir ton espace.</p>
-
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div className="lp-field">
-              <input
-                id="lp-email"
-                type="email"
-                className="lp-input"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder=" "
-                autoCapitalize="none"
-                autoCorrect="off"
-                autoComplete="username"
-                inputMode="email"
-                spellCheck={false}
-                required
-              />
-              <label htmlFor="lp-email" className="lp-label">Adresse email</label>
-            </div>
-
-            <div className="lp-field">
-              <input
-                id="lp-password"
-                type={showPassword ? "text" : "password"}
-                className="lp-input"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder=" "
-                autoComplete="current-password"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                required
-                style={{ paddingRight: 82 }}
-              />
-              <label htmlFor="lp-password" className="lp-label">Mot de passe</label>
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="lp-pw-eye"
-                aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              >
-                {showPassword ? "Masquer" : "Afficher"}
-              </button>
-            </div>
-
-            {error ? <div className="lp-error">{error}</div> : null}
-
-            <button
-              type="submit"
-              className="lp-submit"
-              disabled={!authReady || submitting}
-            >
-              {submitting ? "Connexion…" : "Ouvrir mon espace"}
-              {!submitting ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              ) : null}
-            </button>
-          </form>
-
-          <button
-            type="button"
-            onClick={() => navigate("/forgot-password")}
-            className="lp-magic-link"
-          >
-            Mot de passe oublié ? <strong>Recevoir un lien</strong>
-          </button>
-
-          <div className="lp-trust">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            Connexion sécurisée · données chiffrées
+    <div className="bv" data-v="coaching">
+      <div className="bv-entree">
+        {/* Ordinateur seulement : la marque et les trois maisons. */}
+        <section className="bv-entree-g" aria-label="La Base">
+          <div className="bv-lueur" aria-hidden="true" />
+          <div className="bv-marque">LA BASE</div>
+          <div className="bv-eye">Verdun · depuis 2022</div>
+          <div className="bv-h1" aria-hidden="true">
+            Trois maisons,
+            <br />
+            une équipe
           </div>
+          <p className="bv-p">Ton compte ouvre la bonne porte : ton coaching, ton club, ou ton espace de coach.</p>
+          <MaisonsEntree />
+        </section>
+
+        <div className="bv-entree-d">
+          <div className="bv-lueur bv-seulement-mobile" aria-hidden="true" />
+          <main className="bv-col">
+            {revient ? (
+              <button type="button" className="bv-retour" onClick={handleNotMe}>
+                ‹ Pas {knownFirstName} ?
+              </button>
+            ) : (
+              <Link to="/welcome" className="bv-retour" aria-label="Retour à l'accueil">
+                ‹ Accueil
+              </Link>
+            )}
+            <div className="bv-seulement-mobile" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="bv-marque">LA BASE</div>
+              <FamilleLogos />
+            </div>
+
+            <div className="bv-eye">{revient ? "Bon retour" : "Connexion"}</div>
+            <h1 className="bv-h1">
+              {revient ? (
+                <>
+                  Content de
+                  <br />
+                  te revoir,
+                  <br />
+                  {knownFirstName}
+                </>
+              ) : (
+                <>
+                  Ton espace
+                  <br />
+                  t'attend
+                </>
+              )}
+            </h1>
+            <p className="bv-p">
+              {revient
+                ? "Ton mot de passe, et c'est reparti."
+                : "Cliente, membre du club ou coach : ton email et ton mot de passe."}
+            </p>
+
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div className="bv-champ">
+                <label htmlFor="lp-email">Ton email</label>
+                <div className="bv-saisie">
+                  <input
+                    id="lp-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="exemple@email.com"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    autoComplete="username"
+                    inputMode="email"
+                    spellCheck={false}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="bv-champ">
+                <label htmlFor="lp-password">Ton mot de passe</label>
+                <div className="bv-saisie">
+                  <input
+                    id="lp-password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="bv-oeil"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-pressed={showPassword}
+                    aria-label={showPassword ? "Cacher le mot de passe" : "Voir le mot de passe"}
+                  >
+                    {showPassword ? "Cacher" : "Voir"}
+                  </button>
+                </div>
+              </div>
+
+              {error ? (
+                <div className="bv-erreur" role="alert">
+                  <p>{error}</p>
+                </div>
+              ) : null}
+
+              <button type="submit" className="bv-cta" disabled={!authReady || submitting}>
+                {submitting ? "Connexion…" : (
+                  <>
+                    Me connecter <span aria-hidden="true">→</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="bv-petit">
+              Mot de passe oublié ? <Link to="/forgot-password">Recevoir un lien</Link>
+            </p>
+            {!revient && (
+              <div className="bv-aide">
+                <b>Première fois ?</b> Ton accès se crée avec le lien que ton coach t'envoie. Pas de lien ?
+                Demande-le-lui.
+              </div>
+            )}
+            <div className="bv-confiance">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              Connexion sécurisée · données chiffrées
+            </div>
+          </main>
         </div>
       </div>
     </div>

@@ -1,407 +1,61 @@
 // =============================================================================
-// WelcomePage — Porte d'entree publique La Base 360 (Rebrand 2026-05-05)
+// WelcomePage — /welcome, la porte d'entrée publique (ce qu'on voit déconnecté).
 //
-// Refonte complete avec identite G3 Vital Fusion :
-//   - Logo "patience" (orbe + B + Since 2022 + tagline) au centre
-//   - Mesh gradient G3 (emerald, cyan, violet) au lieu de gold/teal
-//   - Sora 700 pour titre + Inter pour body
-//   - Heritage badge "★ Since 2022 ★"
-//   - Cards glassmorphism gardent leur structure (anims stagger)
-//   - prefers-reduced-motion respecte
+// Refaite le 22/09/2026 (maquette Fbk2bRMgzC4bMLYAm91nLM, Thomas : « bon travail,
+// bravo ») pour parler le même langage que la page du lien d'accès (/bienvenue) :
+// La Base en TROIS MAISONS, chacune avec son geste — le coaching (/decouvrir), le
+// club (/club), le bar (commande en ligne) —, puis UN seul bouton « Me connecter » :
+// cliente, membre du club ou coach, c'est la même porte (/login sert tout le monde).
+// Plus de « Tu es ? » en trois cartes, plus de pop-up « As-tu un lien ? » : la
+// réponse est écrite sous le bouton.
+// Téléphone : une colonne. Ordinateur : les maisons à gauche, le geste à droite.
 // =============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProfileCard } from "../components/welcome/ProfileCard";
-import { ClientModal } from "../components/welcome/ClientModal";
-import { ProspectFormModal } from "../components/welcome/ProspectFormModal";
-import { LogoMark } from "../components/brand/LogoMark";
+import { MaisonsEntree } from "../components/bienvenue/TroisMaisons";
+import "../components/bienvenue/bienvenue.css";
 
 export function WelcomePage() {
   const navigate = useNavigate();
-  const [clientOpen, setClientOpen] = useState(false);
-  const [prospectOpen, setProspectOpen] = useState(false);
 
-  // Safety net : redirection si token dans URL
+  // Filet de sécurité : un lien d'accès arrivé ici (?token=) repart vers /bienvenue.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-      navigate(`/bienvenue?token=${token}`, { replace: true });
-    }
+    const token = new URLSearchParams(window.location.search).get("token");
+    if (token) navigate(`/bienvenue?token=${encodeURIComponent(token)}`, { replace: true });
   }, [navigate]);
 
   return (
-    <div className="welcome-root">
-      <style>{`
-        /* ─── Base layout ───────────────────────────────────────────── */
-        .welcome-root {
-          min-height: 100vh;
-          min-height: 100dvh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 32px 20px;
-          position: relative;
-          overflow: hidden;
-          font-family: 'DM Sans', sans-serif;
-          background: #0a0c0a;
-          color: #F1EFE8;
-        }
-
-        /* ─── Mesh G3 (Emerald + Cyan + Violet, blobs flous) ────────── */
-        .welcome-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(110px);
-          opacity: 0.16;
-          pointer-events: none;
-          will-change: transform;
-        }
-        .welcome-blob-emerald {
-          top: -10%;
-          left: -8%;
-          width: 540px;
-          height: 540px;
-          background: radial-gradient(circle, #c5f82a 0%, transparent 70%);
-          animation: welcome-float-1 28s ease-in-out infinite alternate;
-        }
-        .welcome-blob-cyan {
-          top: 20%;
-          right: -12%;
-          width: 480px;
-          height: 480px;
-          background: radial-gradient(circle, #2DD4BF 0%, transparent 70%);
-          animation: welcome-float-2 32s ease-in-out infinite alternate;
-          opacity: 0.14;
-        }
-        .welcome-blob-violet {
-          bottom: -15%;
-          left: 30%;
-          width: 460px;
-          height: 460px;
-          background: radial-gradient(circle, #A78BFA 0%, transparent 70%);
-          animation: welcome-float-3 36s ease-in-out infinite alternate;
-          opacity: 0.13;
-        }
-
-        @keyframes welcome-float-1 {
-          0%   { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(-50px, 40px) scale(1.1); }
-        }
-        @keyframes welcome-float-2 {
-          0%   { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(60px, -30px) scale(1.12); }
-        }
-        @keyframes welcome-float-3 {
-          0%   { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(40px, -50px) scale(1.08); }
-        }
-
-        /* ─── Grain noise (SVG inline, leger) ─────────────────────── */
-        .welcome-grain {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.025;
-          mix-blend-mode: overlay;
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-        }
-
-        /* ─── Contenu central ─────────────────────────────────────── */
-        .welcome-inner {
-          position: relative;
-          z-index: 1;
-          width: 100%;
-          max-width: 540px;
-          display: flex;
-          flex-direction: column;
-          gap: 28px;
-        }
-
-        /* ─── Logo orbe (app-icon SVG) avec glow pulse G3 ────────── */
-        .welcome-logo-wrap {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 16px;
-          animation: welcome-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        .welcome-logo-ring {
-          position: relative;
-          width: 116px;
-          height: 116px;
-        }
-        .welcome-logo-ring::before {
-          content: '';
-          position: absolute;
-          inset: -8px;
-          border-radius: 50%;
-          background: conic-gradient(from 0deg, transparent 0%, rgba(197,248,42,0.4) 25%, rgba(45,212,191,0.5) 50%, rgba(167,139,250,0.4) 75%, transparent 100%);
-          animation: welcome-ring-rotate 6s linear infinite;
-          opacity: 0.7;
-        }
-        .welcome-logo-ring::after {
-          content: '';
-          position: absolute;
-          inset: -4px;
-          border-radius: 50%;
-          background: #0a0c0a;
-        }
-        .welcome-logo {
-          position: relative;
-          z-index: 1;
-          width: 116px;
-          height: 116px;
-          border-radius: 28px;
-          object-fit: contain;
-          animation: welcome-logo-breathe 3.5s ease-in-out infinite alternate;
-          filter: drop-shadow(0 0 28px rgba(197,248,42,0.35)) drop-shadow(0 12px 32px rgba(45,212,191,0.20));
-          will-change: transform, filter;
-        }
-        @keyframes welcome-logo-breathe {
-          0%   { transform: scale(1); filter: drop-shadow(0 0 24px rgba(197,248,42,0.30)) drop-shadow(0 12px 32px rgba(45,212,191,0.18)); }
-          100% { transform: scale(1.04); filter: drop-shadow(0 0 36px rgba(197,248,42,0.50)) drop-shadow(0 16px 36px rgba(167,139,250,0.30)); }
-        }
-        @keyframes welcome-ring-rotate {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-
-        /* ─── Heritage badge ★ Since 2022 ★ ──────────────────────── */
-        .welcome-heritage {
-          padding: 6px 18px;
-          border-radius: 100px;
-          background: rgba(197,248,42,0.06);
-          border: 0.5px solid rgba(197,248,42,0.18);
-          font-family: 'DM Sans', sans-serif;
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.32em;
-          text-transform: uppercase;
-          color: #9AA0A6;
-          backdrop-filter: blur(8px);
-        }
-
-        /* ─── Hero (titre + accroche) ─────────────────────────────── */
-        .welcome-hero { text-align: center; }
-        .welcome-title {
-          font-family: 'Anton', 'Syne', sans-serif;
-          text-transform: uppercase;
-          font-size: clamp(38px, 6.5vw, 54px);
-          font-weight: 400;
-          line-height: 1.0;
-          letter-spacing: 0.01em;
-          margin: 0 0 14px;
-          color: #F1EFE8;
-          animation: welcome-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
-        }
-        .welcome-title-greeting {
-          font-family: 'JetBrains Mono', ui-monospace, monospace;
-          text-transform: uppercase;
-          font-weight: 600;
-          color: #9AA0A6;
-          font-size: 0.22em;
-          display: block;
-          margin-bottom: 12px;
-          letter-spacing: 0.18em;
-        }
-        .welcome-title-brand {
-          font-weight: 400;
-          color: #F1EFE8;
-        }
-        .welcome-title-360 {
-          font-weight: 400;
-          background: linear-gradient(135deg, #c5f82a 0%, #2DD4BF 50%, #A78BFA 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-          color: transparent;
-          display: inline-block;
-          padding-right: 6px;
-        }
-        .welcome-tagline {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 16px;
-          color: #9AA0A6;
-          margin: 0;
-          line-height: 1.5;
-          font-weight: 400;
-          animation: welcome-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
-        }
-        .welcome-tagline-en {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 12px;
-          color: #6b7280;
-          margin: 6px 0 0;
-          line-height: 1.5;
-          font-weight: 400;
-          letter-spacing: 0.02em;
-          animation: welcome-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
-        }
-
-        /* ─── Label "Tu es ?" ─────────────────────────────────────── */
-        .welcome-label-wrap {
-          text-align: center;
-          animation: welcome-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
-        }
-        .welcome-label {
-          font-family: 'DM Sans', sans-serif;
-          font-size: 10px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #6b7280;
-          font-weight: 700;
-          display: block;
-          margin-bottom: 10px;
-        }
-        .welcome-divider {
-          width: 36px;
-          height: 2px;
-          background: linear-gradient(90deg, transparent 0%, #c5f82a 30%, #2DD4BF 50%, #A78BFA 70%, transparent 100%);
-          border-radius: 999px;
-          margin: 0 auto;
-        }
-
-        /* ─── Cards container ─────────────────────────────────────── */
-        .welcome-cards {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        /* ─── Footer ─────────────────────────────────────────────── */
-        .welcome-footer {
-          text-align: center;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 11px;
-          color: #6b7280;
-          margin-top: 8px;
-          animation: welcome-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both;
-        }
-        .welcome-footer-brand {
-          font-weight: 600;
-          background: linear-gradient(135deg, #c5f82a 0%, #2DD4BF 50%, #A78BFA 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        /* ─── Animation generique fade + slide up ─────────────────── */
-        @keyframes welcome-in {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ─── Reduced motion ──────────────────────────────────────── */
-        @media (prefers-reduced-motion: reduce) {
-          .welcome-logo-wrap,
-          .welcome-title,
-          .welcome-tagline,
-          .welcome-tagline-en,
-          .welcome-label-wrap,
-          .welcome-footer {
-            animation: none !important;
-          }
-          .welcome-blob-emerald,
-          .welcome-blob-cyan,
-          .welcome-blob-violet,
-          .welcome-logo,
-          .welcome-logo-ring::before {
-            animation: none !important;
-          }
-        }
-
-        /* ─── Mobile (≤ 480px) ────────────────────────────────────── */
-        @media (max-width: 480px) {
-          .welcome-root { padding: 24px 18px; }
-          .welcome-inner { gap: 22px; }
-          .welcome-logo-ring { width: 96px; height: 96px; }
-          .welcome-logo { width: 96px; height: 96px; border-radius: 22px; }
-          .welcome-blob { filter: blur(80px); }
-          .welcome-blob-emerald { width: 380px; height: 380px; }
-          .welcome-blob-cyan { width: 340px; height: 340px; }
-          .welcome-blob-violet { width: 320px; height: 320px; }
-        }
-      `}</style>
-
-      {/* Background mesh G3 (3 blobs flous emerald/cyan/violet) */}
-      <div aria-hidden="true" className="welcome-blob welcome-blob-emerald" />
-      <div aria-hidden="true" className="welcome-blob welcome-blob-cyan" />
-      <div aria-hidden="true" className="welcome-blob welcome-blob-violet" />
-      {/* Grain noise SVG inline */}
-      <div aria-hidden="true" className="welcome-grain" />
-
-      {/* Contenu */}
-      <div className="welcome-inner">
-        {/* Logo orbe + heritage badge */}
-        <div className="welcome-logo-wrap">
-          <div className="welcome-logo-ring" aria-hidden="true">
-            <LogoMark size={96} className="welcome-logo" />
-          </div>
-          <span className="welcome-heritage">★ Since 2022 ★</span>
-        </div>
-
-        {/* Hero : titre + accroche */}
-        <div className="welcome-hero">
-          <h1 className="welcome-title">
-            <span className="welcome-title-greeting">Bienvenue sur</span>
-            <span className="welcome-title-brand">La Base </span>
-            <span className="welcome-title-360">360</span>
+    <div className="bv" data-v="coaching">
+      <div className="bv-entree">
+        <section className="bv-entree-g aussi-mobile" aria-label="La Base">
+          <div className="bv-lueur" aria-hidden="true" />
+          <div className="bv-marque">LA BASE</div>
+          <div className="bv-eye">Verdun · depuis 2022</div>
+          <h1 className="bv-h1">
+            Trois maisons,
+            <br />
+            une équipe
           </h1>
-          <p className="welcome-tagline">Ta transformation commence ici.</p>
-          <p className="welcome-tagline-en">The wellness nutrition club</p>
-        </div>
+          <p className="bv-p">
+            Le coaching, le club du petit-déjeuner et le bar à shakes : <b>tout commence ici</b>.
+          </p>
+          <MaisonsEntree gestes />
+        </section>
 
-        {/* Label "Tu es ?" */}
-        <div className="welcome-label-wrap">
-          <span className="welcome-label">Tu es ?</span>
-          <div className="welcome-divider" aria-hidden="true" />
-        </div>
-
-        {/* 3 cards profil */}
-        <div className="welcome-cards">
-          <ProfileCard
-            icon="👤"
-            title="Client suivi par un coach"
-            subtitle="Accès à mon programme perso"
-            onClick={() => setClientOpen(true)}
-            delayMs={800}
-            accent="teal"
-          />
-          <ProfileCard
-            icon="🚀"
-            title="Distributeur de l'équipe"
-            subtitle="Accès à ma tour de contrôle"
-            onClick={() => navigate("/login")}
-            delayMs={900}
-            accent="gold"
-          />
-          <ProfileCard
-            icon="✦"
-            title="Découvrir le club"
-            subtitle="Qui on est, ce qu'on fait, comment nous rejoindre"
-            // Refonte 2026-07-31 : au lieu d'envoyer direct sur /rejoindre (qui
-            // verrouille le contenu derrière un questionnaire → 0 conversion),
-            // on ouvre la page découverte /decouvrir qui EXPLIQUE d'abord, puis
-            // propose deux chemins (bilan offert / opportunité). Maquette validée.
-            onClick={() => navigate("/decouvrir")}
-            delayMs={1000}
-            accent="magenta"
-            featured
-            badge="Nouveau"
-          />
-        </div>
-
-        {/* Footer */}
-        <div className="welcome-footer">
-          Propulsé par <span className="welcome-footer-brand">La Base 360</span> · Verdun · France
+        <div className="bv-entree-d">
+          <main className="bv-col suite">
+            <button type="button" className="bv-cta" onClick={() => navigate("/login")}>
+              Me connecter <span aria-hidden="true">→</span>
+            </button>
+            <p className="bv-petit">Cliente, membre du club ou coach : c'est la même porte.</p>
+            <div className="bv-aide">
+              <b>Pas encore de compte ?</b> Il se crée avec le lien que ton coach t'envoie par WhatsApp ou SMS. Tu ne
+              l'as pas ? Demande-le-lui : ça prend 10 secondes.
+            </div>
+          </main>
         </div>
       </div>
-
-      <ClientModal open={clientOpen} onClose={() => setClientOpen(false)} />
-      <ProspectFormModal open={prospectOpen} onClose={() => setProspectOpen(false)} />
     </div>
   );
 }
