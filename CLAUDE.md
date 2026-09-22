@@ -256,8 +256,11 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   anti-doublon `journal_semaines_envoyees`, lien `?tab=journal&semaine=1`).
 - Idée de Thomas, à discuter (rien de codé) : le plan de la semaine par mail le vendredi soir —
   bilan, plan, 5 recettes, liste de courses (mémoire `project_journal_plan_semaine_mail`).
-- Reste à faire : la photo, le mail de lancement (`docs/campagnes/journal-nutritionnel/`, captures
-  à refaire : l'accueil a changé), la recette iPhone de Thomas avant `main`.
+- **En prod depuis le 22/09** (main `04d0703f`, sans recette iPhone : Thomas le présentait le matin même).
+- Le mail de lancement aux **membres du club** : `docs/campagnes/journal-nutritionnel/mail-membres-bbc.html`,
+  en brouillon dans /admin/campagnes (voir le README du dossier). Visuels en tableaux HTML, pas en PNG.
+- Reste à faire : la photo ; la version La Base 360 du mail pour les clients en suivi ; le mail aux
+  nouveaux clients.
 
 ---
 
