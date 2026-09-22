@@ -60,11 +60,15 @@ export default async function handler(req: Request): Promise<Response> {
   const { searchParams } = new URL(req.url);
   const path = searchParams.get("path") ?? "club";
 
+  // `membre` (22/09) : l'aperçu du lien d'espace d'une membre (api/client-meta) —
+  // pas d'offre à vendre à quelqu'un qui est déjà membre.
   const offer =
     path === "reserver"
       ? "Ton body scan + bilan bien-être, offerts."
-      : "Le club du matin de Verdun · body scan offert.";
-  const cta = path === "reserver" ? "Réserver ma séance  →" : "Réserver mon body scan  →";
+      : path === "membre"
+        ? "Ton espace membre : ta carte, ton journal, tes résultats."
+        : "Le club du matin de Verdun · body scan offert.";
+  const cta = path === "reserver" ? "Réserver ma séance  →" : path === "membre" ? "Ouvrir mon espace  →" : "Réserver mon body scan  →";
 
   const [anton, sora, inter] = await Promise.all([
     loadFont("https://cdn.jsdelivr.net/npm/@fontsource/anton@5.0.20/files/anton-latin-400-normal.woff", "Anton", 400),
