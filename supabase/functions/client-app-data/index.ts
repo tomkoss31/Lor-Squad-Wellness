@@ -323,11 +323,17 @@ serve(async (req) => {
       // Filtrer masquait la carte pleine et l'app annonçait « pas de carte
       // active » au lieu de « 10/10 · ton bilan t'attend 🎁 ». Le renouvellement
       // insère une carte plus récente, l'ordre suffit donc à la remplacer.
+      // À date de début ÉGALE (carte de 10 changée pour une de 30 le même jour,
+      // double clic), l'ordre était au hasard : Lauriane voyait sa carte de 10
+      // fermée, « 0 visite », alors que ses 6 visites sont sur la 30 (22/09).
+      // Départage : la carte encore ouverte, puis la dernière créée.
       supabase
         .from("member_cards")
         .select("id, card_type, expires_at")
         .eq("client_id", clientId)
         .order("started_at", { ascending: false })
+        .order("closed_at", { ascending: false, nullsFirst: true })
+        .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
