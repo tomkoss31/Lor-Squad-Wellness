@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { getSupabaseClient } from "../../../services/supabaseClient";
+import type { MailDeplacement } from "./agendaClub";
 
 export interface DemandeRdv {
   coachId: string;
@@ -84,6 +85,89 @@ export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
     return { ok: true, id: String(data) };
   } catch {
     return { ok: false, raison: "reseau", message: "Le rendez-vous n'a pas pu être enregistré. Réessaie." };
+  }
+}
+
+const REFUS_RESERVATION: Record<string, { raison: "creneau_pris" | "refuse"; message: string }> = {
+  full: { raison: "creneau_pris", message: "Ce créneau est complet au club — choisis-en un autre." },
+  busy: { raison: "creneau_pris", message: MESSAGES.creneau_pris },
+  past: { raison: "refuse", message: "Ce créneau est déjà passé." },
+  invalid: { raison: "refuse", message: MESSAGES.creneau_invalide },
+  forbidden: { raison: "refuse", message: "Ce rendez-vous n'est pas dans ton club." },
+};
+
+/**
+ * Déplacer une réservation du site (22/09). Avant, l'agenda ne savait pas : Mélanie
+ * a « décalé » Sandrine M. du 2 au 7 octobre en créant un DEUXIÈME rendez-vous, et
+ * le premier serait resté, rappel compris. Même fonction que le CRM
+ * (`coach_reschedule_club_booking`), ouverte aux coachs du club : elle revérifie la
+ * capacité du club ET que la coach est libre, et fait repartir les rappels. Le mail
+ * « votre rendez-vous a changé » (le même que le CRM) ne part que si la case est
+ * cochée ; s'il échoue, le rendez-vous reste déplacé — on le dit, sans revenir en arrière.
+ */
+export async function deplacerReservation(d: {
+  bookingId: string;
+  debut: string;
+  fin: string;
+  coachId: string | null;
+  ancienDebut: string;
+  prevenir: boolean;
+}): Promise<ResultatRdv & { mail?: MailDeplacement }> {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb) return { ok: false, raison: "reseau", message: "Pas de connexion." };
+    const { data, error } = await sb.rpc("coach_reschedule_club_booking", {
+      p_booking_id: d.bookingId,
+      p_slot_start: d.debut,
+      p_slot_end: d.fin,
+      p_coach: d.coachId,
+    });
+    if (error) return { ok: false, raison: "reseau", message: "Le rendez-vous n'a pas pu être déplacé. Réessaie." };
+    const res = String(data ?? "");
+    if (res !== "ok") {
+      const r = REFUS_RESERVATION[res];
+      return { ok: false, raison: r?.raison ?? "refuse", message: r?.message ?? MESSAGES.rendez_vous_introuvable };
+    }
+    if (!d.prevenir) return { ok: true, id: d.bookingId, mail: "non_demande" };
+    try {
+      const { data: n } = await sb.functions.invoke("notify-club-booking-moved", {
+        body: { bookingId: d.bookingId, previousStart: d.ancienDebut },
+      });
+      const envoi = n as { sent?: boolean; reason?: string } | null;
+      return { ok: true, id: d.bookingId, mail: envoi?.sent ? "parti" : envoi?.reason === "pas_d_email" ? "pas_de_mail" : "pas_parti" };
+    } catch {
+      return { ok: true, id: d.bookingId, mail: "pas_parti" };
+    }
+  } catch {
+    return { ok: false, raison: "reseau", message: "Le rendez-vous n'a pas pu être déplacé. Réessaie." };
+  }
+}
+
+/**
+ * Annuler un rendez-vous (22/09) — les trois sortes, par `annuler_rdv_club`, avec
+ * la règle de droits de « Comment ça s'est passé ? ». Rien n'est envoyé : décision
+ * Thomas du 11/08 (« on décroche son téléphone, un mail automatique serait froid ») ;
+ * les rappels ne lisent que les rendez-vous vivants, donc aucun ne part plus.
+ */
+export async function annulerRdv(rdv: { id: string; source: string }): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (rdv.source !== "prospect" && rdv.source !== "reservation" && rdv.source !== "suivi") {
+    return { ok: false, message: "Ce rendez-vous ne s'annule pas ici." };
+  }
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb) return { ok: false, message: "Pas de connexion." };
+    const { error } = await sb.rpc("annuler_rdv_club", { p_source: rdv.source, p_rdv_id: rdv.id });
+    if (error) {
+      return {
+        ok: false,
+        message: error.message.includes("rendez_vous_introuvable")
+          ? "Ce rendez-vous est déjà rangé, ou n'est pas dans ton club."
+          : "Le rendez-vous n'a pas pu être annulé. Réessaie.",
+      };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, message: "Le rendez-vous n'a pas pu être annulé. Réessaie." };
   }
 }
 

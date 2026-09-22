@@ -23,7 +23,7 @@ import { getSupabaseClient } from "../../../services/supabaseClient";
 import type { CoachRattache } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
 import { useCreneauxOccupes } from "./useCreneauxOccupes";
-import { calerRdv, calerSuivi, prevenirCoach } from "./calerRdv";
+import { calerRdv, calerSuivi, deplacerReservation, prevenirCoach } from "./calerRdv";
 import { poserIndispo } from "./indispos";
 import {
   QUAND_INDISPO,
@@ -39,8 +39,10 @@ import {
   jourDe,
   libelleJour,
   libelleJourCourt,
+  motDeplacement,
   nomComplet,
   horairesDuJour,
+  type MailDeplacement,
   type Plage,
   type RdvClub,
   type ReglagesHoraires,
@@ -98,7 +100,7 @@ interface Props {
   coachInitial?: string | null;
   /** Heure décimale — quand on a touché un trou dans la vue Jour. */
   heureInitiale?: number | null;
-  /** Le rendez-vous qu'on déplace (table `prospects` seulement). */
+  /** Le rendez-vous qu'on déplace : posé à la main, suivi, ou réservation du site (22/09). */
   deplace?: RdvClub | null;
   /** Les horaires du club (`settings.discovery`) : jours de repos, fermetures,
    *  plages du jour. Sans eux, on retombe sur 8 h–18 h tous les jours. */
@@ -106,7 +108,8 @@ interface Props {
   /** La prochaine pesée d'une membre (22/09) : suivi de 30 min chez sa coach, sans chercher la personne. */
   membre?: MembreACaler | null;
   onClose: () => void;
-  onFait: (jour: string, coachId: string) => void;
+  /** `info` : le mot à afficher après coup (ex. « … a reçu sa nouvelle date par mail »). */
+  onFait: (jour: string, coachId: string, info?: string) => void;
 }
 
 export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachInitial, heureInitiale, deplace, reglages, membre, onClose, onFait }: Props) {
@@ -130,6 +133,12 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   );
   const [coach, setCoach] = useState<string | null>(coachInitial ?? null);
   const [heure, setHeure] = useState<number | null>(heureInitiale ?? null);
+  // Une réservation du site (22/09) : elle se DÉPLACE (jamais un 2e rendez-vous), et
+  // la personne peut recevoir sa nouvelle date par mail — case cochée, décochable
+  // quand on vient de l'avoir au téléphone (même règle que le CRM, Mélanie 09/08).
+  const resa = deplace?.source === "reservation";
+  const mailResa = resa && /\S+@\S+\.\S+/.test(deplace?.email ?? "");
+  const [prevenir, setPrevenir] = useState(true);
   const [tout, setTout] = useState<Set<string>>(new Set());
   const [personne, setPersonne] = useState<Personne | null>(
     deplace
@@ -252,7 +261,16 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     const qui: Personne = personne ?? { ...np, origine: "" };
     const res = membre
       ? await calerSuivi({ clientId: membre.clientId, debut: debut.toISOString(), dureeMin: duree })
-      : await calerRdv({
+      : resa && deplace
+        ? await deplacerReservation({
+            bookingId: deplace.id,
+            debut: debut.toISOString(),
+            fin: new Date(debut.getTime() + duree * 60_000).toISOString(),
+            coachId: coach,
+            ancienDebut: deplace.debut,
+            prevenir: mailResa && prevenir,
+          })
+        : await calerRdv({
           coachId: coach,
           debut: debut.toISOString(),
           dureeMin: duree,
@@ -280,7 +298,11 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
       `${qui.prenom} ${qui.nom}`.trim() + ` · ${libelleJourCourt(d)} ${fmtHeure(heure)}` + (moi ? ` · par ${moi.prenom}` : ""),
       coachs.find((c) => c.id === coach)?.prenom,
     );
-    onFait(jour, coach);
+    onFait(
+      jour,
+      coach,
+      resa ? motDeplacement((res as { mail?: MailDeplacement }).mail, qui.prenom) : membre ? "Pesée calée" : deplace ? "Rendez-vous déplacé" : "Rendez-vous calé",
+    );
   }
 
   // ── « Pas dispo » ──
@@ -608,6 +630,29 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                       {membre ? "✓ sur sa fiche et dans son espace membre, avec sa confirmation et ses rappels" : deplace ? "✓ l'ancien créneau sera libéré" : "✓ le rendez-vous apparaîtra sur sa fiche du CRM"}
                     </div>
                   </div>
+                  {resa ? (
+                    mailResa ? (
+                      <label htmlFor="prevenir-mail" style={caseMail}>
+                        <input
+                          id="prevenir-mail"
+                          type="checkbox"
+                          checked={prevenir}
+                          onChange={(e) => setPrevenir(e.target.checked)}
+                          style={{ width: 20, height: 20, margin: "2px 0 0", flex: "none", accentColor: "var(--ls-bbc-lime)" }}
+                        />
+                        <span>
+                          <span style={{ display: "block", fontSize: 14, fontWeight: 700 }}>
+                            <span aria-hidden="true">✉️ </span>Prévenir {personne.prenom || "la personne"} par mail
+                          </span>
+                          <span style={{ display: "block", fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.4 }}>
+                            Sa nouvelle date, avec son lien pour gérer son rendez-vous. Décoche si tu viens de l'avoir au téléphone.
+                          </span>
+                        </span>
+                      </label>
+                    ) : (
+                      <div style={{ fontSize: 12.5, color: "var(--ls-bbc-amber)", marginTop: 8 }}>⚠️ pas de mail sur sa réservation : préviens-la toi-même de sa nouvelle date</div>
+                    )
+                  ) : null}
                 </div>
               ) : nouveau ? (
                 <div>
@@ -713,6 +758,8 @@ const creneau: CSSProperties = { minWidth: 64, minHeight: 44, padding: "0 10px",
 const recap: CSSProperties = { display: "flex", gap: 12, alignItems: "stretch", padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)" };
 const lien: CSSProperties = { flex: "none", alignSelf: "center", border: 0, background: "transparent", color: "var(--ls-bbc-lime-text)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, cursor: "pointer", minHeight: 44, padding: "0 4px" };
 const bloc: CSSProperties = { marginTop: 8, padding: "12px 14px", borderRadius: 14, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)" };
+/** « Prévenir … par mail » — une réservation du site qu'on déplace (22/09). */
+const caseMail: CSSProperties = { display: "flex", gap: 11, alignItems: "flex-start", marginTop: 10, padding: 12, minHeight: 44, borderRadius: 13, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", cursor: "pointer" };
 const champ: CSSProperties = { display: "flex", flexDirection: "column", gap: 6, marginTop: 10 };
 /* 16 px obligatoire : en dessous, iOS zoome au focus et décale l'écran. */
 const saisie: CSSProperties = { minHeight: 48, borderRadius: 12, border: "1px solid var(--ls-bbc-line)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", padding: "0 14px", fontFamily: "var(--ls-bbc-font-body)", fontSize: 16 };

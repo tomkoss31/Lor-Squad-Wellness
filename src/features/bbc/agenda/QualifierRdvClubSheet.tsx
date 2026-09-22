@@ -15,14 +15,19 @@
 // Cette feuille ne décide rien et n'écrit rien : le parent écrit (par
 // `qualifier_rdv_club()`) et ouvre la feuille membre. Une feuille qui décide
 // ET écrit est intestable — même principe que QualifierRdvProspect.
+//
+// 22/09 (maquette E6bR9Sko1R4mGaDgFD2W9n validée) : « 🔁 Déplacer » et
+// « ✕ Annuler » sur TOUTES les sortes de rendez-vous, en haut d'un rendez-vous
+// à venir (on vient souvent d'avoir la personne au téléphone), sous la question
+// d'un rendez-vous passé. Annuler demande une confirmation et ne prévient personne.
 // =============================================================================
 
 import { useState, type CSSProperties } from "react";
-import { aQualifier, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, type RdvClub } from "./agendaClub";
+import { aQualifier, effetAnnulation, heureDe, libelleJour, libelleNature, marqueDe, nomComplet, peutChanger, type RdvClub } from "./agendaClub";
 import { ContactRdv } from "./ContactRdv";
 import type { Qualification, ResultatQualif } from "./qualifierRdvClub";
 
-type Etape = "choix" | "reflechit" | "pasvenue" | "lapin" | "replanifier";
+type Etape = "choix" | "reflechit" | "pasvenue" | "lapin" | "replanifier" | "annuler";
 
 interface Props {
   rdv: RdvClub;
@@ -33,8 +38,11 @@ interface Props {
   /** Ouvre la feuille « nouvelle membre », pré-remplie. Le parent qualifie à la création. */
   onMembre: () => void;
   onQualifie: (q: Qualification) => Promise<ResultatQualif>;
-  /** Déplacer ce rendez-vous — seulement pour un rendez-vous posé à la main. */
+  /** Déplacer ce rendez-vous — réservation du site, posé à la main ou suivi (22/09). */
   onDeplacer: (() => void) | null;
+  /** Annuler ce rendez-vous (22/09) : il sort de l'agenda, personne n'est prévenu.
+   *  Le parent écrit (`annulerRdv`) ; la feuille ne fait que demander confirmation. */
+  onAnnuler?: (() => Promise<ResultatQualif>) | null;
   /** Suivi de cliente (18/09) : « Venue · faire son bilan » — le bilan standard,
    *  ou le bilan des 10 pour une fin de carte. Le parent décide lequel. */
   onBilan?: (() => void) | null;
@@ -46,7 +54,7 @@ interface Props {
 
 const JOURS_RELANCE = [3, 7, 15];
 
-export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer, etapeInitiale, onBilan, onFiche }: Props) {
+export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, onClose, onMembre, onQualifie, onDeplacer, onAnnuler, etapeInitiale, onBilan, onFiche }: Props) {
   const [etape, setEtape] = useState<Etape>(etapeInitiale ?? "choix");
   const [jours, setJours] = useState(7);
   const [envoi, setEnvoi] = useState(false);
@@ -77,13 +85,54 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
     return libelleJour(d);
   };
 
+  async function annuler() {
+    if (envoi || !onAnnuler) return;
+    setEnvoi(true);
+    setErreur(null);
+    const res = await onAnnuler();
+    setEnvoi(false);
+    if (!res.ok) setErreur(res.message);
+  }
+
+  // Déplacer / Annuler (22/09, maquette validée) : deux gestes, en HAUT d'un
+  // rendez-vous à venir (on vient souvent de l'avoir au téléphone), SOUS la
+  // question d'un rendez-vous passé. Un rendez-vous déjà tranché ne bouge plus.
+  const blocChanger =
+    peutChanger(rdv) && (onDeplacer || onAnnuler) ? (
+      <div style={{ display: "grid", gridTemplateColumns: onDeplacer && onAnnuler ? "1fr 1fr" : "1fr", gap: 8 }}>
+        {onDeplacer ? (
+          <button type="button" onClick={onDeplacer} style={geste}>
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700 }}>
+              <span aria-hidden="true">🔁 </span>Déplacer
+            </span>
+            <span style={sousGeste}>un autre jour, une autre heure</span>
+          </button>
+        ) : null}
+        {onAnnuler ? (
+          <button
+            type="button"
+            onClick={() => {
+              setErreur(null);
+              setEtape("annuler");
+            }}
+            style={geste}
+          >
+            <span style={{ display: "block", fontSize: 15, fontWeight: 700, color: "var(--ls-bbc-coral)" }}>
+              <span aria-hidden="true">✕ </span>Annuler
+            </span>
+            <span style={sousGeste}>il sort de l'agenda</span>
+          </button>
+        ) : null}
+      </div>
+    ) : null;
+
   return (
     <div style={voile} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bbc-mode" style={panneau} role="dialog" aria-modal="true" aria-label={`Qualifier le rendez-vous de ${nomComplet(rdv)}`}>
         <div style={{ width: 40, height: 5, borderRadius: 9, background: "var(--ls-bbc-line2)", margin: "10px auto 4px", flex: "none" }} />
         <div style={entete}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={titre}>{etape === "choix" ? nomComplet(rdv) : etape === "reflechit" ? "Elle réfléchit" : etape === "pasvenue" || etape === "replanifier" ? "Pas venue" : "Sans nouvelles"}</div>
+            <div style={titre}>{etape === "choix" ? nomComplet(rdv) : etape === "annuler" ? "Annuler ce rendez-vous ?" : etape === "reflechit" ? "Elle réfléchit" : etape === "pasvenue" || etape === "replanifier" ? "Pas venue" : "Sans nouvelles"}</div>
             <div style={sousTitre}>{etape === "choix" ? `rdv ${quand}` : `${prenom} · ${quand}`}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={croix}>
@@ -104,6 +153,7 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
               </div>
               {/* Les mêmes coordonnées que le CRM (22/09) : Mélanie devait repasser par le CRM standard. */}
               <ContactRdv rdv={rdv} />
+              {!passe ? blocChanger : null}
 
               {marque ? (
                 <div style={encart}>
@@ -128,8 +178,8 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
                     />
                   ) : null}
                   <Choix emoji="✓" titre="Venue · c'est fait" sous="Le suivi est coché. Rien d'autre à faire." onClick={() => void repondre({ issue: "fait" })} />
-                  {onDeplacer ? <Choix emoji="🔁" titre="Déplacer" sous="Un autre créneau, chez sa coach." onClick={onDeplacer} /> : null}
                   <Choix emoji="🚫" titre="Pas venue" sous="On la replanifie dans 3, 7 ou 15 jours. Pas de SMS." onClick={() => setEtape("replanifier")} />
+                  {passe ? blocChanger : null}
                   {onFiche ? (
                     <button type="button" onClick={onFiche} style={lienBas}>
                       Sa fiche complète →
@@ -147,14 +197,31 @@ export function QualifierRdvClubSheet({ rdv, coachPrenom, couleur, maintenant, o
               />
               <Choix emoji="🕓" titre="Pas encore" sous="Elle réfléchit. Tu choisis quand elle revient dans ta liste d'appels." onClick={() => setEtape("reflechit")} />
               <Choix emoji="🚫" titre="Pas venue" sous="On décide de la suite juste après." onClick={() => setEtape("pasvenue")} />
-
-              {onDeplacer && !marque ? (
-                <button type="button" onClick={onDeplacer} style={lienBas}>
-                  Déplacer ou modifier ce rendez-vous
-                </button>
-              ) : null}
+              {passe ? blocChanger : null}
                 </>
               )}
+            </>
+          ) : etape === "annuler" ? (
+            <>
+              <div style={carteRdv}>
+                <span style={{ display: "block", fontSize: 15, fontWeight: 700 }}>{nomComplet(rdv)}</span>
+                <span style={{ display: "block", fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 3 }}>{quand}</span>
+              </div>
+              <div style={{ fontSize: 13.5, color: "var(--ls-bbc-muted)", lineHeight: 1.55 }}>{effetAnnulation(rdv)}</div>
+              <div style={{ fontSize: 13.5, color: "var(--ls-bbc-muted)", lineHeight: 1.55 }}>
+                <b style={{ color: "var(--ls-bbc-text)" }}>Personne n'est prévenu</b> : tu viens de l'avoir au téléphone.
+              </div>
+              {onDeplacer ? (
+                <button type="button" onClick={onDeplacer} style={lienBas}>
+                  {prenom} veut un autre créneau ? Déplacer plutôt →
+                </button>
+              ) : null}
+              <button type="button" disabled={envoi} onClick={() => void annuler()} style={boutonCorail}>
+                {envoi ? "Annulation…" : "Oui, annuler le rendez-vous"}
+              </button>
+              <button type="button" onClick={() => setEtape("choix")} style={boutonFantome}>
+                Non, le garder
+              </button>
             </>
           ) : etape === "reflechit" ? (
             <>
@@ -267,6 +334,11 @@ const puce: CSSProperties = { minHeight: 44, padding: "0 13px", borderRadius: 11
 const boutonLime: CSSProperties = { width: "100%", minHeight: 52, border: 0, borderRadius: 14, background: "var(--ls-bbc-lime)", color: "var(--ls-bbc-lime-ink)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 800, cursor: "pointer" };
 const boutonFantome: CSSProperties = { width: "100%", minHeight: 46, borderRadius: 13, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13.5, fontWeight: 700, cursor: "pointer" };
 const lienBas: CSSProperties = { width: "100%", minHeight: 44, border: 0, background: "transparent", color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 };
+// Déplacer / Annuler (22/09)
+const geste: CSSProperties = { minHeight: 66, padding: "10px 12px", borderRadius: 14, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)", textAlign: "left", fontFamily: "var(--ls-bbc-font-body)", cursor: "pointer" };
+const sousGeste: CSSProperties = { display: "block", fontSize: 12, color: "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.35 };
+const carteRdv: CSSProperties = { padding: "12px 14px", borderRadius: 14, background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line2)" };
+const boutonCorail: CSSProperties = { ...boutonLime, background: "var(--ls-bbc-coral)", color: "var(--ls-bbc-coral-ink)" };
 function alerte(ton: "coral" | "amber"): CSSProperties {
   const c = ton === "coral" ? "var(--ls-bbc-coral)" : "var(--ls-bbc-amber)";
   return { padding: "11px 13px", borderRadius: 13, fontSize: 13, lineHeight: 1.5, background: `color-mix(in srgb, ${c} 14%, transparent)`, border: `1px solid color-mix(in srgb, ${c} 40%, transparent)`, color: "var(--ls-bbc-text)" };

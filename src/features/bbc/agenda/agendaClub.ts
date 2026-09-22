@@ -277,6 +277,35 @@ export function aQualifier(r: RdvClub, maintenantMs: number): boolean {
   return new Date(r.fin).getTime() < maintenantMs && marqueDe(r) === null;
 }
 
+/**
+ * Déplacer / annuler (22/09, maquette E6bR9Sko1R4mGaDgFD2W9n) : n'importe quel
+ * rendez-vous tant qu'il n'est pas tranché — réservation du site, rendez-vous posé
+ * à la main, suivi. Un « pas dispo » garde son geste à lui (« Libérer cette plage »).
+ */
+export function peutChanger(r: RdvClub): boolean {
+  if (r.source !== "prospect" && r.source !== "reservation" && r.source !== "suivi") return false;
+  return marqueDe(r) === null;
+}
+
+/** Ce que l'annulation fait, en une phrase : la coach sait ce qu'elle déclenche. */
+export function effetAnnulation(r: RdvClub): string {
+  if (r.source === "reservation") return "Il sort de l'agenda et le créneau se libère, sur le site du club aussi.";
+  if (r.source === "suivi") return "Son prochain suivi sort de l'agenda, de sa fiche et de son espace membre.";
+  return `Il sort de l'agenda. ${r.prenom.trim() || "Elle"} reste dans le CRM.`;
+}
+
+/** Après le déplacement d'une réservation : le mail « votre rendez-vous a changé » est-il parti ? */
+export type MailDeplacement = "parti" | "pas_de_mail" | "pas_parti" | "non_demande";
+
+/** Le mot qui suit un déplacement de réservation — on dit toujours si la personne sait. */
+export function motDeplacement(mail: MailDeplacement | undefined, prenom: string): string {
+  const p = prenom.trim() || "elle";
+  if (mail === "parti") return `Rendez-vous déplacé · ${p} a reçu sa nouvelle date par mail`;
+  if (mail === "pas_de_mail") return `Rendez-vous déplacé · pas de mail : préviens ${p} toi-même`;
+  if (mail === "pas_parti") return `Rendez-vous déplacé · le mail n'est pas parti : préviens ${p}`;
+  return "Rendez-vous déplacé · personne n'a été prévenu";
+}
+
 /** « 14 – 20 sept. » */
 export function libelleSemaine(lundi: Date): string {
   const dimanche = new Date(lundi);

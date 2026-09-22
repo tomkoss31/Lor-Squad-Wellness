@@ -44,7 +44,9 @@ import { GuideAgendaSheet } from "./GuideAgendaSheet";
 import { NotifsAgendaSheet } from "./NotifsAgendaSheet";
 import { ContactRdv } from "./ContactRdv";
 import { qualifierRdvClub } from "./qualifierRdvClub";
+import { annulerRdv, prevenirCoach } from "./calerRdv";
 import { libererIndispo } from "./indispos";
+import { Toast } from "../ui";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
 import { BbcBilan10 } from "../BbcBilan10";
 import {
@@ -132,6 +134,13 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
   const [caler, setCaler] = useState<{ jour: string; coach?: string | null; heure?: number | null; deplace?: RdvClub | null } | null>(null);
   /** Le rendez-vous qu'on qualifie — toucher un rendez-vous ouvre directement la question. */
   const [qualif, setQualif] = useState<RdvClub | null>(null);
+  /** Le mot qui suit un geste (22/09) : « déplacé · elle a reçu sa nouvelle date », « annulé ». */
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 3500);
+    return () => window.clearTimeout(t);
+  }, [toast]);
   /** Le rendez-vous dont on crée la fiche membre (feuille pré-remplie). */
   const [membrePour, setMembrePour] = useState<RdvClub | null>(null);
   const navigate = useNavigate();
@@ -585,7 +594,9 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
           }
           onFiche={qualif.source === "suivi" && qualif.clientId ? () => navigate(`/clients/${qualif.clientId}`) : null}
           onDeplacer={
-            qualif.source === "prospect" || qualif.source === "suivi"
+            // Toutes les sortes depuis le 22/09 — la réservation du site comprise :
+            // avant, on ne pouvait que la recréer, et l'ancienne restait.
+            qualif.source === "prospect" || qualif.source === "suivi" || qualif.source === "reservation"
               ? () => {
                   const r = qualif;
                   setQualif(null);
@@ -593,6 +604,27 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
                 }
               : null
           }
+          onAnnuler={async () => {
+            const r = qualif;
+            const res = await annulerRdv(r);
+            if (res.ok) {
+              setQualif(null);
+              void refetch();
+              setToast("Rendez-vous annulé · personne n'a été prévenu");
+              // La coach dont on a touché l'agenda le sait (selon SA cloche), comme pour un déplacement.
+              if (r.coachId) {
+                const moi = coachs.find((c) => c.id === userId);
+                void prevenirCoach(
+                  r.coachId,
+                  userId,
+                  "Rendez-vous annulé",
+                  `${nomComplet(r)} · ${libelleJour(new Date(r.debut))} ${heureDe(r.debut)}` + (moi ? ` · par ${moi.prenom}` : ""),
+                  prenomCoach(r.coachId),
+                );
+              }
+            }
+            return res;
+          }}
         />
       ) : null}
 
@@ -627,14 +659,16 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
           heureInitiale={caler.heure ?? null}
           deplace={caler.deplace ?? null}
           onClose={() => setCaler(null)}
-          onFait={(jour) => {
+          onFait={(jour, _coach, info) => {
             setCaler(null);
             setAncre(jour);
             setVue("jour");
             void refetch();
+            if (info) setToast(info);
           }}
         />
       ) : null}
+      <Toast message={toast} />
     </div>
   );
 }

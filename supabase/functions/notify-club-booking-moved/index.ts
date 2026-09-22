@@ -4,6 +4,8 @@
 // Appelée par l'app quand un coach déplace un RDV découverte et laisse la case
 // « prévenir la personne » cochée (Mélanie, 2026-08-09). Décochée, l'app
 // n'appelle simplement pas cette fonction : aucun mail ne part.
+// Depuis le 22/09, aussi depuis L'agenda du club, par toute coach du club (plus
+// seulement un admin depuis le CRM).
 //
 // POST { bookingId, previousStart }   ← JWT coach obligatoire (verify_jwt)
 //
@@ -63,7 +65,7 @@ serve(async (req: Request) => {
   if (!bookingId) return json({ success: false, error: "booking_requis" }, 400);
 
   // Le JWT du coach est vérifié par la plateforme (verify_jwt). On re-contrôle
-  // le rôle : un compte authentifié n'est pas forcément un admin du club.
+  // les droits : un compte authentifié n'est pas forcément du club.
   const authHeader = req.headers.get("Authorization") ?? "";
   const sbUser = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY") ?? "", {
     global: { headers: { Authorization: authHeader } },
@@ -73,22 +75,30 @@ serve(async (req: Request) => {
   if (!uid) return json({ success: false, error: "non_authentifie" }, 401);
 
   const sb = createClient(SUPABASE_URL, SERVICE_KEY);
-  const { data: me } = await sb
-    .from("users").select("role, active").eq("id", uid).maybeSingle();
-  if (!me || (me as { role?: string }).role !== "admin" || !(me as { active?: boolean }).active) {
-    return json({ success: false, error: "interdit" }, 403);
-  }
-
   const { data: b } = await sb
     .from("rdv_bookings")
-    .select("id, first_name, contact, slot_start, club_id, manage_token, status")
+    .select("id, first_name, contact, slot_start, club_id, manage_token, status, coach_user_id")
     .eq("id", bookingId)
     .maybeSingle();
   if (!b) return json({ success: false, error: "rdv_introuvable" }, 404);
   const booking = b as {
     first_name: string | null; contact: string | null; slot_start: string;
     club_id: string | null; manage_token: string | null; status: string;
+    coach_user_id: string | null;
   };
+
+  // Droits (22/09, agenda du club) : un admin actif, OU une coach du club de ce
+  // rendez-vous — la MÊME règle que `coach_reschedule_club_booking`, qui a déjà
+  // déplacé le rendez-vous. `est_coach_de_mon_club` lit auth.uid() : on l'appelle
+  // avec le jeton de la personne, jamais avec la clé de service.
+  const { data: me } = await sb
+    .from("users").select("role, active").eq("id", uid).maybeSingle();
+  let autorise = Boolean(me && (me as { role?: string }).role === "admin" && (me as { active?: boolean }).active);
+  if (!autorise && booking.coach_user_id) {
+    const { data: duClub } = await sbUser.rpc("est_coach_de_mon_club", { uid: booking.coach_user_id });
+    autorise = duClub === true;
+  }
+  if (!autorise) return json({ success: false, error: "interdit" }, 403);
   if (booking.status === "canceled") return json({ success: false, error: "deja_annule" }, 409);
 
   // Pas d'email saisi (téléphone seul) : rien à envoyer, et ce n'est pas une

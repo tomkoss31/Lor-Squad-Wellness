@@ -51,7 +51,8 @@ import { QualifierRdvClubSheet } from "./agenda/QualifierRdvClubSheet";
 import { qualifierRdvClub } from "./agenda/qualifierRdvClub";
 import { ApresCreation } from "./ApresCreation";
 import { BbcBilan10 } from "./BbcBilan10";
-import { cleJour, contactDe, couleurCoach, urlBilanStandard, type RdvClub } from "./agenda/agendaClub";
+import { cleJour, contactDe, couleurCoach, heureDe, libelleJour, nomComplet, urlBilanStandard, type RdvClub } from "./agenda/agendaClub";
+import { annulerRdv, prevenirCoach } from "./agenda/calerRdv";
 import { useCoachsDuClub } from "./useCoachsDuClub";
 import { useContactsDuJour } from "./useContactsDuJour";
 import { useBbcSignaux } from "./useBbcSignaux";
@@ -518,12 +519,14 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           deplace={caler.deplace ?? null}
           membre={caler.membre ?? null}
           onClose={() => setCaler(null)}
-          onFait={() => {
+          onFait={(_jour, _coach, info) => {
             const pesee = Boolean(caler.membre);
+            const deplace = Boolean(caler.deplace);
             setCaler(null);
             setRafraichir((n) => n + 1);
             setView("agenda");
-            setToast(pesee ? "Pesée calée ✓ — elle reçoit sa confirmation" : "Rendez-vous calé ✓");
+            // Un déplacement dit si la personne a été prévenue (22/09) ; le reste garde ses mots.
+            setToast(pesee ? "Pesée calée ✓ — elle reçoit sa confirmation" : deplace && info ? info : "Rendez-vous calé ✓");
           }}
         />
       ) : null}
@@ -576,7 +579,21 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           }}
           onBilan={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => { const r = qualif.rdv; setQualif(null); if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: `${r.prenom} ${r.nom ?? ""}`.trim() }); else if (/pes/i.test(r.nature)) venueALaPesee(r.clientId!); else navigate(`/clients/${r.clientId}/follow-up/new`); } : null}
           onFiche={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => navigate(`/clients/${qualif.rdv.clientId}`) : null}
-          onDeplacer={qualif.rdv.source === "prospect" || qualif.rdv.source === "suivi" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
+          onDeplacer={qualif.rdv.source === "prospect" || qualif.rdv.source === "suivi" || qualif.rdv.source === "reservation" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
+          onAnnuler={async () => {
+            const r = qualif.rdv;
+            const res = await annulerRdv(r);
+            if (res.ok) {
+              setQualif(null);
+              setRafraichir((n) => n + 1);
+              setToast("Rendez-vous annulé · personne n'a été prévenu");
+              if (r.coachId) {
+                const moi = coachs.find((c) => c.id === userId);
+                void prevenirCoach(r.coachId, userId, "Rendez-vous annulé", `${nomComplet(r)} · ${libelleJour(new Date(r.debut))} ${heureDe(r.debut)}` + (moi ? ` · par ${moi.prenom}` : ""), prenomCoach(r.coachId));
+              }
+            }
+            return res;
+          }}
         />
       ) : null}
 
