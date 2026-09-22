@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { InstallerEspace } from '../components/bienvenue/InstallerEspace'
+import { ICONE_ACCUEIL } from '../components/bienvenue/bienvenue'
+import { isStandalonePwa } from '../lib/utils/detectDevice'
 import { getSupabaseClient } from '../services/supabaseClient'
 import { ClientOnboardingTour } from '../components/client-app/ClientOnboardingTour'
 import { ClientBaselineStep } from '../components/client-app/ClientBaselineStep'
@@ -87,6 +90,50 @@ export function ClientAppPage() {
   // client-app-data. Priorité : liveData > snapshot. Refresh on focus
   // debounced 5s. Si l'edge function fail, on garde le snapshot.
   const { liveData, dataSource } = useClientLiveData(token)
+
+  // L'installation sur l'écran d'accueil (22/09/2026, maquette 7pdf4sTkQoHob1axp76vfP).
+  // /bienvenue envoie ici avec ?installer=1, par un vrai chargement : c'est la
+  // seule adresse où le téléphone lit le manifeste de SON espace (index.html le
+  // pose avant tout) — depuis /bienvenue, l'icône s'ouvrait sur la connexion.
+  // Délai de secours : si les données tardent (base sur le Nano), l'écran vient
+  // quand même au bout de 6 s, à l'habillage coaching.
+  const [installerOuvert, setInstallerOuvert] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('installer') === '1' &&
+      !isStandalonePwa(),
+  )
+  const [attenteInstallerFinie, setAttenteInstallerFinie] = useState(false)
+  useEffect(() => {
+    if (!installerOuvert) return
+    const id = window.setTimeout(() => setAttenteInstallerFinie(true), 6000)
+    return () => window.clearTimeout(id)
+  }, [installerOuvert])
+  const fermerInstaller = useCallback(() => {
+    const u = new URL(window.location.href)
+    u.searchParams.delete('installer')
+    window.history.replaceState(window.history.state, '', `${u.pathname}${u.search}${u.hash}`)
+    setInstallerOuvert(false)
+  }, [])
+
+  // Une membre du club installe SON club (22/09) : sur iPhone, l'icône et le nom
+  // posés sur l'écran d'accueil viennent de l'apple-touch-icon et du titre d'app de
+  // la PAGE (index.html : La Base 360 pour tout le monde). Android, lui, lit le
+  // manifeste (api/client-manifest sert le médaillon aux membres du club).
+  const membreDuClub = Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
+  useEffect(() => {
+    if (!membreDuClub) return
+    const icone = document.querySelector('link[rel="apple-touch-icon"]')
+    const titre = document.querySelector('meta[name="apple-mobile-web-app-title"]')
+    const avantIcone = icone?.getAttribute('href') ?? null
+    const avantTitre = titre?.getAttribute('content') ?? null
+    icone?.setAttribute('href', ICONE_ACCUEIL.club.src)
+    titre?.setAttribute('content', ICONE_ACCUEIL.club.nom)
+    return () => {
+      if (icone && avantIcone) icone.setAttribute('href', avantIcone)
+      if (titre && avantTitre) titre.setAttribute('content', avantTitre)
+    }
+  }, [membreDuClub])
 
   // Bouton refresh manuel (FAB en bas a droite). Visible en permanence
   // pour l'utilisateur — fix retour Thomas 2026-05-08 (clients voyaient
@@ -384,6 +431,22 @@ export function ClientAppPage() {
     (typeof window !== 'undefined' &&
       new URLSearchParams(window.location.search).get('bbc') === '1') ||
     Boolean((liveData?.client as { ebe_bbc?: boolean } | undefined)?.ebe_bbc)
+
+  // L'installation d'abord, à l'habillage de SA maison (22/09) — arrivée depuis
+  // /bienvenue avec ?installer=1. On attend de savoir si c'est une membre du club
+  // (sinon l'écran changerait de couleur sous ses yeux), 6 s au plus.
+  if (installerOuvert) {
+    if (dataSource === 'unknown' && !attenteInstallerFinie)
+      return <div style={{ minHeight: '100vh', background: '#162624', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, system-ui, sans-serif', color: '#A4B2AA' }}>Chargement...</div>
+    return (
+      <InstallerEspace
+        variante={isBbcClient ? 'club' : 'coaching'}
+        prenom={(data.client_first_name ?? '').trim() || 'toi'}
+        onFini={fermerInstaller}
+      />
+    )
+  }
+
   if (isBbcClient) {
     const bbcFirstW = typeof first?.weight === 'number' && first.weight > 0 ? first.weight : null
     const bbcLastW = typeof latest?.weight === 'number' && latest.weight > 0 ? latest.weight : null

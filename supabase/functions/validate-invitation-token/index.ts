@@ -9,6 +9,8 @@
 //   client_first_name?: string,
 //   coach_first_name?: string,
 //   has_email_on_record?: boolean,
+//   club?: boolean,            // membre du Breakfast Club (clients.ebe_bbc), 22/09
+//   email_masque?: string|null, // « c••••e@gmail.com », 22/09
 //   reason?: 'expired' | 'consumed' | 'not_found' | 'missing_token'
 // }
 //
@@ -26,6 +28,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+/** « camille.renard@gmail.com » → « c••••d@gmail.com » (null si l'adresse ne ressemble à rien). */
+function masquerEmail(email: string): string | null {
+  const e = email.trim();
+  const at = e.lastIndexOf("@");
+  if (at < 1 || at === e.length - 1) return null;
+  const local = e.slice(0, at);
+  const fin = local.length > 2 ? local[local.length - 1] : "";
+  const points = "•".repeat(Math.min(Math.max(local.length - 2, 1), 6));
+  return `${local[0]}${points}${fin}@${e.slice(at + 1)}`;
+}
 
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
@@ -70,10 +83,10 @@ serve(async (req) => {
       return json({ valid: false, reason: "expired" });
     }
 
-    // Lookup client (first_name + email) + coach (first_name).
+    // Lookup client (first_name + email + membre du club) + coach (first_name).
     const { data: client, error: clientErr } = await sb
       .from("clients")
-      .select("first_name, email, distributor_id, distributor_name")
+      .select("first_name, email, distributor_id, distributor_name, ebe_bbc")
       .eq("id", invitation.client_id)
       .maybeSingle();
 
@@ -86,11 +99,18 @@ serve(async (req) => {
       .trim()
       .split(/\s+/)[0] || "Ton coach";
 
+    // 22/09/2026 (la page refaite, maquette 7pdf4sTkQoHob1axp76vfP) :
+    //   · `club` : une membre du Breakfast Club voit SA maison en tête (« C'est
+    //     ton club »), une cliente en coaching la sienne ;
+    //   · `email_masque` : son identifiant affiché (« c••••e@gmail.com ») pour
+    //     qu'elle sache avec quoi se reconnecter. Jamais l'adresse en clair.
     return json({
       valid: true,
       client_first_name: client.first_name,
       coach_first_name: coachFirstName,
       has_email_on_record: Boolean((client.email ?? "").trim()),
+      club: client.ebe_bbc === true,
+      email_masque: masquerEmail(client.email ?? ""),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";

@@ -821,6 +821,24 @@ pose AVANT tout, `ClientAppPage` le repose et rend le manifeste coach au démont
 Gwen ouvrait la page de connexion (22/09, du 16/06 au 22/09 sur iPhone). Installée de travers : supprimer
 l'icône, rouvrir le même lien dans Safari, refaire « Sur l'écran d'accueil ».
 
+**Le lien d'accès refait — `/bienvenue?token=`** (22/09, maquette 7pdf4sTkQoHob1axp76vfP, Thomas : « il est top ») :
+1 · **Découvrir** — « La Base, ce sont trois maisons » avec les VRAIS logos (`TroisMaisons`) : La Base Nutrition
+« pour ton coaching », The Breakfast Club « ton club petit-déjeuner », La Base Shakes & Drinks « les boissons
+énergisantes et les smoothies protéinés » ; SA maison en tête et en couleur (orange du club pour une membre,
+teal pour une cliente en coaching) · 2 · **Mot de passe** — son identifiant affiché (email masqué) ; sans email
+en fiche, un champ et une phrase (plus de pop-up) · 3 · **Installer — dans SON espace**, jamais sur /bienvenue :
+là, le manifeste est celui du COACH (`start_url /login`), l'icône posée s'ouvrait sur la connexion. /bienvenue
+envoie par un VRAI chargement (`window.location.replace`) vers `/client/<jeton>?welcome=1&installer=1` →
+`InstallerEspace` (iPhone / Android en 3 gestes, l'icône qu'elle va voir, « ouvre dans Safari » si le lien s'est
+ouvert dans Telegram/Messenger), 6 s d'attente au plus pour savoir si c'est une membre. **Une membre du club
+installe « Mon club »** (le médaillon sur fond noir, `public/brand/breakfast-club/apple-touch-icon-180` + `pwa-*`) :
+Android par `api/client-manifest` (qui lit `apercu_espace_membre`, 2,5 s au plus, sinon La Base 360), iPhone
+par l'apple-touch-icon et le titre d'app que `ClientAppPage` change pour elle. `validate-invitation-token`
+rend `club` (ebe_bbc) et `email_masque`. Code : `src/components/bienvenue/` (styles `bienvenue.css`, jetons
+`--bv-*` propres à la page). Le logo du bar vient du dépôt du Shake Bar (`Documents/code/labase-shakesbar`) et de
+Thomas : `public/brand/shakes-drinks/` (WebP). Retirés : `ExplainerModal` (pop-up) et `MagicLinkFallback` (le
+lien WhatsApp de secours : l'espace installé s'ouvre par son jeton, sans connexion).
+
 ---
 
 ---
@@ -1092,7 +1110,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `generate-distributor-invite-token` | fetch front (coach) | Invite distri |
 | `consume-distributor-invite-token` | fetch front (onboarding distri) | Signup distri |
 | `validate-distributor-invite-token` | fetch front (onboarding distri) | Check validité |
-| `validate-invitation-token` | fetch front (onboarding client) | Check validité |
+| `validate-invitation-token` | fetch front (`/bienvenue`) | Check validité ; rend aussi `club` (ebe_bbc) et `email_masque` depuis le 22/09 (la page refaite). verify_jwt (clé publique) |
 | `consume-invitation-token` | fetch front (onboarding client) | Signup client |
 | `submit-prospect-lead` | fetch front (form Welcome) | Création lead anon |
 | `submit-online-bilan` | fetch front (form bilan online) | Création Lead chantier #1 |
