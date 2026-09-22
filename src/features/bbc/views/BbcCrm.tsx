@@ -23,6 +23,7 @@ import { prochaineEtape, type ActionEtape } from "../prochaineEtape";
 import { getSupabaseClient } from "../../../services/supabaseClient";
 import type { Club } from "../../../types/domain";
 import { BbcSupprimerMembre } from "./BbcSupprimerMembre";
+import { ClientAccessModal } from "../../../components/client/ClientAccessModal";
 import { useAppContext } from "../../../context/AppContext";
 
 function objLabel(o?: string) {
@@ -373,6 +374,14 @@ function MemberRow({
 }) {
   const lvlColor = levelColor(m);
   const [volet, setVolet] = useState<Volet>("visites");
+  // « Envoyer l'accès » (22/09) : le MÊME lien qu'un client standard — un membre
+  // BBC est aussi un client. Le lien /bienvenue crée le mot de passe, explique et
+  // guide l'installation. Avant, « Copier le lien » donnait le lien BRUT /client/…
+  // (sans mot de passe, sans tuto) : Gwen l'a ajouté à l'écran d'accueil et est
+  // tombée sur la page de connexion.
+  const [acces, setAcces] = useState(false);
+  const prenomM = (m.name || "").trim().split(/\s+/)[0] || "";
+  const nomM = (m.name || "").trim().split(/\s+/).slice(1).join(" ");
   // On ne le dit que quand c'est une information : « inscrite par moi » n'en
   // est pas une. Le prénom suffit, c'est un club de deux personnes.
   const parQui = m.ownerId && m.ownerId !== userId ? (m.ownerName ?? "").trim().split(/\s+/)[0] : null;
@@ -547,50 +556,53 @@ function MemberRow({
             </>
           )}
 
-          {/* Voir l'app telle que le membre la voit — indispensable pour la
-              recette : le coach ouvre la PWA du membre sans chercher son lien. */}
-          <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
+          {/* Son accès à l'app — LE MÊME qu'un client standard (/bienvenue :
+              mot de passe + tuto + installation). « Ouvrir son app » sert à TA
+              recette, jamais à l'envoyer : il ouvre la PWA sans mot de passe. */}
+          <div style={{ display: "flex", gap: 9, flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={() => setAcces(true)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: 12,
+                background: "var(--ls-bbc-lime)",
+                color: "var(--ls-bbc-lime-ink)",
+                fontWeight: 800,
+                fontSize: 12.5,
+                border: 0,
+                cursor: "pointer",
+                fontFamily: "var(--ls-bbc-font-body)",
+                minHeight: 44,
+              }}
+            >
+              🔗 Envoyer l'accès à l'app
+            </button>
             {m.appToken ? (
-              <>
-                <a
-                  href={`/client/${m.appToken}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: 12,
-                    background: "var(--ls-bbc-lime)",
-                    color: "var(--ls-bbc-lime-ink)",
-                    fontWeight: 800,
-                    fontSize: 12.5,
-                    textDecoration: "none",
-                  }}
-                >
-                  📱 Ouvrir son app
-                </a>
-                <button
-                  type="button"
-                  onClick={() => void navigator.clipboard?.writeText(`${window.location.origin}/client/${m.appToken}`)}
-                  style={{
-                    padding: "10px 16px",
-                    borderRadius: 12,
-                    background: "var(--ls-bbc-s2)",
-                    border: "1px solid var(--ls-bbc-line)",
-                    color: "var(--ls-bbc-muted)",
-                    fontWeight: 600,
-                    fontSize: 12.5,
-                    cursor: "pointer",
-                    fontFamily: "var(--ls-bbc-font-body)",
-                  }}
-                >
-                  Copier le lien
-                </button>
-              </>
-            ) : (
-              <div style={{ fontSize: 11.5, color: "var(--ls-bbc-hint)" }}>
-                Pas encore d'accès à l'app pour ce membre — génère-le depuis sa fiche client.
-              </div>
-            )}
+              <a
+                href={`/client/${m.appToken}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: 12,
+                  background: "var(--ls-bbc-s2)",
+                  border: "1px solid var(--ls-bbc-line)",
+                  color: "var(--ls-bbc-muted)",
+                  fontWeight: 600,
+                  fontSize: 12.5,
+                  textDecoration: "none",
+                  minHeight: 44,
+                  display: "inline-flex",
+                  alignItems: "center",
+                }}
+              >
+                👁 Voir son app (recette)
+              </a>
+            ) : null}
+          </div>
+          <div style={{ fontSize: 11.5, color: "var(--ls-bbc-hint)", marginTop: 6 }}>
+            « Envoyer l'accès » donne le même lien qu'un client : elle crée son mot de passe, l'app lui explique tout et s'installe. Ne partage jamais « Voir son app » — c'est sans mot de passe, pour toi.
           </div>
 
           {/* ── Sortir de là ────────────────────────────────────────────────
@@ -641,6 +653,15 @@ function MemberRow({
           </div>
         </div>
       ) : null}
+      <ClientAccessModal
+        open={acces}
+        onClose={() => setAcces(false)}
+        clientId={m.id}
+        clientFirstName={prenomM}
+        clientLastName={nomM}
+        clientPhone={m.phone ?? null}
+        clientEmail={m.email ?? null}
+      />
     </div>
   );
 }
