@@ -11,7 +11,7 @@
 // Maquette validée : scratchpad/maquette-bbc-cliquable.html, v7.
 // =============================================================================
 
-import { useMemo, type CSSProperties } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import type { Club } from "../../../types/domain";
 import { useAppContext } from "../../../context/AppContext";
 import { useCoachsDuClub } from "../useCoachsDuClub";
@@ -38,9 +38,11 @@ interface Props {
   onQualifier: (rdv: RdvClub, etape: "choix" | "pasvenue") => void;
   /** Ouvre la fiche d'une membre dans « Membres », sur sa prochaine étape. */
   onMembre: (id: string) => void;
+  /** Le journal de la coach elle-même (22/09) : la carte « Mon journal », en tête. */
+  monJournal?: ReactNode;
 }
 
-export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, onContact, onLiens, onQualifier, onMembre }: Props) {
+export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, onContact, onLiens, onQualifier, onMembre, monJournal }: Props) {
   const { unreadMessageCount } = useAppContext();
   // L'heure est VIVANTE : l'app reste ouverte au comptoir, parfois toute la
   // nuit. Sans ça, « aujourd'hui » restait figé sur le jour du montage.
@@ -82,6 +84,8 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 760 }}>
+      {/* 0 · Son journal à elle (22/09, maquette validée) : la même carte que l'accueil des membres */}
+      {monJournal}
       {/* 1 · Ton prochain rendez-vous — le propriétaire de l'espace d'abord */}
       {loading ? null : prochain ? (
         <div className="bbc-carte" style={hero}>

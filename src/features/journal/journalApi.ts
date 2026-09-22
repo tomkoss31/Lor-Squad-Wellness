@@ -176,6 +176,33 @@ export const journalCoach = {
     appeler<SemaineCoach>("journal_envoyer_remarque", { p_client_id: clientId, p_texte: texte, p_changements: changements }),
 };
 
+// ─── Le journal de la coach elle-même (22/09) ────────────────────────────────
+// Une coach est aussi une membre : son journal est celui de SA fiche membre,
+// ouvert avec le jeton de cette fiche une fois reliée à son compte.
+export interface FicheCoach {
+  client_id: string;
+  prenom: string;
+  initiale: string;
+  /** « mail » : même adresse que son compte de connexion ; « prenom » : une de SES membres à son prénom. */
+  raison: "mail" | "prenom";
+  relie: boolean;
+  poids: number | null;
+}
+
+export const journalCoachPerso = {
+  /** Le jeton de SA fiche membre, si elle est reliée à son compte (sinon null). */
+  monJeton: async (): Promise<string | null> => {
+    const t = await appeler<string | null>("get_my_client_app_token", {});
+    return typeof t === "string" && t ? t : null;
+  },
+  /** Les fiches qui peuvent être les siennes (la première fois). */
+  mesFiches: () => appeler<FicheCoach[]>("journal_coach_mes_fiches", {}),
+  /** Relie la fiche choisie à son compte et rend son jeton. */
+  relier: (clientId: string) => appeler<string>("journal_coach_relier", { p_client: clientId }),
+  /** « Ce n'est pas ma fiche » : on recommence. */
+  delier: () => appeler<null>("journal_coach_delier", {}),
+};
+
 /** Le passage de niveau prévient la coach (même edge que l'espace standard). */
 export async function prevenirCoachNiveau(token: string, niveau: number): Promise<void> {
   try {

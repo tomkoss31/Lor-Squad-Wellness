@@ -60,6 +60,11 @@ import { useBbcHearts } from "./useBbcHearts";
 import { aContacter, type AContacter } from "./contacter";
 import { DEFAULT_CLUB_SETTINGS } from "./useClubSettings";
 import { Feuille, Toast } from "./ui";
+import { JournalAccueil } from "../journal/JournalAccueil";
+import { MonJournalCoach } from "../journal/MonJournalCoach";
+import { RondMonJournal } from "../journal/RondMonJournal";
+import { useMonJournal } from "../journal/useMonJournal";
+import { journalCoachPerso } from "../journal/journalApi";
 
 export type BbcView =
   | "matin"
@@ -78,7 +83,9 @@ export type BbcView =
   | "appels"
   | "prelancement"
   | "club100"
-  | "reglages";
+  | "reglages"
+  /** Son journal à elle (22/09) : ouvert par le rond de l'en-tête et la carte du Matin. */
+  | "journal";
 
 interface BbcAppProps {
   coachName?: string;
@@ -154,6 +161,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
   club100: { eye: "le modèle · tes chiffres", title: "Club 100 & rentabilité" },
   reglages: { eye: "config du club", title: "Réglages" },
+  journal: { eye: "ton journal perso · comme tes membres", title: "Mon journal" },
 };
 
 export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peutBasculer, onSetPreview, club: clubProp, clubs, onCreateClub, onRenameClub }: BbcAppProps) {
@@ -256,6 +264,14 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const faits = useMemo(() => new Set(cdj.faits.keys()), [cdj.faits]);
   const [contact, setContact] = useState<AContacter | null>(null);
   const { coachs } = useCoachsDuClub(userId);
+  // Son journal à elle (22/09, maquette validée) : le jeton de SA fiche membre.
+  const journalPerso = useMonJournal(userId);
+  /** Sans fiche à son nom : son évaluation, comme une membre (le journal a besoin d'un poids pesé). */
+  const [evalPerso, setEvalPerso] = useState(false);
+  function journalPret(token: string) {
+    journalPerso.setToken(token);
+    setToast("Ton journal est prêt ✓");
+  }
 
   async function repondreLead(c: AContacter, r: Reponse): Promise<string | null> {
     if (!c.lead) return "Pas un lead.";
@@ -367,6 +383,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "none" }}>
             {(isAdmin || peutBasculer) && onSetPreview ? <span className="bbc-seulement-large"><BbcModeSwitch value="bbc" onChange={(v) => onSetPreview(v)} /></span> : null}
+            {/* Relu seulement en passant par les écrans où l'on note (Le matin, Mon journal) : pas un appel par onglet. */}
+            {userId ? <RondMonJournal token={journalPerso.token} prenom={first} cle={view === "matin" || view === "journal" ? view : "ailleurs"} onOuvrir={() => setView("journal")} /> : null}
             {view !== "plus" ? (
               <button type="button" className="bbc-plus-btn bbc-pression" onClick={() => setView("plus")} aria-label="Plus">⋯</button>
             ) : (
@@ -389,6 +407,24 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             onLiens={() => setLiensOuverts(true)}
             onQualifier={(rdv, etape) => setQualif({ rdv, etape })}
             onMembre={ouvrirMembre}
+            monJournal={journalPerso.token ? <JournalAccueil token={journalPerso.token} format="bbc" onOuvrirJournal={() => setView("journal")} /> : null}
+          />
+        )}
+        {view === "journal" && (
+          <MonJournalCoach
+            token={journalPerso.token}
+            pret={journalPerso.pret}
+            onRelie={journalPret}
+            onDelie={async () => {
+              try {
+                await journalCoachPerso.delier();
+                journalPerso.setToken(null);
+              } catch (e) {
+                setToast((e as Error).message);
+              }
+            }}
+            onEvaluation={() => setEvalPerso(true)}
+            onRetour={() => setView("matin")}
           />
         )}
         {view === "contacter" && <BbcContacter contacts={contacts} faits={faits} count={cdj.count} target={cdj.target} onContact={setContact} />}
@@ -526,6 +562,23 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             if (r) void qualifierRdvClub(r, { issue: "membre", clientId }).then(() => setRafraichir((n) => n + 1));
             void membresApi.refetch();
             setApres({ clientId, prenom: r?.prenom });
+          }}
+        />
+      ) : null}
+
+      {evalPerso ? (
+        <BbcNewMemberSheet
+          userId={userId}
+          coachName={coachName}
+          club={club ?? null}
+          prefill={{ prenom: first, nom: (coachName ?? "").trim().split(/\s+/).slice(1).join(" ") }}
+          onClose={() => setEvalPerso(false)}
+          onCreated={(clientId) => {
+            void membresApi.refetch();
+            // Sa fiche est à son prénom et à elle : on la relie tout de suite. Si elle a
+            // tapé un autre prénom, « Mon journal » la lui proposera à la prochaine ouverture.
+            void journalCoachPerso.relier(clientId).then(journalPret).catch(() => { /* proposée plus tard */ });
+            setView("journal");
           }}
         />
       ) : null}

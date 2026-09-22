@@ -577,6 +577,34 @@
 }
 .jr-vide { font-size: 13px; color: var(--jr-hint); padding: 10px 0 4px; }
 
+/* Le journal de la coach, dans l'app coach (22/09) : le rond « T » de l'en-tête,
+   le retour au Matin, la première fois (« c'est bien ta fiche ? »). */
+.jr.jr-moi {
+  position: relative; display: grid; place-items: center; gap: 0; flex: none;
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 999px;
+  background: color-mix(in srgb, var(--jr-s1) 80%, transparent);
+}
+.jr.jr-moi svg { position: absolute; inset: 0; }
+.jr.jr-moi b { position: relative; font-family: var(--jr-fm); font-size: 14px; font-weight: 700; color: var(--jr-acc-tx); }
+.jr-moi-neuf {
+  position: absolute; top: 1px; right: 1px; width: 10px; height: 10px; border-radius: 999px;
+  background: var(--jr-nly-tx); border: 2px solid var(--jr-fond);
+}
+.jr-retour { align-self: flex-start; text-decoration: none; margin: -6px 0 -6px -6px; padding: 0 8px; }
+.jr-perso { display: flex; flex-direction: column; gap: 10px; }
+.jr-perso-t { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--jr-mut); }
+.jr-fiche {
+  display: flex; align-items: center; gap: 12px; background: var(--jr-s2); border: 1px solid var(--jr-ln2);
+  border-radius: 14px; padding: 10px 12px;
+}
+.jr-fiche-av {
+  width: 44px; height: 44px; border-radius: 999px; background: var(--jr-acc-soft); color: var(--jr-acc-tx);
+  display: grid; place-items: center; font-family: var(--jr-fm); font-weight: 700; font-size: 13px; flex: none;
+}
+.jr-fiche b { display: block; font-size: 15px; }
+.jr-fiche small { display: block; font-size: 12px; line-height: 1.4; color: var(--jr-mut); margin-top: 1px; }
+.jr-fiche .jr-cta { width: auto; min-height: 44px; padding: 0 16px; font-size: 13.5px; flex: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .jr-ring .jr-arc, .jr-xpbar i, .jr-toast, .jr-defi { transition: none; }
   .jr-defi.juste, .jr-montee, .jr-feuille, .jr-acc-verres i.neuf::after { animation: none; }
