@@ -28,3 +28,17 @@ en suivi) pour expliquer le journal et Noaly — **puis le même mail aux nouvea
   `{lien_desabonnement}`). Les images doivent être **hébergées** (Supabase Storage, comme la
   newsletter) avant l'envoi : un mail ne peut pas embarquer un fichier du dépôt.
 - Deux versions : une aux couleurs du club pour les membres BBC, une La Base 360 pour les autres.
+
+## Le mail aux membres du club — `mail-membres-bbc.html` (22/09/2026)
+
+Fait : **« Votre journal, en quelques gestes »**, identité du Breakfast Club. Les visuels ne
+sont PAS les PNG ci-dessus : ce sont quatre mini-écrans en **tableaux HTML** (la journée,
+« Tes habituels », Noaly, « Ta semaine »), donc rien à héberger, et ils s'affichent même
+quand les images sont bloquées. Seul le logo est une image (déjà en ligne sur le site du club).
+
+- En base : deux **brouillons** dans /admin/campagnes, `body_html` = ce fichier à l'octet près
+  (même md5) — « TEST — Journal nutritionnel (Thomas seul) » et « Journal nutritionnel —
+  membres du club » (les membres `ebe_bbc` avec une adresse valide, sans les fiches de coach).
+- Le texte parle de « votre coach, **qui** vous envoie votre lien » : pas de « elle », des
+  membres sont suivies par Thomas.
+- Reste : la version La Base 360 pour les clients en suivi, et l'envoi aux nouveaux clients.
