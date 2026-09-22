@@ -8,7 +8,8 @@
 // un téléphone (médaillon 35 Ko au lieu de 645, logo du bar en WebP).
 // =============================================================================
 
-import { MAISON_DE, ORDRE_MAISONS, type Maison, type Variante } from "./bienvenue";
+import { Link } from "react-router-dom";
+import { GESTES_MAISONS, MAISON_DE, ORDRE_MAISONS, type Maison, type Variante } from "./bienvenue";
 
 const LOGOS: Record<Maison, { src: string; carre?: boolean }> = {
   nutrition: { src: "/brand/labase360/logo-primary.svg", carre: true },
@@ -60,6 +61,66 @@ export function TroisMaisons({ variante, coach }: { variante: Variante; coach: s
         </li>
       ))}
     </ul>
+  );
+}
+
+/**
+ * Les trois maisons de l'ENTRÉE (accueil, connexion sur ordinateur — 22/09, maquette
+ * Fbk2bRMgzC4bMLYAm91nLM) : aucune n'est « la sienne » (on ne sait pas encore qui arrive).
+ * Avec `gestes`, chaque carte mène quelque part : le coaching, le club, la commande au bar.
+ */
+export function MaisonsEntree({ gestes = false }: { gestes?: boolean }) {
+  const ordre: Maison[] = ["nutrition", "bbc", "shakes"];
+  return (
+    <ul className="bv-maisons" aria-label="Les trois maisons de La Base">
+      {ordre.map((m) => {
+        const contenu = (
+          <>
+            <span className={`bv-logo${LOGOS[m].carre ? " carre" : ""}`}>
+              <img src={LOGOS[m].src} alt="" width={62} height={62} decoding="async" />
+            </span>
+            <span>
+              <span className="bv-maison-nom">{NOMS[m]}</span>
+              <span className="bv-maison-ligne">{LIGNES[m]}</span>
+              {gestes && (
+                <span className={`bv-maison-geste${m === "bbc" ? " club" : ""}`}>
+                  {GESTES_MAISONS[m].libelle} <span aria-hidden="true">{GESTES_MAISONS[m].externe ? "↗" : "›"}</span>
+                </span>
+              )}
+            </span>
+          </>
+        );
+        if (!gestes) return <li key={m} className="bv-maison">{contenu}</li>;
+        const g = GESTES_MAISONS[m];
+        return (
+          <li key={m}>
+            {g.externe ? (
+              <a className="bv-maison lien" href={g.href} target="_blank" rel="noopener noreferrer">
+                {contenu}
+              </a>
+            ) : (
+              <Link className="bv-maison lien" to={g.href}>
+                {contenu}
+              </Link>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Les trois logos en petit, en tête de la connexion sur téléphone. */
+export function FamilleLogos() {
+  const ordre: Maison[] = ["nutrition", "bbc", "shakes"];
+  return (
+    <div className="bv-famille" aria-hidden="true">
+      {ordre.map((m) => (
+        <span key={m} className={LOGOS[m].carre ? "carre" : ""}>
+          <img src={LOGOS[m].src} alt="" width={34} height={34} decoding="async" />
+        </span>
+      ))}
+    </div>
   );
 }
 

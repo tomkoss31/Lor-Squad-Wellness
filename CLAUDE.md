@@ -839,6 +839,17 @@ rend `club` (ebe_bbc) et `email_masque`. Code : `src/components/bienvenue/` (sty
 Thomas : `public/brand/shakes-drinks/` (WebP). Retirés : `ExplainerModal` (pop-up) et `MagicLinkFallback` (le
 lien WhatsApp de secours : l'espace installé s'ouvre par son jeton, sans connexion).
 
+**L'entrée, au même langage** (22/09, maquette Fbk2bRMgzC4bMLYAm91nLM, « bon travail, bravo ») — `/welcome`,
+`/login`, `/forgot-password`, `/reset-password` habillées comme /bienvenue (jetons `--bv-*`, `bienvenue.css`) :
+l'accueil présente les trois maisons avec leur geste (`MaisonsEntree gestes` : coaching → `/decouvrir`, club →
+`/club`, bar → commande.labase-nutrition.com) + UN bouton « Me connecter » — /login sert la cliente, la membre ET
+la coach. ⚠️ `/decouvrir` = la découverte du COACHING La Base, pas le Breakfast Club. Ordinateur (≥ 900 px) :
+deux colonnes (`.bv-entree` : maisons à gauche, geste à droite) ; téléphone : une colonne, la connexion n'y montre
+que les trois logos en petit (`FamilleLogos`). Logique inchangée : « Content de te revoir » / « Pas {prénom} ? »
+(dernier email et prénom sur l'appareil), redirection selon le rôle, `send-password-reset`, la détection du lien
+de reset (3 formats, 4,5 s d'attente). Retirés de /welcome : `ProfileCard`, `ClientModal` (la pop-up « As-tu un
+lien ? », devenue une phrase), `components/welcome/ProspectFormModal` (jamais ouvert).
+
 ---
 
 ---

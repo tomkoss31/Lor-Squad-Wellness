@@ -22,6 +22,17 @@ export const ORDRE_MAISONS: Record<Variante, Maison[]> = {
 /** La maison de la personne (celle qu'on met en couleur, avec sa pastille). */
 export const MAISON_DE: Record<Variante, Maison> = { club: "bbc", coaching: "nutrition" };
 
+/**
+ * Le geste de chaque maison sur l'accueil (/welcome, 22/09, maquette Fbk2bRMgzC4bMLYAm91nLM).
+ * ⚠️ `/decouvrir` présente le COACHING La Base (« un club, pas une appli de plus »), pas le
+ * Breakfast Club : le club a son site, `/club` (le domaine labase-nutrition.com y mène).
+ */
+export const GESTES_MAISONS: Record<Maison, { libelle: string; href: string; externe?: boolean }> = {
+  nutrition: { libelle: "Découvrir le coaching", href: "/decouvrir" },
+  bbc: { libelle: "Découvrir le club", href: "/club" },
+  shakes: { libelle: "Commander", href: "https://commande.labase-nutrition.com", externe: true },
+};
+
 /** iPhone par défaut : un Android se reconnaît à coup sûr, un iPhone (ou un iPad) moins. */
 export function appareilDepuisUA(ua: string): Appareil {
   return /android/i.test(ua) ? "android" : "iphone";
