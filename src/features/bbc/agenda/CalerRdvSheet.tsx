@@ -23,7 +23,7 @@ import { getSupabaseClient } from "../../../services/supabaseClient";
 import type { CoachRattache } from "../useCoachsDuClub";
 import { useAgendaDuClub } from "./useAgendaDuClub";
 import { useCreneauxOccupes } from "./useCreneauxOccupes";
-import { calerRdv, prevenirCoach } from "./calerRdv";
+import { calerRdv, calerSuivi, prevenirCoach } from "./calerRdv";
 import { poserIndispo } from "./indispos";
 import {
   QUAND_INDISPO,
@@ -72,6 +72,24 @@ interface Personne {
   coachFiche?: string | null;
 }
 
+/**
+ * Une membre du club (22/09, Thomas : « comment je prends RDV pour sa prochaine
+ * pesée ? Elles n'ont pas repris de carte ») : sa pesée est un SUIVI de SA fiche,
+ * chez SA coach — pas un rendez-vous de prospect, qui aurait proposé de lui créer
+ * une nouvelle fiche à la venue.
+ */
+export interface MembreACaler {
+  clientId: string;
+  prenom: string;
+  nom: string;
+  telephone?: string;
+  email?: string;
+  /** La coach de SA fiche : la pesée se cale chez elle. */
+  coachId: string;
+  /** Son prochain rendez-vous déjà calé (ISO) : une cliente n'en a qu'un, celui-ci le remplace. */
+  prochainRdv?: string | null;
+}
+
 interface Props {
   userId?: string | null;
   coachs: CoachRattache[];
@@ -85,14 +103,17 @@ interface Props {
   /** Les horaires du club (`settings.discovery`) : jours de repos, fermetures,
    *  plages du jour. Sans eux, on retombe sur 8 h–18 h tous les jours. */
   reglages?: ReglagesHoraires | null;
+  /** La prochaine pesée d'une membre (22/09) : suivi de 30 min chez sa coach, sans chercher la personne. */
+  membre?: MembreACaler | null;
   onClose: () => void;
   onFait: (jour: string, coachId: string) => void;
 }
 
-export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachInitial, heureInitiale, deplace, reglages, onClose, onFait }: Props) {
+export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachInitial, heureInitiale, deplace, reglages, membre, onClose, onFait }: Props) {
   const aujourdhui = cleJour(new Date());
   const [etape, setEtape] = useState<Etape>(heureInitiale != null && coachInitial ? "qui" : "quand");
   const [type, setType] = useState<TypeRdv>(() => {
+    if (membre) return "suivi";
     if (!deplace) return "bilan";
     const min = Math.round((new Date(deplace.fin).getTime() - new Date(deplace.debut).getTime()) / 60_000);
     return min === 30 ? "suivi" : "bilan";
@@ -111,8 +132,14 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
   const [heure, setHeure] = useState<number | null>(heureInitiale ?? null);
   const [tout, setTout] = useState<Set<string>>(new Set());
   const [personne, setPersonne] = useState<Personne | null>(
-    deplace ? { prenom: deplace.prenom, nom: deplace.nom ?? "", telephone: deplace.telephone ?? "", email: "", origine: "déjà dans l'agenda" } : null,
+    deplace
+      ? { prenom: deplace.prenom, nom: deplace.nom ?? "", telephone: deplace.telephone ?? "", email: "", origine: "déjà dans l'agenda" }
+      : membre
+        ? { prenom: membre.prenom, nom: membre.nom, telephone: membre.telephone ?? "", email: membre.email ?? "", origine: "membre du club", coachFiche: membre.coachId }
+        : null,
   );
+  /** Son prochain rendez-vous encore à venir : on dit qu'il sera remplacé. */
+  const rdvARemplacer = membre?.prochainRdv && new Date(membre.prochainRdv).getTime() > Date.now() ? new Date(membre.prochainRdv) : null;
   const [nouveau, setNouveau] = useState(false);
   const [np, setNp] = useState({ prenom: "", nom: "", telephone: "", email: "" });
   const [recherche, setRecherche] = useState("");
@@ -223,18 +250,20 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     const d = jourDe(jour);
     const debut = new Date(d.getFullYear(), d.getMonth(), d.getDate(), Math.floor(heure), Math.round((heure % 1) * 60));
     const qui: Personne = personne ?? { ...np, origine: "" };
-    const res = await calerRdv({
-      coachId: coach,
-      debut: debut.toISOString(),
-      dureeMin: duree,
-      prenom: qui.prenom,
-      nom: qui.nom || null,
-      telephone: qui.telephone || null,
-      email: qui.email || null,
-      note: note.trim() || null,
-      rdvId: deplace && (deplace.source === "prospect" || deplace.source === "suivi") ? deplace.id : null,
-      table: deplace?.source === "suivi" ? "suivi" : "prospect",
-    });
+    const res = membre
+      ? await calerSuivi({ clientId: membre.clientId, debut: debut.toISOString(), dureeMin: duree })
+      : await calerRdv({
+          coachId: coach,
+          debut: debut.toISOString(),
+          dureeMin: duree,
+          prenom: qui.prenom,
+          nom: qui.nom || null,
+          telephone: qui.telephone || null,
+          email: qui.email || null,
+          note: note.trim() || null,
+          rdvId: deplace && (deplace.source === "prospect" || deplace.source === "suivi") ? deplace.id : null,
+          table: deplace?.source === "suivi" ? "suivi" : "prospect",
+        });
     setEnvoi(false);
     if (!res.ok) {
       setErreur(res.message);
@@ -247,8 +276,9 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
     void prevenirCoach(
       coach,
       userId,
-      deplace ? "Rendez-vous déplacé" : "Nouveau rendez-vous",
+      membre ? "Pesée calée" : deplace ? "Rendez-vous déplacé" : "Nouveau rendez-vous",
       `${qui.prenom} ${qui.nom}`.trim() + ` · ${libelleJourCourt(d)} ${fmtHeure(heure)}` + (moi ? ` · par ${moi.prenom}` : ""),
+      coachs.find((c) => c.id === coach)?.prenom,
     );
     onFait(jour, coach);
   }
@@ -276,6 +306,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
       userId,
       "Pas dispo noté dans l'agenda",
       `${libelleJourCourt(jourDe(jour))} · ${QUAND_INDISPO[quandIndispo].nom.toLowerCase()}` + (moi ? ` · par ${moi.prenom}` : ""),
+      coachs.find((c) => c.id === cibleIndispo)?.prenom,
     );
     onFait(jour, cibleIndispo);
   }
@@ -294,7 +325,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
         <div style={{ width: 40, height: 5, borderRadius: 9, background: "var(--ls-bbc-line2)", margin: "10px auto 4px", flex: "none" }} />
         <div style={entete}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={titre}>{etape === "quand" ? (deplace ? "Déplacer le rendez-vous" : type === "indispo" ? "Pas dispo" : "Nouveau rendez-vous") : deplace ? "On le déplace ?" : "Pour qui ?"}</div>
+            <div style={titre}>{etape === "quand" ? (membre ? "Sa prochaine pesée" : deplace ? "Déplacer le rendez-vous" : type === "indispo" ? "Pas dispo" : "Nouveau rendez-vous") : membre ? "On la cale ?" : deplace ? "On le déplace ?" : "Pour qui ?"}</div>
             <div style={sousTitre}>{etape === "quand" ? (type === "indispo" ? "personne ne calera rien sur cette plage" : "étape 1 sur 2 · quand et avec qui") : "étape 2 sur 2"}</div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fermer" style={croix}>
@@ -307,7 +338,21 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
           <div style={corps}>
             {erreur ? <div style={alerte("coral")}>{erreur}</div> : null}
 
-            {!deplace ? (
+            {membre ? (
+              <>
+                <div style={{ fontSize: 13, color: "var(--ls-bbc-muted)", lineHeight: 1.45 }}>
+                  {`${membre.prenom} ${membre.nom}`.trim()} · pesée de 30 min chez {coachs.find((c) => c.id === membre.coachId)?.prenom ?? "sa coach"} → choisis le créneau.
+                </div>
+                {rdvARemplacer ? (
+                  <div style={alerte("amber")}>
+                    Elle a déjà un rendez-vous le {libelleJour(rdvARemplacer)} à {heureDe(rdvARemplacer.toISOString())} : celui-ci le remplacera.
+                  </div>
+                ) : null}
+                {!coachs.some((c) => c.id === membre.coachId) ? (
+                  <div style={alerte("amber")}>Sa coach n'est pas dans l'agenda de ton club : cale-la depuis sa fiche complète.</div>
+                ) : null}
+              </>
+            ) : !deplace ? (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(Object.keys(TYPES) as TypeRdv[]).map((t) => (
                   <button key={t} type="button" onClick={() => { setType(t); setErreur(null); }} style={{ ...puce, background: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s2)", borderColor: type === t ? "var(--ls-bbc-lime)" : "var(--ls-bbc-line)", color: type === t ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-muted)" }}>
@@ -321,7 +366,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
               </div>
             )}
 
-            {plusTot && type !== "indispo" && decalage === 0 && deplace?.source !== "suivi" ? (
+            {plusTot && type !== "indispo" && decalage === 0 && deplace?.source !== "suivi" && !membre ? (
               <button
                 type="button"
                 onClick={() => {
@@ -454,8 +499,8 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
             ) : null}
             <div style={etiquette}>avec qui ?</div>
             {[...coachs]
-              // Un suivi reste avec sa coach : on ne propose qu'elle.
-              .filter((c) => deplace?.source !== "suivi" || c.id === deplace.coachId)
+              // Un suivi reste avec sa coach : on ne propose qu'elle (sa pesée aussi).
+              .filter((c) => (deplace?.source !== "suivi" || c.id === deplace.coachId) && (!membre || c.id === membre.coachId))
               .sort((a, b) => Number(b.id === coachInitial) - Number(a.id === coachInitial))
               .map((c) => {
                 const l = libresDe(occupesDe(c.id), jour);
@@ -547,7 +592,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                   <div style={bloc}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <b style={{ flex: 1, minWidth: 0, fontSize: 15 }}>{`${personne.prenom} ${personne.nom}`.trim()}</b>
-                      {!deplace ? (
+                      {!deplace && !membre ? (
                         <button type="button" onClick={() => setPersonne(null)} style={lien}>
                           Changer
                         </button>
@@ -559,7 +604,9 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                         {personne.email || "⚠️ pas d'email : pas de rappel la veille"}
                       </div>
                     ) : null}
-                    <div style={{ fontSize: 12.5, color: "var(--ls-bbc-lime-text)", marginTop: 8 }}>{deplace ? "✓ l'ancien créneau sera libéré" : "✓ le rendez-vous apparaîtra sur sa fiche du CRM"}</div>
+                    <div style={{ fontSize: 12.5, color: "var(--ls-bbc-lime-text)", marginTop: 8 }}>
+                      {membre ? "✓ sur sa fiche et dans son espace membre, avec sa confirmation et ses rappels" : deplace ? "✓ l'ancien créneau sera libéré" : "✓ le rendez-vous apparaîtra sur sa fiche du CRM"}
+                    </div>
                   </div>
                 </div>
               ) : nouveau ? (
@@ -602,7 +649,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
                 </div>
               )}
 
-              {!deplace ? (
+              {!deplace && !membre ? (
                 <div style={champ}>
                   <label htmlFor="note-rdv" style={etiquette}>
                     note · facultatif
@@ -614,7 +661,7 @@ export function CalerRdvSheet({ userId, coachs, couleur, jourInitial, coachIniti
             </div>
             <div style={pied}>
               <button type="button" onClick={() => void enregistrer()} disabled={!pret || envoi} style={{ ...boutonLime, background: pret && !envoi ? "var(--ls-bbc-lime)" : "var(--ls-bbc-s3)", color: pret && !envoi ? "var(--ls-bbc-lime-ink)" : "var(--ls-bbc-hint)" }}>
-                {envoi ? "Enregistrement…" : deplace ? "Déplacer le rendez-vous" : "Caler le rendez-vous"}
+                {envoi ? "Enregistrement…" : membre ? "Caler sa pesée" : deplace ? "Déplacer le rendez-vous" : "Caler le rendez-vous"}
               </button>
               <div style={{ fontSize: 12, color: "var(--ls-bbc-hint)", textAlign: "center", lineHeight: 1.45 }}>
                 {coach && coach !== userId ? `${coachs.find((c) => c.id === coach)?.prenom ?? "La coach"} sera prévenue.` : "Le créneau est revérifié à l'enregistrement."}

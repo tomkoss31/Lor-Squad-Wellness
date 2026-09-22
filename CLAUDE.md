@@ -97,6 +97,17 @@ Audit (artifact RmsMFUAFHGDKWq5ShuHEXC) puis maquette validée par Thomas (R5zUR
   atelier). Le filtre « Protocole » (29 lignes / 60 j) et les statistiques du haut n'ont pas
   été repris : ce sont des informations de fiche et de CRM.
 - Les liens `/agenda?tab=…` des notifications ouvrent l'agenda ; les paramètres sont ignorés.
+- **La prochaine pesée d'une membre** (22/09) : fiche du club → « Prochaine étape » → « Caler sa
+  prochaine pesée » (membre sans carte active) → `CalerRdvSheet` en mode `membre` → RPC
+  `caler_suivi_membre` = un SUIVI de SA fiche chez SA coach, type « Pesée ». ⚠️ `follow_ups.client_id`
+  est UNIQUE : une cliente n'a qu'un prochain suivi, la pesée le REMPLACE (la feuille le dit).
+  Jamais par « ＋ → Caler un RDV » : il crée un rendez-vous de PROSPECT (table `prospects`), et à la
+  venue l'app proposerait une nouvelle fiche. « Venue · faire sa pesée » ouvre sa fiche du club.
+- **Qui est prévenu d'un rendez-vous** (22/09, « le choix est au coach ») : la cloche 🔔 de l'agenda
+  → `users.notif_agenda` = `miens` (défaut, l'ancien comportement : ce qu'une autre cale dans MON
+  agenda ; les admins, les réservations du site) · `club` (tout ce qui se cale, et le site) · `aucun`.
+  La base choisit (`agenda_a_prevenir`, appelé par `prevenirCoach`) ; `book-club-discovery` filtre
+  pareil. La personne qui a rendez-vous garde TOUJOURS sa confirmation et ses rappels.
 - Le mode d'emploi (`mail-agenda-club`, `GuideAgendaSheet`) dit « menu Agenda » et décrit la
   question d'un suivi. **Thomas veut le renvoyer aux coachs** pour le nouvel agenda.
 

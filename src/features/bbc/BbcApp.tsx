@@ -46,7 +46,7 @@ import { BbcMatin } from "./views/BbcMatin";
 import { BbcContacter, BbcContactSheet } from "./views/BbcContacter";
 import { BbcPlus } from "./views/BbcPlus";
 import { BbcNewMemberSheet } from "./BbcNewMemberSheet";
-import { CalerRdvSheet } from "./agenda/CalerRdvSheet";
+import { CalerRdvSheet, type MembreACaler } from "./agenda/CalerRdvSheet";
 import { QualifierRdvClubSheet } from "./agenda/QualifierRdvClubSheet";
 import { qualifierRdvClub } from "./agenda/qualifierRdvClub";
 import { ApresCreation } from "./ApresCreation";
@@ -225,7 +225,13 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const [gestes, setGestes] = useState(false);
   /** La barre latérale (ordinateur) : « Plus » est replié par défaut. */
   const [plusOuvert, setPlusOuvert] = useState(false);
-  const [caler, setCaler] = useState<{ deplace?: RdvClub } | null>(null);
+  /** « Caler » : un nouveau rendez-vous, un déplacement, ou la prochaine pesée d'une membre (22/09). */
+  const [caler, setCaler] = useState<{ deplace?: RdvClub; membre?: MembreACaler } | null>(null);
+  /** Venue à sa pesée : sa fiche s'ouvre dans Membres, « Son corps » a la balance. */
+  function venueALaPesee(clientId: string) {
+    ouvrirMembre(clientId);
+    setToast("Sa fiche est ouverte : « Son corps » → nouvelle pesée");
+  }
   /** Livraison C — le prochain rendez-vous se qualifie depuis Le matin, sans changer d'écran. */
   const [qualif, setQualif] = useState<{ rdv: RdvClub; etape: "choix" | "pasvenue" } | null>(null);
   /** « Elle prend sa carte de membre » : la fiche papier, pré-remplie du rendez-vous. */
@@ -439,13 +445,36 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           />
         )}
         {view === "scripts" && <BbcScripts settings={club?.settings ?? null} />}
-        {view === "agenda" && <BbcAgenda key={rafraichir} userId={userId} coachName={coachName} club={club ?? null} onMembreCree={(clientId, prenom) => setApres({ clientId, prenom })} onSuiviClassique={versSuiviClassique} />}
+        {view === "agenda" && <BbcAgenda key={rafraichir} userId={userId} coachName={coachName} club={club ?? null} onMembreCree={(clientId, prenom) => setApres({ clientId, prenom })} onSuiviClassique={versSuiviClassique} onPesee={venueALaPesee} />}
         {view === "coeurs" && <BbcCoeurs userId={userId} club={club ?? null} />}
         {view === "club" && <BbcClub userId={userId} club={club ?? null} />}
         {view === "clubs" && <BbcClubs clubs={clubs} isAdmin={isAdmin} onCreateClub={onCreateClub} onRenameClub={onRenameClub} />}
         {view === "formation" && <BbcFormation />}
         {view === "lexique" && <BbcLexique settings={club?.settings ?? null} />}
-        {view === "crm" && <BbcCrm key={rafraichir} userId={userId} club={club ?? null} onNouveauMembre={() => setNouveauMembre(true)} ouvrirId={membreOuvert} onGo={(v) => setView(v)} />}
+        {view === "crm" && (
+          <BbcCrm
+            key={rafraichir}
+            userId={userId}
+            club={club ?? null}
+            onNouveauMembre={() => setNouveauMembre(true)}
+            ouvrirId={membreOuvert}
+            onGo={(v) => setView(v)}
+            onCalerPesee={(m) => {
+              const [prenom, ...reste] = m.name.trim().split(/\s+/);
+              setCaler({
+                membre: {
+                  clientId: m.id,
+                  prenom: prenom || m.name,
+                  nom: reste.join(" "),
+                  telephone: m.phone,
+                  email: m.email,
+                  coachId: m.ownerId ?? userId ?? "",
+                  prochainRdv: m.nextFollowUp ?? null,
+                },
+              });
+            }}
+          />
+        )}
         {view === "boites" && <BbcBoites userId={userId} club={club ?? null} />}
         {view === "messages" && <BbcMessages userId={userId} coachName={coachName} />}
         {view === "appels" && <BbcAppels userId={userId} club={club ?? null} />}
@@ -485,14 +514,16 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
           couleur={(id) => couleurCoach(id, coachs)}
           reglages={club?.settings?.discovery ?? null}
           jourInitial={caler.deplace ? cleJour(new Date(caler.deplace.debut)) : cleJour(new Date())}
-          coachInitial={caler.deplace?.coachId ?? userId ?? null}
+          coachInitial={caler.deplace?.coachId ?? caler.membre?.coachId ?? userId ?? null}
           deplace={caler.deplace ?? null}
+          membre={caler.membre ?? null}
           onClose={() => setCaler(null)}
           onFait={() => {
+            const pesee = Boolean(caler.membre);
             setCaler(null);
             setRafraichir((n) => n + 1);
             setView("agenda");
-            setToast("Rendez-vous calé ✓");
+            setToast(pesee ? "Pesée calée ✓ — elle reçoit sa confirmation" : "Rendez-vous calé ✓");
           }}
         />
       ) : null}
@@ -543,7 +574,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
             }
             return res;
           }}
-          onBilan={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => { const r = qualif.rdv; setQualif(null); if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: `${r.prenom} ${r.nom ?? ""}`.trim() }); else navigate(`/clients/${r.clientId}/follow-up/new`); } : null}
+          onBilan={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => { const r = qualif.rdv; setQualif(null); if (/carte/i.test(r.nature)) setBilan10({ clientId: r.clientId!, nom: `${r.prenom} ${r.nom ?? ""}`.trim() }); else if (/pes/i.test(r.nature)) venueALaPesee(r.clientId!); else navigate(`/clients/${r.clientId}/follow-up/new`); } : null}
           onFiche={qualif.rdv.source === "suivi" && qualif.rdv.clientId ? () => navigate(`/clients/${qualif.rdv.clientId}`) : null}
           onDeplacer={qualif.rdv.source === "prospect" || qualif.rdv.source === "suivi" ? () => { const r = qualif.rdv; setQualif(null); setCaler({ deplace: r }); } : null}
         />

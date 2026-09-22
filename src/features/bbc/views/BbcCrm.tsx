@@ -87,9 +87,11 @@ interface BbcCrmProps {
   onGo?: (v: "appels" | "coeurs") => void;
   /** La fiche à ouvrir en arrivant (depuis Le matin, « prochaine étape »). */
   ouvrirId?: string | null;
+  /** « Caler sa prochaine pesée » (22/09) : la feuille « Caler », sur SA fiche, chez SA coach. */
+  onCalerPesee?: (m: BbcMember) => void;
 }
 
-export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId }: BbcCrmProps) {
+export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId, onCalerPesee }: BbcCrmProps) {
   const live = useBbcMembers(userId);
   const tous = apercu ?? live.members;
   const loading = apercu ? false : live.loading;
@@ -220,7 +222,7 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId }
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
-              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} onBilan={setBilan} onGo={onGo} />
+              onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} onBilan={setBilan} onGo={onGo} onCalerPesee={onCalerPesee} />
           ))
         )}
       </div>
@@ -350,16 +352,18 @@ function quoiFaire(m: BbcMember): { ton: string; ic: string; titre: string; deta
 
 type Volet = "visites" | "corps" | "journal" | "etape";
 const VOLETS: [Volet, string][] = [["visites", "Visites & carte"], ["corps", "Son corps"], ["journal", "Journal"], ["etape", "Prochaine étape"]];
-const ICONE_ETAPE: Record<ActionEtape, string> = { bilan: "📋", carte: "🎟️", coeurs: "❤️", appels: "📞" };
+const ICONE_ETAPE: Record<ActionEtape, string> = { bilan: "📋", carte: "🎟️", pesee: "⚖️", coeurs: "❤️", appels: "📞" };
 
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache, onBilan, onGo,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache, onBilan, onGo, onCalerPesee,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
   onSupprimer: (m: BbcMember) => void;
   /** Ouvre le bilan des 10 pour ce membre (livraison C). */
   onBilan: (m: BbcMember) => void;
   onGo?: (v: "appels" | "coeurs") => void;
+  /** « Caler sa prochaine pesée » (22/09). */
+  onCalerPesee?: (m: BbcMember) => void;
   /** Ouvre la feuille carte pour ce membre (03/09). */
   onCarte: (m: BbcMember) => void;
   onPesee?: (m: BbcMember) => void; cleCorps?: number;
@@ -522,7 +526,7 @@ function MemberRow({
                   key={e.cle}
                   type="button"
                   className="bbc-pression"
-                  onClick={() => (e.action === "bilan" ? onBilan(m) : e.action === "carte" ? onCarte(m) : onGo?.(e.action))}
+                  onClick={() => (e.action === "bilan" ? onBilan(m) : e.action === "carte" ? onCarte(m) : e.action === "pesee" ? onCalerPesee?.(m) : onGo?.(e.action))}
                   style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%", minHeight: 66, padding: "10px 14px", borderRadius: 14, textAlign: "left", cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)",
                     border: `1px solid ${e.fort ? "transparent" : "var(--ls-bbc-line2)"}`, background: e.fort ? "var(--ls-bbc-grad)" : "var(--ls-bbc-s2)",

@@ -38,6 +38,30 @@ const MESSAGES: Record<string, string> = {
   suivi_reste_avec_sa_coach: "Un suivi reste avec sa coach : choisis un créneau chez elle.",
 };
 
+function refus(message: string): ResultatRdv {
+  const cle = Object.keys(MESSAGES).find((k) => message.includes(k));
+  if (cle === "creneau_pris") return { ok: false, raison: "creneau_pris", message: MESSAGES[cle] };
+  return { ok: false, raison: "refuse", message: cle ? MESSAGES[cle] : "Le rendez-vous n'a pas pu être enregistré." };
+}
+
+/**
+ * La prochaine pesée d'une membre (22/09) : un SUIVI de SA fiche, chez SA coach
+ * (`caler_suivi_membre`). Jamais un rendez-vous de prospect : à la venue, l'app
+ * aurait proposé de lui créer une nouvelle fiche. Une cliente n'a qu'UN prochain
+ * suivi : celui-ci remplace le précédent.
+ */
+export async function calerSuivi(d: { clientId: string; debut: string; dureeMin: number }): Promise<ResultatRdv> {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb) return { ok: false, raison: "reseau", message: "Pas de connexion." };
+    const { data, error } = await sb.rpc("caler_suivi_membre", { p_client: d.clientId, p_debut: d.debut, p_duree_min: d.dureeMin });
+    if (error) return refus(error.message);
+    return { ok: true, id: String(data) };
+  } catch {
+    return { ok: false, raison: "reseau", message: "Le rendez-vous n'a pas pu être enregistré. Réessaie." };
+  }
+}
+
 export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
   try {
     const sb = await getSupabaseClient();
@@ -56,11 +80,7 @@ export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
       p_rdv_id: d.rdvId ?? null,
       p_table: d.table ?? "prospect",
     });
-    if (error) {
-      const cle = Object.keys(MESSAGES).find((k) => error.message.includes(k));
-      if (cle === "creneau_pris") return { ok: false, raison: "creneau_pris", message: MESSAGES[cle] };
-      return { ok: false, raison: "refuse", message: cle ? MESSAGES[cle] : "Le rendez-vous n'a pas pu être enregistré." };
-    }
+    if (error) return refus(error.message);
     return { ok: true, id: String(data) };
   } catch {
     return { ok: false, raison: "reseau", message: "Le rendez-vous n'a pas pu être enregistré. Réessaie." };
@@ -68,18 +88,40 @@ export async function calerRdv(d: DemandeRdv): Promise<ResultatRdv> {
 }
 
 /**
- * Prévient la coach dont on a touché l'agenda. Jamais soi-même, jamais
- * bloquant : un push qui échoue ne doit pas faire croire que le rendez-vous
- * n'est pas pris.
+ * Prévient qui veut l'être (22/09, Thomas : « le client lead, lui, reçoit, mais le
+ * choix est au coach ») : chacune selon SON réglage (`users.notif_agenda`, la
+ * cloche de l'agenda) — la coach dont on a touché l'agenda (« les miens », le
+ * défaut) et celles qui suivent « tout le club ». La base décide
+ * (`agenda_a_prevenir`), jamais soi-même. Jamais bloquant : un push qui échoue ne
+ * doit pas faire croire que le rendez-vous n'est pas pris. La personne qui a
+ * rendez-vous a sa confirmation par ailleurs, quel que soit ce réglage.
  */
-export async function prevenirCoach(coachId: string, moiId: string | null | undefined, titre: string, texte: string): Promise<void> {
-  if (!coachId || coachId === moiId) return;
+export async function prevenirCoach(coachId: string, moiId: string | null | undefined, titre: string, texte: string, chezPrenom?: string): Promise<void> {
+  if (!coachId) return;
   try {
     const sb = await getSupabaseClient();
     if (!sb) return;
-    await sb.functions.invoke("send-push", {
-      body: { user_id: coachId, title: titre, body: texte, url: "/agenda", type: "agenda_club" },
-    });
+    let destinataires: Array<{ user_id: string; est_son_agenda: boolean }>;
+    const { data, error } = await sb.rpc("agenda_a_prevenir", { p_coach: coachId });
+    if (error || !Array.isArray(data)) {
+      // Repli : l'ancien comportement (sa coach seulement) plutôt que le silence.
+      destinataires = coachId !== moiId ? [{ user_id: coachId, est_son_agenda: true }] : [];
+    } else {
+      destinataires = data as Array<{ user_id: string; est_son_agenda: boolean }>;
+    }
+    await Promise.all(
+      destinataires.map((d) =>
+        sb.functions.invoke("send-push", {
+          body: {
+            user_id: d.user_id,
+            title: titre,
+            body: d.est_son_agenda || !chezPrenom ? texte : `${texte} (agenda de ${chezPrenom})`,
+            url: "/agenda",
+            type: "agenda_club",
+          },
+        }),
+      ),
+    );
   } catch {
     // silent-fail
   }
