@@ -292,10 +292,13 @@ function RdvHeroTile({
             un RDV
           </div>
           <div style={{ fontSize: 12.5, color: "var(--ls-text-muted)", marginTop: 10, fontFamily: AT_MONO }}>
-            {priority.meta || "Aucun RDV programmé"}
+            {(priority.type === "plan_rdv" && priority.meta) || "Aucun RDV programmé"}
           </div>
         </div>
-        <button type="button" onClick={onPriorityCta} style={goldBtn}>PLANIFIER →</button>
+        {/* « Planifier » ouvre TOUJOURS la fenêtre du rendez-vous (22/09). Avec une
+            fiche « à jour » (bilan fait le jour même), ce bouton partait sur
+            « Vue complète » : Mélanie ne pouvait pas caler la suite de Gwen. */}
+        <button type="button" onClick={onEditRdv} style={goldBtn}>PLANIFIER →</button>
       </div>
     );
   }

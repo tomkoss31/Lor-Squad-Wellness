@@ -1,5 +1,6 @@
 import { canAccessPortfolioUser, getAccessibleOwnerIds } from "./auth";
 import type { Client, FollowUp, User } from "../types/domain";
+import { RDV_GRACE_PERIOD_MS } from "./timeConstants";
 
 export type PortfolioAccent = "blue" | "green" | "amber" | "rose";
 export type PortfolioGlyph = "crest" | "spark" | "pulse" | "orbit";
@@ -141,9 +142,24 @@ export function getClientActiveFollowUp(client: Client, followUps: FollowUp[]): 
     return null;
   }
 
-  // Sujet C (2026-04-19) : client en suivi libre → hors agenda auto, pas de RDV.
+  // Sujet C (2026-04-19) : client en suivi libre → hors agenda AUTOMATIQUE.
+  // Mais un rendez-vous posé à la main reste un vrai rendez-vous (22/09 : la
+  // fiche de Gwen, en suivi libre, cachait celui qu'on voulait lui caler et
+  // reproposait « Planifier » en boucle). On ne montre que celui-là : jamais la
+  // date figée de clients.next_follow_up, jamais un suivi d'avant la bascule
+  // (ils passent en `inactive`), jamais un rendez-vous passé depuis la grâce,
+  // jamais une relance (`pending`) : le suivi libre reste hors relances.
   if (client.freeFollowUp) {
-    return null;
+    const depuis = Date.now() - RDV_GRACE_PERIOD_MS;
+    return (
+      followUps
+        .filter((followUp) =>
+          followUp.clientId === client.id
+          && followUp.status === 'scheduled'
+          && getScheduleTimestamp(followUp.dueDate) >= depuis
+        )
+        .sort((left, right) => compareByDateAsc(left.dueDate, right.dueDate))[0] ?? null
+    );
   }
 
   const clientFollowUps = followUps
