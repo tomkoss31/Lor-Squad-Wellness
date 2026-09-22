@@ -101,8 +101,9 @@ export function ClientDetailPage() {
   });
   // Onglet Mesures V2 : le panneau mensurations est replié par défaut.
   const [measurementsOpen, setMeasurementsOpen] = useState(false);
-  // Journal nutritionnel (21/09/2026) : replié aussi, chargé seulement à l'ouverture.
-  const [journalOpen, setJournalOpen] = useState(false);
+  // Journal nutritionnel (21/09/2026) : en tête de « Mesures » et OUVERT par défaut
+  // depuis le 22/09 (Thomas : « le journal doit être mieux vu sur la fiche »). Repliable.
+  const [journalOpen, setJournalOpen] = useState(true);
   // Refonte Actions Tab (2026-04-26) : les states editPhone/editEmail/
   // editCity/transferFeedback/nextOwnerId et les handlers handleDelete/
   // handleTransfer sont désormais internes à ActionsTab.tsx.
@@ -671,23 +672,11 @@ export function ClientDetailPage() {
         </Card>
       )}
 
-      {/* Tab 1: Mesures — V2 (2026-08-03). Le contenu est passé dans
-          BodyScanTab : l'onglet faisait 13 écrans parce qu'il empilait les 4
-          cartes de lecture en même temps. Une métrique à la fois désormais ;
-          radar et tableau repliés. Aucun calcul modifié, rien supprimé. */}
-      {activeTab === 1 && (
-        <BodyScanTab
-          client={client}
-          latestBodyScan={latestBodyScan}
-          previousAssessment={previousAssessment}
-          firstAssessment={firstAssessment}
-        />
-      )}
-
       {/* Journal nutritionnel (21/09/2026) — ce que la cliente note dans son
           espace (onglet « Journal ») : 7 derniers jours, ce qu'il faut en
           retenir, son coefficient protéines, une remarque. Rangé dans
-          « Mesures » : la fiche a déjà ses 5 onglets (règle B9). */}
+          « Mesures » (la fiche a déjà ses 5 onglets, règle B9), mais EN TÊTE et
+          OUVERT depuis le 22/09 : le suivi du quotidien passe avant le body scan. */}
       {activeTab === 1 && (
         <Card>
           <button
@@ -709,6 +698,19 @@ export function ClientDetailPage() {
             </div>
           )}
         </Card>
+      )}
+
+      {/* Tab 1: Mesures — V2 (2026-08-03). Le contenu est passé dans
+          BodyScanTab : l'onglet faisait 13 écrans parce qu'il empilait les 4
+          cartes de lecture en même temps. Une métrique à la fois désormais ;
+          radar et tableau repliés. Aucun calcul modifié, rien supprimé. */}
+      {activeTab === 1 && (
+        <BodyScanTab
+          client={client}
+          latestBodyScan={latestBodyScan}
+          previousAssessment={previousAssessment}
+          firstAssessment={firstAssessment}
+        />
       )}
 
       {/* Mensurations — Chantier Module Mensurations (2026-04-24). B1 : remonté

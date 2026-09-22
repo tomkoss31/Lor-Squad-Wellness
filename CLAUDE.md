@@ -274,6 +274,17 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   en brouillon dans /admin/campagnes (voir le README du dossier). Visuels en tableaux HTML, pas en PNG.
 - Reste à faire : la photo ; la version La Base 360 du mail pour les clients en suivi ; le mail aux
   nouveaux clients.
+- **Vu du coach, en standard** (22/09, maquette XpS9uerQY6M627Zg9vXS99 : « on essaie, on verra ») :
+  sur la fiche, le journal est EN TÊTE de « Mesures » et ouvert par défaut ; sur le Co-pilote, la carte
+  « Le journal de tes clientes » (sous le RDV du jour) mène à **`/co-pilote/journal`**
+  (`JournalApercuPage`) : toute la liste de `visibleClients` + recherche, EN TÊTE et en couleur celles
+  qui notent vraiment (7 jours), un toucher → SON journal (`JournalCoach`, le même que la fiche ;
+  `?client=<id>`). La base n'ajoute que l'état du journal : **`journal_apercu_coach()`** (SECURITY
+  INVOKER, le RLS décide). « Elle a noté » = la règle du rappel de 20 h (repas `membre`/`noaly`, eau,
+  sport ; le pré-rempli du club seul = case teal ; une ligne de la coach ne compte pas) ; la moyenne de
+  protéines ne porte que sur les jours à REPAS (un jour « eau seulement » la ferait chuter). Un seul
+  appel partagé carte + écran, gardé 2 min, clé = personne + jour de Paris (`useJournalApercu`).
+  Logique pure et testée : `apercuJournal.ts`. `/co-pilote/journal` n'est pas capté par le mode BBC.
 
 ---
 

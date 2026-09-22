@@ -422,6 +422,12 @@ const CoPiloteV5Page = lazy(() =>
     default: module.CoPiloteV5Page,
   }))
 );
+// Co-pilote › Journal (22/09/2026) : qui tient son journal, toute la liste.
+const JournalApercuPage = lazy(() =>
+  import("./features/journal/JournalApercuPage").then((module) => ({
+    default: module.JournalApercuPage,
+  }))
+);
 // Chantier « Salle des Opérations » (onboarding distri, 2026-06-29) — slice 1 :
 // route preview provisoire pour recetter le look pixel-fidèle de la maquette.
 // Le switch de rendu sur /co-pilote (§3) viendra une fois le look validé.
@@ -859,6 +865,9 @@ export default function App() {
                   stable en prod) → CoPilotePage/RentabilityWidget/Gauge supprimés.
                   Rollback éventuel = historique git. */}
               <Route path="co-pilote" element={<CoPiloteV5Page />} />
+              {/* Le journal de ses clientes (22/09) : ouvert depuis la carte du Co-pilote.
+                  En mode BBC, l'adresse n'est pas captée (bbcRoutes : `/co-pilote` exact). */}
+              <Route path="co-pilote/journal" element={<JournalApercuPage />} />
               {/* Preview provisoire Salle des Opérations (slice 1, recette look). */}
               <Route path="salle-ops" element={<SalleDesOperationsPage />} />
               <Route path="dashboard" element={<Navigate to="/co-pilote" replace />} />
