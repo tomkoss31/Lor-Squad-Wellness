@@ -153,37 +153,29 @@ export function ClientAppPage() {
       // gardait le manifest coach start_url:/login), donc l'icône PWA lançait
       // /login puis /client → le bouton retour Android retombait sur /login.
       // On REMPLACE le manifest existant par celui du client (start_url correct).
-      const manifest = {
-        name: 'La Base 360',
-        short_name: 'La Base 360',
-        description: 'Mon espace bien-être personnalisé · The wellness nutrition club',
-        start_url: `/client/${token}`,
-        scope: '/client/',
-        display: 'standalone',
-        // Passe de chaleur (2026-08-05) : l'écran d'installation et la barre
-        // d'état affichaient encore l'ancienne identité (émeraude sur blanc)
-        // alors que l'app s'ouvre en vert profond → rupture à chaque install.
-        background_color: '#162624',
-        theme_color: '#162624',
-        orientation: 'portrait',
-        icons: [
-          { src: '/brand/labase360/pwa-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: '/brand/labase360/pwa-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: '/brand/labase360/pwa-maskable-192.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
-          { src: '/brand/labase360/pwa-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-        ],
-      }
-      const blobUrl = URL.createObjectURL(
-        new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }),
-      )
+      //
+      // 22/09 : ce manifeste était fabriqué dans le navigateur (adresse `blob:`).
+      // Android le lisait ; l'iPhone NON — il retombait sur le manifeste coach
+      // (start_url /login) : Gwen ajoutait son espace à l'écran d'accueil et
+      // l'icône ouvrait la page de connexion. Il est désormais servi par une vraie
+      // adresse (api/client-manifest, start_url = SON lien), qu'index.html pose
+      // déjà avant même que l'app démarre ; on la repose ici pour une arrivée par
+      // navigation interne (un coach qui ouvre l'aperçu d'une cliente).
+      const manifesteClient = `/api/client-manifest?token=${encodeURIComponent(token)}`
       let link = document.querySelector('link[rel="manifest"]') as HTMLLinkElement | null
-      const prevHref = link?.getAttribute('href') ?? null
+      const prevHrefBrut = link?.getAttribute('href') ?? null
+      // Au démontage, on rend le manifeste COACH — jamais celui d'une cliente (la page
+      // a pu être ouverte directement sur /client/…, index.html l'avait déjà posé).
+      const prevHref =
+        prevHrefBrut && !prevHrefBrut.startsWith('/api/client-manifest') && !prevHrefBrut.startsWith('blob:')
+          ? prevHrefBrut
+          : '/manifest.webmanifest'
       if (!link) {
         link = document.createElement('link')
         link.rel = 'manifest'
         document.head.appendChild(link)
       }
-      link.href = blobUrl
+      link.href = manifesteClient
 
       const meta = document.createElement('meta')
       meta.name = 'theme-color'
@@ -198,8 +190,7 @@ export function ClientAppPage() {
       // Au démontage (le coach quitte la preview), on rend son manifest.
       const linkRef = link
       const cleanup = () => {
-        URL.revokeObjectURL(blobUrl)
-        if (prevHref) linkRef.href = prevHref
+        linkRef.href = prevHref
       }
       void loadClientData()
       return cleanup
