@@ -49,6 +49,18 @@
     <meta name="msapplication-TileImage" content="/brand/labase360/pwa-192.png" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- L'espace d'une cliente s'installe sur SON lien (22/09) : sans ça,
+         « Sur l'écran d'accueil » suivait le manifeste coach (start_url /login)
+         et l'icône de Gwen ouvrait la page de connexion. Exécuté tout de suite,
+         avant que le téléphone ne lise le manifeste. -->
+    <script>
+      (function () {
+        var m = location.pathname.match(/^\/client\/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\/?$/);
+        if (!m) return;
+        var lien = document.querySelector('link[rel="manifest"]');
+        if (lien) lien.setAttribute("href", "/api/client-manifest?token=" + m[1]);
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/brand/labase360/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/brand/labase360/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/brand/labase360/favicon-16.png" />
