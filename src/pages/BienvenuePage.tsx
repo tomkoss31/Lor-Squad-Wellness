@@ -1,30 +1,33 @@
-// Chantier Lien d'invitation client app (2026-04-21) — commit 4/5.
+// =============================================================================
+// /bienvenue?token=… — la page qui s'ouvre avec le lien d'accès envoyé par la
+// coach (WhatsApp, SMS, mail).
 //
-// Route publique /bienvenue?token=XYZ. Le client atterrit ici depuis le
-// WhatsApp/SMS envoyé par son coach. Flow :
-//   1. Lit ?token, call Edge Function validate-invitation-token.
-//   2. Si invalide/expiré/consommé → message clair.
-//   3. Si valide :
-//      - Cas A (email en fiche) → form direct mot de passe + confirm.
-//      - Cas B (pas d'email) → ExplainerModal bloquante, puis form
-//        email + mot de passe + confirm.
-//   4. Submit → call Edge Function consume-invitation-token avec
-//      { token, password, email? }. Gère l'auto-login (setSession) puis
-//      redirige vers /client/{redirect_token} avec un flag ?welcome=1
-//      pour déclencher le toast sur ClientAppPage.
+// Refaite le 22/09/2026 (maquette 7pdf4sTkQoHob1axp76vfP, Thomas : « il est
+// top, good job, continue »). Deux écrans, puis son espace :
+//   1. Découvrir — « La Base, ce sont trois maisons », avec les vrais logos :
+//      La Base Nutrition (le coaching), The Breakfast Club (le club
+//      petit-déjeuner), La Base Shakes & Drinks (les boissons). SA maison en
+//      tête et en couleur : une membre du club (`club`, clients.ebe_bbc) voit
+//      l'orange du club, une cliente en coaching le teal de La Base.
+//   2. Mot de passe — son identifiant affiché (`email_masque`) ; sans email en
+//      fiche, elle saisit le sien (plus de pop-up bloquante).
+//   3. Installer — PAS ici : dans son espace (/client/<jeton>?installer=1,
+//      InstallerEspace). Ici, le manifeste est celui de l'app coach
+//      (`start_url: /login`) : l'icône posée depuis cette page s'ouvrait sur la
+//      connexion. On y va donc par un VRAI chargement (window.location), pour
+//      qu'index.html pose le manifeste de SON espace avant tout.
 //
-// Design volontairement grand, chaleureux, sans jargon : le public est
-// non-tech.
+// La logique d'origine (21/04) ne change pas : validate-invitation-token, puis
+// consume-invitation-token { token, password, email? } → session + redirect_token.
+// =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { ExplainerModal } from "../components/bienvenue/ExplainerModal";
-import { MagicLinkFallback } from "../components/bienvenue/MagicLinkFallback";
-import { InstallPwaInstructions } from "../components/pwa/InstallPwaInstructions";
-import { InstallPwaTutorialModal } from "../components/pwa/InstallPwaTutorialModal";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Progres, TroisMaisons } from "../components/bienvenue/TroisMaisons";
+import type { Variante } from "../components/bienvenue/bienvenue";
 import { isStandalonePwa } from "../lib/utils/detectDevice";
 import { extractFunctionError } from "../lib/utils/extractFunctionError";
 import { getSupabaseClient } from "../services/supabaseClient";
+import "../components/bienvenue/bienvenue.css";
 
 type ValidationState =
   | { status: "loading" }
@@ -33,37 +36,33 @@ type ValidationState =
       firstName: string;
       coachFirstName: string;
       hasEmailOnRecord: boolean;
+      club: boolean;
+      emailMasque: string | null;
     }
   | { status: "invalid"; message: string };
 
+const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function BienvenuePage() {
-  const navigate = useNavigate();
   const [token, setToken] = useState<string>("");
   const [validation, setValidation] = useState<ValidationState>({ status: "loading" });
-  const [showExplainer, setShowExplainer] = useState(false);
+  const [etape, setEtape] = useState<"decouvrir" | "mdp">("decouvrir");
 
-  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [voir, setVoir] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string>("");
-  // Hotfix client-login (2026-04-24) : étape intermédiaire "installe la
-  // PWA" entre la création du compte et la redirection finale.
-  const [installPromptStage, setInstallPromptStage] = useState<
-    { redirectToken: string | null; firstName: string } | null
-  >(null);
+  // « Mot de passe oublié ? » seulement quand le SERVEUR dit qu'elle a déjà un
+  // compte — jamais pour « au moins 6 caractères » (l'ancienne page le proposait).
+  const [lienOubli, setLienOubli] = useState(false);
 
-  // 1. Parse token from URL + validate.
+  // 1. Le lien : on lit le jeton et on le fait vérifier.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const t = (params.get("token") ?? "").trim();
+    const t = (new URLSearchParams(window.location.search).get("token") ?? "").trim();
     if (!t) {
-      setValidation({
-        status: "invalid",
-        message:
-          "Lien incomplet. Demande à ton coach un nouveau lien d'accès.",
-      });
+      setValidation({ status: "invalid", message: "Lien incomplet. Demande à ton coach un nouveau lien d'accès." });
       return;
     }
     setToken(t);
@@ -71,17 +70,10 @@ export function BienvenuePage() {
     void (async () => {
       const sb = await getSupabaseClient();
       if (!sb) {
-        setValidation({
-          status: "invalid",
-          message: "Service momentanément indisponible. Réessaie dans quelques minutes.",
-        });
+        setValidation({ status: "invalid", message: "Service momentanément indisponible. Réessaie dans quelques minutes." });
         return;
       }
-
-      const { data, error } = await sb.functions.invoke("validate-invitation-token", {
-        body: { token: t },
-      });
-
+      const { data, error } = await sb.functions.invoke("validate-invitation-token", { body: { token: t } });
       if (error || !data || data.valid !== true) {
         const reason = data?.reason as string | undefined;
         const message =
@@ -93,24 +85,26 @@ export function BienvenuePage() {
         setValidation({ status: "invalid", message });
         return;
       }
-
       setValidation({
         status: "valid",
-        firstName: data.client_first_name ?? "toi",
+        firstName: (data.client_first_name ?? "").trim() || "toi",
         coachFirstName: data.coach_first_name ?? "Ton coach",
         hasEmailOnRecord: Boolean(data.has_email_on_record),
+        club: data.club === true,
+        emailMasque: typeof data.email_masque === "string" ? data.email_masque : null,
       });
-      // Cas B : ouvrir la pop-up d'explication avant tout.
-      if (!data.has_email_on_record) {
-        setShowExplainer(true);
-      }
     })();
   }, []);
 
-  // 2. Submit form.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [etape]);
+
+  // 2. Le mot de passe : on crée l'accès, puis direction SON espace.
   const handleSubmit = useCallback(async () => {
     if (validation.status !== "valid") return;
     setFormError("");
+    setLienOubli(false);
 
     if (password.length < 6) {
       setFormError("Le mot de passe doit contenir au moins 6 caractères.");
@@ -120,11 +114,9 @@ export function BienvenuePage() {
       setFormError("Les 2 mots de passe ne sont pas identiques.");
       return;
     }
-    if (!validation.hasEmailOnRecord) {
-      if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        setFormError("L'adresse email saisie n'a pas l'air valide.");
-        return;
-      }
+    if (!validation.hasEmailOnRecord && !REGEX_EMAIL.test(email.trim())) {
+      setFormError("L'adresse email saisie n'a pas l'air valide.");
+      return;
     }
 
     setSubmitting(true);
@@ -134,10 +126,8 @@ export function BienvenuePage() {
         setFormError("Service indisponible. Réessaie dans quelques minutes.");
         return;
       }
-
-      // Hotfix 2026-04-30 : supabase-js v2.101+ ne renvoie plus le body
-      // d erreur dans `data` quand status est 4xx/5xx. On extrait via le
-      // helper extractFunctionError qui gere data.error / error.context.
+      // supabase-js v2.101+ ne rend plus le corps d'erreur dans `data` en 4xx/5xx :
+      // extractFunctionError lit data.error / error.context (hotfix 30/04).
       const { data, error } = await sb.functions.invoke("consume-invitation-token", {
         body: {
           token,
@@ -145,533 +135,201 @@ export function BienvenuePage() {
           email: validation.hasEmailOnRecord ? undefined : email.trim().toLowerCase(),
         },
       });
-
       if (error || !data?.success) {
         const msg = await extractFunctionError(data, error, "Impossible de créer ton accès pour le moment.");
         console.warn("[BienvenuePage] consume-invitation-token failed:", { data, error, msg });
         setFormError(msg);
+        setLienOubli(/d[ée]j[aà] un compte|mot de passe/i.test(msg));
         return;
       }
 
-      // 3. Auto-login si on a reçu les tokens.
+      // Connexion automatique si on a reçu la session (non bloquant).
       if (data.access_token && data.refresh_token) {
         try {
-          await sb.auth.setSession({
-            access_token: data.access_token,
-            refresh_token: data.refresh_token,
-          });
+          await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
         } catch {
-          // Non bloquant : on redirige quand même.
+          /* on continue quand même */
         }
       }
 
-      // 4. Hotfix client-login (2026-04-24) : avant la redirection finale,
-      //    si la PWA n'est PAS encore installée, on affiche une étape
-      //    intermédiaire avec instructions. Déjà installée → navigate direct.
-      const firstName = validation.status === "valid" ? validation.firstName : "toi";
-      if (!isStandalonePwa()) {
-        setInstallPromptStage({
-          redirectToken: data.redirect_token ?? null,
-          firstName,
-        });
-        return;
-      }
+      // 3. Son espace — par un VRAI chargement : index.html y pose le manifeste de
+      // SON espace avant tout, et l'installation s'y fait (?installer=1).
       if (data.redirect_token) {
-        navigate(`/client/${data.redirect_token}?welcome=1`, { replace: true });
+        const installer = isStandalonePwa() ? "" : "&installer=1";
+        window.location.replace(`/client/${encodeURIComponent(data.redirect_token)}?welcome=1${installer}`);
       } else {
-        navigate(`/login?welcome=1`, { replace: true });
+        window.location.replace("/login?welcome=1");
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur inattendue.";
-      setFormError(msg);
+      setFormError(err instanceof Error ? err.message : "Erreur inattendue.");
     } finally {
       setSubmitting(false);
     }
-  }, [email, navigate, password, passwordConfirm, token, validation]);
+  }, [email, password, passwordConfirm, token, validation]);
 
   // ─── Rendu ───────────────────────────────────────────────────────────────
+  if (validation.status === "loading") {
+    return (
+      <div className="bv" data-v="coaching">
+        <main className="bv-col">
+          <div className="bv-marque">LA BASE</div>
+          <p className="bv-p" aria-live="polite" style={{ textAlign: "center", marginTop: 40 }}>
+            Vérification du lien…
+          </p>
+        </main>
+      </div>
+    );
+  }
+
+  if (validation.status === "invalid") {
+    return (
+      <div className="bv" data-v="coaching">
+        <main className="bv-col">
+          <div className="bv-marque">LA BASE</div>
+          <div className="bv-invalide" role="alert">
+            <div className="bv-eye" style={{ color: "var(--bv-alerte)" }}>Ton lien d'accès</div>
+            <h1 className="bv-h1" style={{ fontSize: 30, marginTop: 6 }}>Ce lien ne marche plus</h1>
+            <p>{validation.message}</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const v: Variante = validation.club ? "club" : "coaching";
+  const espace = validation.club ? "ton espace membre" : "ton espace";
+
+  if (etape === "decouvrir") {
+    return (
+      <div className="bv" data-v={v}>
+        <div className="bv-lueur" aria-hidden="true" />
+        <main className="bv-col">
+          <div className="bv-marque">LA BASE</div>
+          <div className="bv-eye">{validation.club ? "Ton espace membre" : "Ton espace"}</div>
+          <h1 className="bv-h1">
+            Bienvenue
+            <br />
+            {validation.firstName}
+          </h1>
+          <p className="bv-p">
+            <b>{validation.coachFirstName}</b> t'a ouvert {espace}. La Base, ce sont <b>trois maisons</b> :
+          </p>
+          <TroisMaisons variante={v} coach={validation.coachFirstName} />
+          <p className="bv-equipe">Une seule équipe, basée à Verdun.</p>
+          <button type="button" className="bv-cta" onClick={() => setEtape("mdp")}>
+            Créer mon accès <span aria-hidden="true">→</span>
+          </button>
+          <p className="bv-petit">Un mot de passe et c'est prêt : 30 secondes.</p>
+        </main>
+      </div>
+    );
+  }
+
+  const envoyer = (e: FormEvent) => {
+    e.preventDefault();
+    void handleSubmit();
+  };
+
   return (
-    <div className="bienvenue-root">
-      {/* Chantier Premium Onboarding (2026-04-24) : aligne BienvenuePage
-          sur direction Welcome/Login. Mesh gradient + grain + stagger
-          animations. */}
-      <style>{`
-        /* Hotfix theme (2026-04-30) : default = DARK, html.theme-light = LIGHT
-           pour suivre la convention La Base 360 et eviter "tout noir en mode
-           clair" sur l app installee. */
-        .bienvenue-root {
-          min-height: 100vh;
-          min-height: 100dvh;
-          background: #0A0D0F;
-          color: #F0EDE8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 32px 20px;
-          position: relative;
-          overflow: hidden;
-          font-family: 'DM Sans', sans-serif;
-        }
-        html.theme-light .bienvenue-root {
-          background: #F7F5F0;
-          color: #0B0D11;
-        }
-        html.theme-light .bienvenue-blob-teal { opacity: 0.55; }
-        html.theme-light .bienvenue-blob-gold { opacity: 0.48; }
-        html.theme-light .bienvenue-grain { opacity: 0.035; }
-        /* Inputs FieldLarge — fallback theme-aware via class */
-        .bienvenue-field-input {
-          padding: 16px 16px;
-          border-radius: 12px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(var(--ls-teal-rgb),0.22);
-          color: #F4E9CF;
-          font-size: 16px;
-          font-family: 'DM Sans', sans-serif;
-          outline: none;
-          transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
-        }
-        .bienvenue-field-input:focus {
-          border-color: rgba(45,212,191,0.6);
-          box-shadow: 0 0 0 4px rgba(45,212,191,0.12);
-        }
-        html.theme-light .bienvenue-field-input {
-          background: rgba(255,255,255,0.85);
-          border: 1px solid rgba(11,13,17,0.1);
-          color: #0B0D11;
-        }
-        .bienvenue-field-label { color: rgba(244,233,207,0.8); }
-        html.theme-light .bienvenue-field-label { color: rgba(11,13,17,0.65); }
-        .bienvenue-blob {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(90px);
-          pointer-events: none;
-          will-change: transform;
-        }
-        .bienvenue-blob-teal {
-          top: -14%;
-          left: -10%;
-          width: 520px;
-          height: 520px;
-          background: radial-gradient(circle, #1D9E75 0%, transparent 70%);
-          opacity: 0.35;
-          animation: bienvenue-float-1 32s ease-in-out infinite alternate;
-        }
-        .bienvenue-blob-gold {
-          bottom: -16%;
-          right: -8%;
-          width: 480px;
-          height: 480px;
-          background: radial-gradient(circle, #2DD4BF 0%, transparent 70%);
-          opacity: 0.3;
-          animation: bienvenue-float-2 36s ease-in-out infinite alternate;
-        }
-        @keyframes bienvenue-float-1 {
-          0%   { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(60px, 40px) scale(1.12); }
-        }
-        @keyframes bienvenue-float-2 {
-          0%   { transform: translate(0, 0) scale(1); }
-          100% { transform: translate(-70px, -30px) scale(1.1); }
-        }
-        .bienvenue-grain {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0.06;
-          mix-blend-mode: overlay;
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-        }
-        .bienvenue-inner {
-          position: relative;
-          z-index: 1;
-          max-width: 460px;
-          width: 100%;
-          animation: bienvenue-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-        }
-        @keyframes bienvenue-in {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .bienvenue-blob-teal, .bienvenue-blob-gold, .bienvenue-inner { animation: none !important; }
-        }
-      `}</style>
+    <div className="bv" data-v={v}>
+      <main className="bv-col">
+        <button type="button" className="bv-retour" onClick={() => setEtape("decouvrir")}>
+          ‹ Retour
+        </button>
+        <Progres etape={2} />
+        <h1 className="bv-h1">
+          Ton mot
+          <br />
+          de passe
+        </h1>
+        <p className="bv-p">Il te sert à retrouver {espace} sur un autre téléphone.</p>
 
-      <div aria-hidden="true" className="bienvenue-blob bienvenue-blob-teal" />
-      <div aria-hidden="true" className="bienvenue-blob bienvenue-blob-gold" />
-      <div aria-hidden="true" className="bienvenue-grain" />
-
-      <div className="bienvenue-inner">
-        {installPromptStage ? (
-          <InstallPwaStep
-            firstName={installPromptStage.firstName}
-            clientPhone={null}
-            onContinue={() => {
-              const redirect = installPromptStage.redirectToken
-                ? `/client/${installPromptStage.redirectToken}?welcome=1`
-                : `/login?welcome=1`;
-              navigate(redirect, { replace: true });
-            }}
-          />
-        ) : validation.status === "loading" ? (
-          <p style={{ textAlign: "center", opacity: 0.8 }}>Vérification du lien…</p>
-        ) : validation.status === "invalid" ? (
-          <InvalidCard message={validation.message} />
-        ) : (
-          <>
-            {showExplainer && !validation.hasEmailOnRecord ? (
-              <ExplainerModal
-                firstName={validation.firstName}
-                onClose={() => setShowExplainer(false)}
-              />
-            ) : null}
-
-            <p
-              style={{
-                fontFamily: "Syne, sans-serif",
-                fontSize: 32,
-                fontWeight: 700,
-                color: "#FDECC0",
-                marginBottom: 8,
-                lineHeight: 1.15,
-              }}
-            >
-              🎉 Bienvenue {validation.firstName} !
-            </p>
-            <p
-              style={{
-                fontSize: 16,
-                lineHeight: 1.6,
-                opacity: 0.88,
-                marginBottom: 26,
-              }}
-            >
-              {validation.coachFirstName} t'a préparé ton espace personnel.{" "}
-              {validation.hasEmailOnRecord
-                ? "Choisis un mot de passe pour y accéder."
-                : "On va créer ton compte en 30 secondes."}
-            </p>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {!validation.hasEmailOnRecord ? (
-                <FieldLarge
-                  label="Email"
+        <form onSubmit={envoyer} style={{ display: "flex", flexDirection: "column", gap: 14 }} noValidate>
+          {validation.hasEmailOnRecord ? (
+            validation.emailMasque && (
+              <div className="bv-id">
+                <span aria-hidden="true">✉️</span>
+                <span>
+                  Ton identifiant : <b>{validation.emailMasque}</b>
+                </span>
+              </div>
+            )
+          ) : (
+            <div className="bv-champ">
+              <label htmlFor="bv-email">Ton email</label>
+              <div className="bv-saisie">
+                <input
+                  id="bv-email"
                   type="email"
-                  value={email}
-                  onChange={setEmail}
-                  placeholder="exemple@email.com"
+                  inputMode="email"
                   autoComplete="email"
+                  placeholder="exemple@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
-              ) : null}
+              </div>
+              <span className="bv-petit" style={{ textAlign: "left" }}>
+                Ce sera ton identifiant : c'est avec lui que tu te reconnecteras.
+              </span>
+            </div>
+          )}
 
-              <FieldLarge
-                label="Mot de passe"
-                type="password"
-                value={password}
-                onChange={setPassword}
+          <div className="bv-champ">
+            <label htmlFor="bv-mdp1">Choisis un mot de passe</label>
+            <div className="bv-saisie">
+              <input
+                id="bv-mdp1"
+                type={voir ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder="Au moins 6 caractères"
-                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
-
-              <FieldLarge
-                label="Confirme ton mot de passe"
-                type="password"
-                value={passwordConfirm}
-                onChange={setPasswordConfirm}
-                placeholder="Retape le même"
-                autoComplete="new-password"
-              />
-
-              {formError ? (
-                <div
-                  style={{
-                    background: "rgba(251,113,133,0.12)",
-                    border: "1px solid rgba(251,113,133,0.3)",
-                    color: "#FBBFC8",
-                    padding: "12px 14px",
-                    borderRadius: 12,
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <p style={{ margin: 0 }}>{formError}</p>
-                  {/* Lien "Mot de passe oublie" si l'erreur contient
-                      "deja un compte" -> guide le client vers le reset
-                      Supabase standard (envoi email). 2026-05-05. */}
-                  {(formError.toLowerCase().includes("deja un compte") ||
-                    formError.toLowerCase().includes("déjà un compte") ||
-                    formError.toLowerCase().includes("mot de passe")) ? (
-                    <a
-                      href="/forgot-password"
-                      style={{
-                        display: "inline-block",
-                        marginTop: 8,
-                        color: "#FFD66B",
-                        fontWeight: 600,
-                        textDecoration: "underline",
-                      }}
-                    >
-                      → Mot de passe oublié ? Reset par email
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
-
               <button
                 type="button"
-                onClick={() => void handleSubmit()}
-                disabled={submitting}
-                style={{
-                  marginTop: 8,
-                  padding: "18px 20px",
-                  borderRadius: 14,
-                  background: submitting
-                    ? "rgba(var(--ls-teal-rgb),0.4)"
-                    : "linear-gradient(135deg, #D4B460, #2DD4BF)",
-                  color: "#0B0D11",
-                  border: "none",
-                  fontFamily: "Syne, sans-serif",
-                  fontWeight: 700,
-                  fontSize: 17,
-                  cursor: submitting ? "default" : "pointer",
-                  letterSpacing: 0.3,
-                  boxShadow: submitting ? "none" : "0 10px 30px rgba(var(--ls-teal-rgb),0.35)",
-                }}
+                className="bv-oeil"
+                aria-pressed={voir}
+                aria-label={voir ? "Cacher le mot de passe" : "Voir le mot de passe"}
+                onClick={() => setVoir((x) => !x)}
               >
-                {submitting ? "Création…" : "Créer mon accès"}
+                {voir ? "Cacher" : "Voir"}
               </button>
-
-              <p
-                style={{
-                  fontSize: 12,
-                  color: "rgba(244,233,207,0.55)",
-                  textAlign: "center",
-                  marginTop: 10,
-                  lineHeight: 1.5,
-                }}
-              >
-                Tes infos sont protégées. Seul toi et {validation.coachFirstName}{" "}
-                y avez accès.
-              </p>
             </div>
-          </>
-        )}
-      </div>
+          </div>
+
+          <div className="bv-champ">
+            <label htmlFor="bv-mdp2">Retape-le</label>
+            <div className="bv-saisie">
+              <input
+                id="bv-mdp2"
+                type={voir ? "text" : "password"}
+                autoComplete="new-password"
+                placeholder="Le même"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {formError && (
+            <div className="bv-erreur" role="alert">
+              <p>{formError}</p>
+              {lienOubli && <a href="/forgot-password">Mot de passe oublié ? Recevoir un lien par email</a>}
+            </div>
+          )}
+
+          <button type="submit" className="bv-cta" disabled={submitting}>
+            {submitting ? "Création de ton accès…" : (
+              <>
+                Créer mon accès <span aria-hidden="true">→</span>
+              </>
+            )}
+          </button>
+        </form>
+        <p className="bv-petit">
+          Déjà un compte ? <a href="/forgot-password">Mot de passe oublié</a>
+        </p>
+      </main>
     </div>
-  );
-}
-
-function InstallPwaStep({
-  firstName,
-  onContinue,
-  clientPhone,
-}: {
-  firstName: string;
-  onContinue: () => void;
-  clientPhone?: string | null;
-}) {
-  // V2 (2026-04-30) : ajout tuto modale pas-a-pas avec illustrations SVG.
-  // Mendy a galere a installer la PWA — ce tuto guide visuellement.
-  const [showTutorial, setShowTutorial] = useState(false);
-  return (
-    <div
-      style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(var(--ls-teal-rgb),0.3)",
-        borderRadius: 22,
-        padding: 28,
-        color: "#F4E9CF",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: 26,
-          fontWeight: 700,
-          color: "#FDECC0",
-          lineHeight: 1.15,
-          marginBottom: 10,
-        }}
-      >
-        C'est bon {firstName}, ton accès est créé ! 🎉
-      </div>
-      <p
-        style={{
-          fontSize: 14,
-          lineHeight: 1.6,
-          opacity: 0.9,
-          marginBottom: 22,
-        }}
-      >
-        Une dernière étape pour un accès rapide :{" "}
-        <strong>installe l'app sur ton téléphone</strong>. Comme ça, tu la
-        retrouves en 1 clic, comme une vraie appli.
-      </p>
-
-      {/* CTA tuto guide visuel (V2 2026-04-30) — recommande pour les
-          users qui ne savent pas installer une PWA */}
-      <button
-        type="button"
-        onClick={() => setShowTutorial(true)}
-        style={{
-          width: "100%",
-          padding: "14px 18px",
-          marginBottom: 14,
-          borderRadius: 14,
-          border: "0.5px solid rgba(255,255,255,0.30)",
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)",
-          color: "#FDECC0",
-          fontFamily: "DM Sans, sans-serif",
-          fontSize: 14,
-          fontWeight: 700,
-          cursor: "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 10,
-          transition: "transform 0.15s ease, background 0.15s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.background =
-            "linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.12) 100%)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = "none";
-          e.currentTarget.style.background =
-            "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.08) 100%)";
-        }}
-      >
-        🎬 Voir le tuto guidé pas-à-pas
-      </button>
-      {showTutorial && (
-        <InstallPwaTutorialModal
-          open={true}
-          onClose={() => setShowTutorial(false)}
-          firstName={firstName}
-        />
-      )}
-
-      <div
-        style={{
-          background: "#FFFFFF",
-          color: "#111827",
-          borderRadius: 16,
-          padding: 22,
-          marginBottom: 20,
-        }}
-      >
-        <InstallPwaInstructions compact />
-      </div>
-
-      <button
-        type="button"
-        onClick={onContinue}
-        style={{
-          width: "100%",
-          padding: "14px 20px",
-          borderRadius: 14,
-          background: "linear-gradient(135deg, #D4B460, #2DD4BF)",
-          color: "#0B0D11",
-          border: "none",
-          fontFamily: "Syne, sans-serif",
-          fontWeight: 700,
-          fontSize: 16,
-          cursor: "pointer",
-          letterSpacing: 0.3,
-          boxShadow: "0 8px 24px rgba(var(--ls-teal-rgb),0.25)",
-        }}
-      >
-        J'ai installé, c'est parti !
-      </button>
-      <button
-        type="button"
-        onClick={onContinue}
-        style={{
-          marginTop: 12,
-          width: "100%",
-          padding: "10px 14px",
-          borderRadius: 10,
-          background: "transparent",
-          color: "rgba(244,233,207,0.65)",
-          border: "none",
-          fontFamily: "DM Sans, sans-serif",
-          fontSize: 13,
-          cursor: "pointer",
-        }}
-      >
-        Je ferai ça plus tard
-      </button>
-
-      {/* Chantier Welcome Page + Magic Links (2026-04-24) : filet de
-          sécurité WhatsApp pour se reconnecter 24h si l'install PWA
-          rate ou le client change d'appareil. */}
-      <MagicLinkFallback firstName={firstName} clientPhone={clientPhone} />
-    </div>
-  );
-}
-
-function InvalidCard({ message }: { message: string }) {
-  return (
-    <div
-      style={{
-        background: "rgba(251,113,133,0.08)",
-        border: "1px solid rgba(251,113,133,0.3)",
-        borderRadius: 18,
-        padding: 24,
-        textAlign: "center",
-      }}
-    >
-      <p
-        style={{
-          fontFamily: "Syne, sans-serif",
-          fontSize: 22,
-          fontWeight: 700,
-          color: "#FBBFC8",
-          marginBottom: 10,
-        }}
-      >
-        Lien non valide
-      </p>
-      <p style={{ fontSize: 15, lineHeight: 1.6, color: "#FBBFC8cc" }}>{message}</p>
-    </div>
-  );
-}
-
-function FieldLarge({
-  label,
-  type,
-  value,
-  onChange,
-  placeholder,
-  autoComplete,
-}: {
-  label: string;
-  type: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  autoComplete?: string;
-}) {
-  return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span
-        className="bienvenue-field-label"
-        style={{ fontSize: 13, fontWeight: 500, letterSpacing: 0.3 }}
-      >
-        {label}
-      </span>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        className="bienvenue-field-input"
-      />
-    </label>
   );
 }
