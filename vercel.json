@@ -105,6 +105,17 @@
       "destination": "/api/club-meta?path=reserver"
     },
     {
+      "source": "/client/:token",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|redditbot|Googlebot|bingbot|Embedly|vkShare|Applebot|SkypeUriPreview|Iframely|Google-InspectionTool).*"
+        }
+      ],
+      "destination": "/api/client-meta?token=:token"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

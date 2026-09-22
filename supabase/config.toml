@@ -90,8 +90,6 @@ verify_jwt = true
 # L'auth se fait DANS la fonction, par le jeton d'URL (client_app_accounts).
 [functions.client-app-data]
 verify_jwt = false
-[functions.client-app-confirm-calendar]
-verify_jwt = false
 [functions.client-app-mark-onboarded]
 verify_jwt = false
 [functions.client-app-set-baseline]
@@ -163,8 +161,6 @@ verify_jwt = false
 [functions.crm-relance-notifier]
 verify_jwt = false
 [functions.shop-relance-notifier]
-verify_jwt = false
-[functions.send-newsletter-email]
 verify_jwt = false
 [functions.lead-relaunch-send]
 verify_jwt = false

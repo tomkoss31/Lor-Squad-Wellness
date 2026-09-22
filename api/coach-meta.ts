@@ -23,7 +23,7 @@
 export const config = { runtime: "edge" };
 
 const FALLBACK_IMAGE =
-  "https://www.labase360.fr/brand/labase360/og-image-1200x630.png";
+  "https://www.labase360.fr/brand/labase360/og-image-1200x630.png?v=2";
 
 function esc(input: unknown): string {
   return String(input ?? "")

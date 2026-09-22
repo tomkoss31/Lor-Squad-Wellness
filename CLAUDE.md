@@ -438,7 +438,20 @@ Micro → ~35 $/mois, pas 25.
   (**à rebrancher à l'ouverture du club**), `daily-actions-notifier-18/19`.
 - **`cron.job_run_details` n'est JAMAIS purgée par Supabase** — 32 000 lignes /
   28 Mo au moment de l'incident. Depuis le 18/09/2026 : tâche `purge-journal-cron`
-  (03:35, garde 14 jours — assez pour rejouer un diagnostic comme celui-ci).
+  (03:35, garde **7 jours depuis le 22/09** — 30 h ont suffi à rejouer le diagnostic du 22/09).
+
+### Le 22/09/2026 : trois gels en 20 h, et ce que ce n'est PAS
+
+Hier 19 h, ce matin 5 h 35 → 8 h 32, cet après-midi 14 h 05 → 14 h 37 (Restart project). Mesuré 10 min
+après le redémarrage : 426 Mo de RAM, 5 Mo libres, **swap déjà 321 Mo, Committed_AS 1,42 Go pour une
+limite de 1,29 Go (110 %)**. Base = **46 Mo** ; connexions normales (PostgREST 11 au repos) ; tâches 5-7/h
+à 0,1 s ; journal 2-5 ms par appel. → C'est la pile Supabase elle-même qui ne tient pas dans le Nano,
+pas l'app : le remède est le **Micro (1 Go)**, rien d'autre. Ce qui fait basculer : le tableau de bord
+Supabase (sa liste d'extensions : **21 s** pour une requête), `get_advisors`, et les migrations (chaque
+DDL fait relire toute la structure à PostgREST : plusieurs secondes). **Sur le Nano : pas de
+`get_advisors`, pages Database/Advisors du tableau de bord fermées, migrations regroupées.**
+Le 22/09 : Shakes&drinks déplacé dans sa propre organisation gratuite (le Pro ne coûte que 25 $),
+21 fonctions SQL mortes et 4 fonctions serveur sans appelant supprimées (migration `20261215730000`).
 
 ---
 
@@ -782,6 +795,14 @@ dur sur La Base 360. Les assets Breakfast existent (`public/brand/breakfast-club
 mais ne sont pas câblés par domaine — seules les pages `/club*` ont leurs méta
 via `club-meta`.
 
+**Les liens d'espace membre `/client/<jeton>`** (22/09) ont les leurs : `api/client-meta` (edge, robots
+seulement via `vercel.json`) → habillage Breakfast Club pour une membre du club (`apercu_espace_membre`,
+lit `clients.ebe_bbc`, ne rend que `club`/`app`), La Base 360 sinon ; `noindex`, jamais de nom.
+⚠️ **Telegram et WhatsApp gardent une image d'aperçu en mémoire d'après son ADRESSE** : l'image
+`og-image-1200x630.png` avait gardé l'ancien logo chez eux alors que la prod servait le nouveau. Changer
+d'image = changer d'adresse (`?v=2` depuis le 22/09). Un aperçu déjà vu se rafraîchit sur Telegram avec
+@WebpageBot.
+
 ---
 
 ---
@@ -1039,14 +1060,13 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 80 (au 21/09/2026)
+## ⚡ Edge Functions — les 76 (au 22/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
 | `campaign-send` | fetch front (admin, JWT) | Envoi d'une campagne par lot — dry-run / send. `verify_jwt=false` (contrôle admin DANS la fonction) |
 | `campaign-unsubscribe` | GET (page) + POST (1-clic Gmail) | Désabonnement → alimente `email_suppressions` |
 | `client-app-data` | fetch front (app client) | Migration RLS → service_role |
-| `client-app-confirm-calendar` | ⚠️ aucun appelant trouvé le 18/09 | Confirmation RDV client — à trancher (lot 3) |
 | `client-app-mark-onboarded` | fetch front (app client) | Marque PWA onboardé |
 | `client-anniversary-check` | cron `4 7 * * *` (9 h 04 Paris) | Points XP de la cliente : anniversaire +50, 1 / 3 / 6 mois depuis son 1er bilan +50 / +100 / +150. En erreur 500 chaque matin de mai au 21/09 (RPC `exec_anniversary_query` absente) : réparée le 21/09, points adoucis, 0 point jamais donné avant |
 | `generate-auto-login-token` | fetch front (coach) | Lien magique app client |
@@ -1064,10 +1084,8 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `rdv-imminent-notifier` | cron `8 5-18 * * *` UTC (1×/heure, 7 h–20 h Paris l'été, depuis le 21/09 ; toutes les 30 min avant) | « RDV dans 1 h » au coach (fenêtre 30–90 min devant : à l'heure, rien n'est raté) |
 | `new-message-notifier` | trigger Postgres | Notif nouveau message client |
 | `new-coach-message-notifier` | trigger Postgres | Notif coach → client |
-| `coach-tips-dispatcher` | plus de cron depuis le 18/09 (supprimé, il était inactif) | Tips contextuels coach — plus rien ne l'appelle |
 | `formation-validation-notifier` | trigger / fetch | Notif validation module |
 | `dispatch-newsletter` | fetch front (admin, `AdminNewsletterEditPage`) | Envoi d'une newsletter : test à l'admin, ou à tous selon l'audience ; lien de désinscription signé par destinataire (`%%DESABO%%`) |
-| `send-newsletter-email` | ⚠️ AUCUN appelant (reste de la validation Resend du 23/05) | Corps vide ou `test:true` → un mail de test fixe à Thomas, SANS contrôle d'accès ; sinon admin seulement. Suppression proposée le 21/09 |
 | `client-app-set-baseline` | fetch front (app client) | Point de départ poids/mensurations à l'onboarding (chantier poids couche 2) |
 | `noaly` | fetch front (coach + client + bilan) | IA Noaly multi-modes (crm_message / coach_chat / client_chat / bilan_analysis). `client_chat` lit le journal du jour depuis le 21/09 (si la personne le tient) |
 | `get-online-bilan-results` | fetch front (page publique) | Données page premium /resultat-bilan/:token (no-verify-jwt) |
@@ -1094,7 +1112,6 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `rdv-confirm-client` | fetch front | Mail de confirmation au CLIENT de suivi quand le RDV est posé |
 | `club-mail-apres-rdv` | fetch front (qualification d'un RDV club) | Le mail d'après-RDV : « vous démarrez » / « vous n'avez pas pu venir » — idempotent (edge v7, 16/09) |
 | `club-mail-creneau-manquant` | cron `2,32 5-21 * * *` UTC (toutes les 30 min, 7 h–23 h 30 Paris l'été, depuis le 21/09 ; toutes les 10 min avant) | Rattrape la plus grosse fuite de l'entonnoir : mail à qui n'a pas fini sa réservation (lectures avec relance anti-Nano, `_shared/reessais.ts`) |
-| `club-mail-relance-dormants` | ⚠️ AUCUN appelant (ni cron, ni front) | Dernier essai propre sur les leads sans réponse — jamais branchée. À trancher (lot 3 de l'audit) |
 | `make-lead-entrant` | Make (webhook du formulaire Meta) | LE tuyau Meta → app : crée le lead, SMS automatique + liens personnels. **Ne PAS supprimer** même si le front ne la cite pas |
 | `lead-clic` | lien dans les SMS / mails | « Qui a cliqué sur son lien ? » : trace le clic puis redirige |
 | `lead-relaunch-send` | outil interne, aucun appel front | Relance des leads dormants par email (Resend). À trancher (lot 3) |
@@ -1126,11 +1143,13 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 > **80 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; puis `morning-suivis-digest` (« pas besoin ») et `formation-relay-to-admin` (0 formation en attente) supprimées avec leurs tâches, `stripe-manual-reconcile` passée à 1 fois par jour ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
-> fait foi ; toute nouvelle fonction = une ligne ici). **En ligne = dépôt = 80 depuis le 21/09** : les
-> 7 fonctions FANTÔMES (en ligne sans aucun code, appelées par rien) ont été supprimées ce jour-là —
+> fait foi ; toute nouvelle fonction = une ligne ici). **En ligne = dépôt = 76 depuis le 22/09** : les
+> 7 fonctions FANTÔMES (en ligne sans aucun code, appelées par rien) ont été supprimées le 21/09 —
 > `admin-cancel-campaign`, `admin-resend-rdv-confirm`, `coach-reminder-notifier`, `daily-actions-notifier`,
-> `flex-notifier`, `passive-supervisor-data`, `tmp-shop-upload`. Contrôle : comparer
-> `supabase functions list` à `ls supabase/functions`. Ne sont appelées par rien dans l'app :
-> `make-lead-entrant` (Make), `test-twilio-sms` (outil), puis `send-newsletter-email`, `coach-tips-dispatcher`,
-> `client-app-confirm-calendar`, `club-mail-relance-dormants` et `lead-relaunch-send` — ces cinq-là sont à
-> trancher avec Thomas.
+> `flex-notifier`, `passive-supervisor-data`, `tmp-shop-upload` — puis, le 22/09 (Thomas : « fais au mieux »),
+> 4 fonctions sans aucun appelant : `send-newsletter-email` (mail de test SANS contrôle d'accès),
+> `club-mail-relance-dormants` (outil ponctuel du 25/08, aucun contrôle d'accès), `coach-tips-dispatcher`,
+> `client-app-confirm-calendar` (code et `config.toml` retirés ; le code reste dans l'historique git).
+> Contrôle : comparer `supabase functions list` à `ls supabase/functions`. Ne sont appelées par rien dans
+> l'app, et c'est voulu : `make-lead-entrant` (Make), `test-twilio-sms` (outil), `lead-relaunch-send` (outil,
+> protégé par un secret).
