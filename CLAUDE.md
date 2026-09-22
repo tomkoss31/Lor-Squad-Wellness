@@ -803,6 +803,13 @@ lit `clients.ebe_bbc`, ne rend que `club`/`app`), La Base 360 sinon ; `noindex`,
 d'image = changer d'adresse (`?v=2` depuis le 22/09). Un aperçu déjà vu se rafraîchit sur Telegram avec
 @WebpageBot.
 
+**L'installation de l'espace membre (« Sur l'écran d'accueil »)** : `api/client-manifest?token=` (edge) sert le
+manifeste d'UNE cliente (start_url = id = `/client/<jeton>`, scope `/client/`) ; un petit script d'index.html le
+pose AVANT tout, `ClientAppPage` le repose et rend le manifeste coach au démontage. ⚠️ **Jamais de manifeste en
+`blob:`** : Android le lit, l'iPhone NON — il retombait sur le manifeste coach (`start_url: /login`) et l'icône de
+Gwen ouvrait la page de connexion (22/09, du 16/06 au 22/09 sur iPhone). Installée de travers : supprimer
+l'icône, rouvrir le même lien dans Safari, refaire « Sur l'écran d'accueil ».
+
 ---
 
 ---
