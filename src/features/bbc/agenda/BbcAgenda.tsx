@@ -42,6 +42,7 @@ import { QualifierRdvClubSheet } from "./QualifierRdvClubSheet";
 import { JourDuClubSheet, type RituelDuJour } from "./JourDuClubSheet";
 import { GuideAgendaSheet } from "./GuideAgendaSheet";
 import { NotifsAgendaSheet } from "./NotifsAgendaSheet";
+import { ContactRdv } from "./ContactRdv";
 import { qualifierRdvClub } from "./qualifierRdvClub";
 import { libererIndispo } from "./indispos";
 import { BbcNewMemberSheet } from "../BbcNewMemberSheet";
@@ -481,18 +482,10 @@ export function BbcAgenda({ userId, coachName, club, collantHaut = "env(safe-are
             ) : aQualifier(rdvOuvert, maintenant) ? (
               <Ligne couleur="var(--ls-bbc-coral)">Passé, pas encore qualifié</Ligne>
             ) : null}
-            {contactDe(rdvOuvert).tel ? (
-              <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
-                <a href={`tel:${contactDe(rdvOuvert).tel}`} style={lienAction}>
-                  📞 Appeler
-                </a>
-                <a href={`sms:${contactDe(rdvOuvert).tel}`} style={lienAction}>
-                  💬 SMS
-                </a>
-              </div>
-            ) : (
-              <div style={{ fontSize: 12.5, color: "var(--ls-bbc-hint)" }}>Pas de téléphone sur ce rendez-vous.</div>
-            )}
+            {/* Les mêmes coordonnées que le CRM (22/09) : numéro, mail, et les quatre gestes. */}
+            <div style={{ paddingTop: 4 }}>
+              <ContactRdv rdv={rdvOuvert} />
+            </div>
             {rdvOuvert.source === "prospect" && !marqueDe(rdvOuvert) ? (
               <button
                 type="button"
@@ -1229,11 +1222,6 @@ const fab: CSSProperties = {
 const boutonFantome: CSSProperties = {
   width: "100%", minHeight: 46, marginTop: 6, borderRadius: 13, border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)",
   color: "var(--ls-bbc-muted)", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13.5, fontWeight: 700, cursor: "pointer",
-};
-const lienAction: CSSProperties = {
-  flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, minHeight: 44, borderRadius: 12,
-  border: "1px solid var(--ls-bbc-line2)", background: "var(--ls-bbc-s2)", color: "var(--ls-bbc-text)",
-  fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, textDecoration: "none",
 };
 const voile: CSSProperties = {
   position: "fixed", inset: 0, zIndex: 60, background: "rgba(8, 20, 18, .6)", display: "flex", alignItems: "flex-end", justifyContent: "center",

@@ -26,6 +26,8 @@ export interface RdvClub {
   prenom: string;
   nom: string | null;
   telephone: string | null;
+  /** Son mail (22/09) : les MÊMES coordonnées que le CRM, partout (`agenda_du_club` les complète depuis sa fiche). */
+  email?: string | null;
   /** Le statut brut de sa table : trois vocabulaires, cf. `marqueDe`. */
   statut: string;
   /** « bilan » · « decouverte » · « suivi » · … */
@@ -50,6 +52,7 @@ export function versRdvClub(r: Record<string, unknown>): RdvClub | null {
     prenom: String(r.prenom ?? "").trim(),
     nom: typeof r.nom === "string" && r.nom.trim() ? r.nom.trim() : null,
     telephone: typeof r.telephone === "string" && r.telephone.trim() ? r.telephone.trim() : null,
+    email: typeof r.email === "string" && r.email.trim() ? r.email.trim() : null,
     statut: String(r.statut ?? ""),
     clientId: typeof r.client_id === "string" && r.client_id ? r.client_id : null,
     nature: String(r.nature ?? "") || (source === "indispo" ? "indispo" : source === "suivi" ? "suivi" : source === "reservation" ? "decouverte" : "bilan"),
@@ -166,10 +169,20 @@ export function parJour(rdvs: readonly RdvClub[]): Map<string, RdvClub[]> {
  */
 export function contactDe(r: RdvClub): { tel: string | null; mail: string | null } {
   const brut = (r.telephone ?? "").trim();
-  if (!brut) return { tel: null, mail: null };
-  if (brut.includes("@")) return { tel: null, mail: brut };
+  // Depuis le 22/09, l'agenda rend aussi le mail, et complète l'un par l'autre
+  // depuis la fiche du CRM : Mélanie n'avait pas le numéro de Sandrine (réservation
+  // laissée avec un mail), alors que le CRM l'avait.
+  const mailRendu = (r.email ?? "").trim();
+  const mail = mailRendu.includes("@") ? mailRendu : brut.includes("@") ? brut : null;
+  if (!brut || brut.includes("@")) return { tel: null, mail };
   const chiffres = brut.replace(/\D/g, "");
-  return { tel: chiffres.length >= 6 ? chiffres : null, mail: null };
+  return { tel: chiffres.length >= 6 ? chiffres : null, mail };
+}
+
+/** « 06 12 34 56 02 » — un numéro français de 10 chiffres, lisible ; le reste tel quel. */
+export function telLisible(tel: string): string {
+  const c = tel.replace(/\D/g, "");
+  return c.length === 10 && c.startsWith("0") ? c.replace(/(\d{2})(?=\d)/g, "$1 ") : tel;
 }
 
 /**

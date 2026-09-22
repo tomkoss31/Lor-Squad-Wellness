@@ -23,6 +23,7 @@ import {
   semaineDe,
   versRdvClub,
   contactDe,
+  telLisible,
   estIndispo,
   sansIndispos,
   horairesDuJour,
@@ -316,6 +317,18 @@ describe("comment joindre la personne", () => {
   it("rien, ou trois chiffres perdus : ni l'un ni l'autre", () => {
     expect(contactDe(versRdvClub(ligne({ telephone: null }))!)).toEqual({ tel: null, mail: null });
     expect(contactDe(versRdvClub(ligne({ telephone: "poste 12" }))!)).toEqual({ tel: null, mail: null });
+  });
+
+  it("le numéro ET le mail, comme dans le CRM (22/09 : le rendez-vous de Sandrine)", () => {
+    expect(contactDe(versRdvClub(ligne({ telephone: "06 12 34 56 53", email: "prenom.nom0273@exemple.fr" }))!))
+      .toEqual({ tel: "0612345653", mail: "prenom.nom0273@exemple.fr" });
+    // Un « mail » qui n'en est pas un ne devient pas un lien mailto.
+    expect(contactDe(versRdvClub(ligne({ telephone: "0612345653", email: "pas de mail" }))!)).toEqual({ tel: "0612345653", mail: null });
+  });
+
+  it("un numéro français se lit par paires ; un numéro étranger reste tel quel", () => {
+    expect(telLisible("0612345653")).toBe("06 12 34 56 53");
+    expect(telLisible("+32470123456")).toBe("+32470123456");
   });
 });
 
