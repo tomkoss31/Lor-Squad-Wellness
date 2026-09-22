@@ -140,3 +140,38 @@ describe("les petites phrases", () => {
     expect(messagePour(c, "Thomas")).toContain("Camille");
   });
 });
+
+// 22/09 — Thomas : « il manque les noms » (capture : Amandine, Amélie, Anaïs… deux
+// Sandrine le matin même). La LISTE montre prénom + nom ; le MESSAGE garde le prénom.
+describe("le nom dans la liste, le prénom dans le message", () => {
+  it("un lead : « Amélie Durand » dans la liste, « Amélie » dans le message", () => {
+    const c = aContacter({ leads: [lead({ firstName: "Amélie", lastName: "durand" })], membres: [], coeurs: [], maintenant: now })[0];
+    expect(c.nomComplet).toBe("Amélie Durand");
+    expect(c.nom).toBe("Amélie");
+    expect(messagePour(c, "Thomas")).toContain("Bonjour Amélie,");
+  });
+
+  it("un lead sans nom de famille garde son prénom", () => {
+    const c = aContacter({ leads: [lead({ firstName: "Nelly", lastName: null })], membres: [], coeurs: [], maintenant: now })[0];
+    expect(c.nomComplet).toBe("Nelly");
+  });
+
+  it("une membre : son nom complet dans la liste, « Salut Gwendoline » dans le message", () => {
+    const m = membre({ name: "Gwendoline Brunet", prenom: "Gwendoline", card: { type: 10, used: 10, remaining: 0, expired: false } });
+    const c = aContacter({ leads: [], membres: [m], coeurs: [], maintenant: now })[0];
+    expect(c.nomComplet).toBe("Gwendoline Brunet");
+    expect(c.nom).toBe("Gwendoline");
+    expect(messagePour(c, "Thomas")).toMatch(/^Gwendoline, ta carte est finie/);
+  });
+
+  it("la liste se range par nom complet (deux Sandrine ne se mélangent plus)", () => {
+    const l = aContacter({
+      leads: [
+        lead({ key: "pl:2", firstName: "Sandrine", lastName: "Miltgen", status: "contacted", relanceDue: true }),
+        lead({ key: "pl:3", firstName: "Sandrine", lastName: "Cottel", status: "contacted", relanceDue: true }),
+      ],
+      membres: [], coeurs: [], maintenant: now,
+    });
+    expect(l.map((c) => c.nomComplet)).toEqual(["Sandrine Cottel", "Sandrine Miltgen"]);
+  });
+});

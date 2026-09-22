@@ -25,6 +25,8 @@ import { isHeart } from "./useBbcHearts";
 export interface BbcMember {
   id: string;
   name: string;
+  /** Le prénom seul (22/09) : c'est lui qu'on écrit dans un message (« Salut Gwendoline ! »). */
+  prenom?: string;
   phone?: string;
   email?: string;
   objective?: string;
@@ -193,6 +195,7 @@ export function useBbcMembers(userId?: string | null): UseBbcMembersResult {
         return {
           id,
           name: `${String(r.first_name ?? "").trim()} ${String(r.last_name ?? "").trim()}`.trim() || "—",
+          prenom: String(r.first_name ?? "").trim() || undefined,
           phone: (r.phone as string) || undefined,
           email: (r.email as string) || undefined,
           objective: (r.objective as string) || undefined,

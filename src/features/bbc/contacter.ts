@@ -22,6 +22,18 @@ import type { CrmLead } from "../../hooks/useCrmLeads";
 import type { BbcMember } from "./useBbcMembers";
 import { nextPalier, type HeartMember } from "./useBbcHearts";
 import type { SignalVisites } from "./useBbcSignaux";
+import { nomAffiche } from "../crm/nomPropre";
+
+/** Le nom complet d'un lead pour la liste : « Amélie Durand », le prénom seul si on n'a pas le nom. */
+function nomCompletLead(l: CrmLead): string {
+  const prenom = l.firstName && l.firstName !== "—" ? l.firstName : null;
+  return nomAffiche(prenom, l.lastName ?? null, l.firstName || "—");
+}
+
+/** Le prénom d'une personne : le sien s'il est connu, sinon le premier mot de son nom. */
+function prenomDe(nom: string, prenom?: string | null): string {
+  return (prenom ?? "").trim() || nom.split(/\s+/)[0] || nom;
+}
 
 export type RaisonContact =
   | "lead_nouveau"
@@ -36,7 +48,11 @@ export type RaisonContact =
 export interface AContacter {
   /** Stable : sert de clé React et de `contact_label` quand on note le geste. */
   key: string;
+  /** Le PRÉNOM : c'est lui qu'on écrit dans le message (« Salut Amélie ! ») et qu'on note. */
   nom: string;
+  /** Prénom + nom, pour la LISTE (22/09, Thomas : « il manque les noms » — trois Amélie,
+   *  deux Sandrine : avec le prénom seul, on ne sait pas qui appeler). */
+  nomComplet: string;
   raison: RaisonContact;
   /** La phrase sous le prénom — ce qui explique pourquoi cette personne est là. */
   texte: string;
@@ -95,6 +111,7 @@ export function aContacter(args: {
       out.push({
         key: `lead:${l.key}`,
         nom: l.firstName,
+        nomComplet: nomCompletLead(l),
         raison: "lead_nouveau",
         texte: `${dou}, pas encore ${geste === "appeler" ? "appelé·e" : "contacté·e"} · ${attente(min)}`,
         geste,
@@ -109,6 +126,7 @@ export function aContacter(args: {
       out.push({
         key: `lead:${l.key}`,
         nom: l.firstName,
+        nomComplet: nomCompletLead(l),
         raison: "relance_due",
         texte: "À relancer aujourd'hui, comme convenu",
         geste,
@@ -129,15 +147,15 @@ export function aContacter(args: {
     const journalLache = !!journal && !journal.dejaRelancee && journal.joursNotes >= JOURNAL_LACHE.joursNotes
       && silence != null && silence >= JOURNAL_LACHE.silenceMin && silence <= JOURNAL_LACHE.silenceMax;
     if (m.card.used >= m.card.type) {
-      out.push({ key: `membre:${m.id}:carte`, nom: m.name, raison: "carte_finie", texte: `Carte ${m.card.type} finie : proposer le bilan et la carte suivante`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+      out.push({ key: `membre:${m.id}:carte`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "carte_finie", texte: `Carte ${m.card.type} finie : proposer le bilan et la carte suivante`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.card.used === m.card.type - 1) {
-      out.push({ key: `membre:${m.id}:neuf`, nom: m.name, raison: "neuvieme_visite", texte: `${m.card.used}e visite : lui proposer le bilan de la ${m.card.type}e`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+      out.push({ key: `membre:${m.id}:neuf`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "neuvieme_visite", texte: `${m.card.used}e visite : lui proposer le bilan de la ${m.card.type}e`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (!m.visitedToday && joursSans !== null && joursSans >= 6) {
-      out.push({ key: `membre:${m.id}:absente`, nom: m.name, raison: "absente", texte: `Pas venue depuis ${Math.round(joursSans)} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+      out.push({ key: `membre:${m.id}:absente`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "absente", texte: `Pas venue depuis ${Math.round(joursSans)} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (journalLache && journal) {
-      out.push({ key: `membre:${m.id}:journal`, nom: m.name, raison: "journal", texte: `Notait son journal ${journal.joursNotes} jours sur 7, plus rien depuis ${silence} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+      out.push({ key: `membre:${m.id}:journal`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "journal", texte: `Notait son journal ${journal.joursNotes} jours sur 7, plus rien depuis ${silence} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.hearts === 0 && joursDepuisDebut !== null && joursDepuisDebut >= 21 && (sig?.visites30j ?? 0) >= 6) {
-      out.push({ key: `membre:${m.id}:contente`, nom: m.name, raison: "contente", texte: `Vient depuis ${Math.floor(joursDepuisDebut / 7)} semaines, ${sig?.visites30j} visites ce mois : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: m.phone ?? null, membreId: m.id });
+      out.push({ key: `membre:${m.id}:contente`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "contente", texte: `Vient depuis ${Math.floor(joursDepuisDebut / 7)} semaines, ${sig?.visites30j} visites ce mois : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: m.phone ?? null, membreId: m.id });
     }
   }
 
@@ -146,10 +164,10 @@ export function aContacter(args: {
     const next = nextPalier(h.hearts);
     if (next === null || next - h.hearts !== 1) continue;
     if (dejaMembre.has(h.key)) continue;
-    out.push({ key: `coeur:${h.key}`, nom: h.name, raison: "coeur", texte: `${h.hearts} ♥ · à 1 cœur du palier ${next} : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: null, membreId: h.key });
+    out.push({ key: `coeur:${h.key}`, nom: prenomDe(h.name), nomComplet: h.name, raison: "coeur", texte: `${h.hearts} ♥ · à 1 cœur du palier ${next} : lui demander une amie`, geste: "ecrire", urgence: 4, telephone: null, membreId: h.key });
   }
 
-  return out.sort((a, b) => a.urgence - b.urgence || (b.attenteMin ?? 0) - (a.attenteMin ?? 0) || a.nom.localeCompare(b.nom, "fr"));
+  return out.sort((a, b) => a.urgence - b.urgence || (b.attenteMin ?? 0) - (a.attenteMin ?? 0) || a.nomComplet.localeCompare(b.nomComplet, "fr"));
 }
 
 /** Le message prêt à envoyer — court, à la première personne, jamais une relance de robot. */
