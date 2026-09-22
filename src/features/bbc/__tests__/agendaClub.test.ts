@@ -17,6 +17,9 @@ import {
   libelleMois,
   lundiDe,
   marqueDe,
+  peutChanger,
+  effetAnnulation,
+  motDeplacement,
   nomComplet,
   parJour,
   prenomSeul,
@@ -427,5 +430,45 @@ describe("les horaires du club, jour par jour (la règle du tunnel du site)", ()
 
   it("une plage illisible ou à l'envers est ignorée plutôt qu'affichée fausse", () => {
     expect(horairesDuJour({ hours: { "1": [["15:00", "08:00"], ["8h", "15h"]] } }, "2026-09-28").etat).toBe("repos");
+  });
+});
+
+// ─── Déplacer / annuler (22/09) ─────────────────────────────────────────────
+// Sandrine M. avait réservé sur le site pour le 2/10 ; au téléphone, elle passait
+// au 7/10. L'agenda ne savait pas déplacer une réservation : on en a CRÉÉ une
+// deuxième, et la première restait, rappel compris.
+describe("déplacer / annuler un rendez-vous", () => {
+  const r = (o: Record<string, unknown>): RdvClub => versRdvClub(ligne(o))!;
+
+  it("les trois sortes se déplacent et s'annulent tant qu'elles ne sont pas tranchées", () => {
+    expect(peutChanger(r({ source: "prospect", statut: "scheduled" }))).toBe(true);
+    expect(peutChanger(r({ source: "reservation", statut: "confirmed" }))).toBe(true);
+    expect(peutChanger(r({ source: "reservation", statut: "requested" }))).toBe(true);
+    expect(peutChanger(r({ source: "suivi", statut: "scheduled" }))).toBe(true);
+  });
+
+  it("un rendez-vous déjà tranché ne bouge plus", () => {
+    expect(peutChanger(r({ source: "prospect", statut: "converted" }))).toBe(false);
+    expect(peutChanger(r({ source: "prospect", statut: "cold" }))).toBe(false);
+    expect(peutChanger(r({ source: "reservation", statut: "honored" }))).toBe(false);
+    expect(peutChanger(r({ source: "reservation", statut: "no_show" }))).toBe(false);
+  });
+
+  it("un « pas dispo » garde son propre geste", () => {
+    expect(peutChanger(r({ source: "indispo", statut: "" }))).toBe(false);
+  });
+
+  it("on dit ce que l'annulation déclenche, selon la sorte", () => {
+    expect(effetAnnulation(r({ source: "reservation", statut: "confirmed" }))).toMatch(/site du club/);
+    expect(effetAnnulation(r({ source: "suivi", statut: "scheduled" }))).toMatch(/espace membre/);
+    expect(effetAnnulation(r({ source: "prospect", statut: "scheduled" }))).toBe("Il sort de l'agenda. Pauline reste dans le CRM.");
+  });
+
+  it("après un déplacement, on dit toujours si la personne sait", () => {
+    expect(motDeplacement("parti", "Camille")).toBe("Rendez-vous déplacé · Camille a reçu sa nouvelle date par mail");
+    expect(motDeplacement("pas_de_mail", "Camille")).toMatch(/préviens Camille toi-même/);
+    expect(motDeplacement("pas_parti", "Camille")).toMatch(/pas parti/);
+    expect(motDeplacement("non_demande", "Camille")).toBe("Rendez-vous déplacé · personne n'a été prévenu");
+    expect(motDeplacement(undefined, "")).toBe("Rendez-vous déplacé · personne n'a été prévenu");
   });
 });

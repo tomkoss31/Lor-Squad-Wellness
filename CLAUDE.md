@@ -108,6 +108,19 @@ Audit (artifact RmsMFUAFHGDKWq5ShuHEXC) puis maquette validée par Thomas (R5zUR
   agenda ; les admins, les réservations du site) · `club` (tout ce qui se cale, et le site) · `aucun`.
   La base choisit (`agenda_a_prevenir`, appelé par `prevenirCoach`) ; `book-club-discovery` filtre
   pareil. La personne qui a rendez-vous garde TOUJOURS sa confirmation et ses rappels.
+- **Déplacer / Annuler, sur chaque rendez-vous** (22/09, maquette E6bR9Sko1R4mGaDgFD2W9n validée,
+  migration `20261215720000`) : deux gestes en haut de la feuille d'un RDV à venir, sous la question
+  d'un RDV passé ; un RDV tranché ne bouge plus (`peutChanger`). Une **réservation du site se
+  DÉPLACE** par `coach_reschedule_club_booking` (celle du CRM, ouverte aux coachs du club : revérifie
+  la capacité ET que la coach est libre → `busy`, change de coach si besoin, relance les rappels mail
+  ET SMS) — avant, l'agenda la RECRÉAIT et l'ancienne restait avec son rappel (Sandrine M., 2/10 →
+  7/10). Case « prévenir par mail » cochée par défaut → `notify-club-booking-moved`. **Annuler** =
+  `annuler_rdv_club` : prospect `cancelled`, résa `canceled`, suivi `dismissed` (+ `clients.next_follow_up`,
+  NOT NULL, ramené à son dernier bilan 9 h, sinon « sa pesée : mardi » resterait) ; rien n'est envoyé
+  (décision 11/08) et les rappels ne lisent que les RDV vivants. Droits = ceux de `qualifier_rdv_club`.
+- **La fiche standard** (22/09, le cas de Gwen) : « PLANIFIER → » ouvre TOUJOURS la fenêtre du RDV
+  (il partait sur « Vue complète » quand la fiche était « à jour ») ; une cliente en **suivi libre**
+  montre son RDV calé à la main (`getClientActiveFollowUp` : `scheduled` à venir, jamais une relance).
 - Le mode d'emploi (`mail-agenda-club`, `GuideAgendaSheet`) dit « menu Agenda » et décrit la
   question d'un suivi. **Thomas veut le renvoyer aux coachs** pour le nouvel agenda.
 
@@ -1076,7 +1089,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `auth-email-hook` | Supabase Send Email Hook | Route TOUS les mails auth (signup/invite/magiclink/recovery/email_change/reauthentication) vers Resend + template `_shared/email.ts`. Signature standardwebhooks (`SEND_EMAIL_HOOK_SECRET`). À activer côté dashboard (Auth → Hooks). (no-verify-jwt) |
 | `book-club-discovery` | fetch front (site du club, `/reserver`) | Réservation d'un RDV découverte au club : créneau + capacité (`get_club_discovery_availability`), insert `rdv_bookings`, push coach (no-verify-jwt) |
 | `manage-club-booking` | lien dans le mail de confirmation | Le prospect gère SON rendez-vous (déplacer / annuler) |
-| `notify-club-booking-moved` | fetch front (agenda) | Prévient la personne que SON rendez-vous a bougé |
+| `notify-club-booking-moved` | fetch front (CRM + L'agenda du club, case « prévenir par mail ») | Prévient la personne que SON rendez-vous a bougé. verify_jwt ; droits = admin OU coach du club du RDV (`est_coach_de_mon_club` appelé avec SON jeton), depuis le 22/09 (v11 ; admins seulement avant) |
 | `rdv-accepted-notify` | fetch front | « C'est confirmé » au prospect (11/08/2026) |
 | `rdv-confirm-client` | fetch front | Mail de confirmation au CLIENT de suivi quand le RDV est posé |
 | `club-mail-apres-rdv` | fetch front (qualification d'un RDV club) | Le mail d'après-RDV : « vous démarrez » / « vous n'avez pas pu venir » — idempotent (edge v7, 16/09) |

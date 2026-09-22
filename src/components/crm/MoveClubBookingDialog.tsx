@@ -106,6 +106,9 @@ export function MoveClubBookingDialog({
     if (res !== "ok") {
       setError(
         res === "full" ? "Ce créneau vient d'être pris. Choisis-en un autre."
+          // 22/09 : la base revérifie aussi que la coach est libre à cette heure-là.
+          : res === "busy" ? "La coach a déjà un rendez-vous à cette heure-là. Choisis un autre créneau."
+          : res === "invalid" ? "Ce créneau n'est pas valable."
           : res === "past" ? "Ce créneau est déjà passé."
           : res === "forbidden" ? "Tu n'as pas les droits pour déplacer ce rendez-vous."
           : "Rendez-vous introuvable — il a peut-être été annulé.",
