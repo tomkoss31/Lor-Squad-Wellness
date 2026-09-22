@@ -67,7 +67,7 @@ export function BbcContacter({ contacts, faits, count, target, onContact }: Prop
               key={c.key}
               fait={faits.has(c.key)}
               avant={<Rond tone={c.geste === "appeler" ? "lead" : "msg"}>{c.geste === "appeler" ? "📞" : "💬"}</Rond>}
-              titre={c.nom}
+              titre={c.nomComplet}
               sous={faits.has(c.key) ? "✓ fait aujourd'hui" : c.texte}
               sousTone={!faits.has(c.key) && c.raison === "lead_nouveau" && (c.attenteMin ?? 0) >= 120 ? "alerte" : undefined}
               action={faits.has(c.key) ? "Revoir" : c.geste === "appeler" ? "Appeler" : "✨ Écrire"}
@@ -149,7 +149,7 @@ export function BbcContactSheet({
   const wa = tel ? `https://wa.me/${tel.replace(/^0/, "33").replace(/^\+/, "")}?text=${encodeURIComponent(message)}` : null;
 
   return (
-    <Feuille titre={c.nom} sous={c.texte} onClose={onClose}>
+    <Feuille titre={c.nomComplet} sous={c.texte} onClose={onClose}>
       {erreur ? <div style={{ fontSize: 12.5, color: "var(--ls-bbc-coral)" }}>{erreur}</div> : null}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
         <Info label={tel ? "Téléphone" : "Contact"}>{tel ?? c.lead?.email ?? "—"}</Info>

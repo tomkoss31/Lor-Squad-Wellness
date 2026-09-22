@@ -136,7 +136,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
           <Ligne
             key={c.key}
             avant={<Rond tone="lead">{c.lead?.viaName ? "♥" : c.lead?.source === "bilan-online" ? "B" : "M"}</Rond>}
-            titre={c.nom}
+            titre={c.nomComplet}
             sous={c.texte}
             sousTone={(c.attenteMin ?? 0) >= 120 ? "alerte" : undefined}
             action={c.geste === "appeler" ? "Appeler" : "Écrire"}
@@ -199,7 +199,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
             <Ligne
               key={c.key}
               avant={<Rond tone={c.geste === "appeler" ? "lead" : "msg"}>{c.geste === "appeler" ? "📞" : "💬"}</Rond>}
-              titre={c.nom}
+              titre={c.nomComplet}
               sous={c.texte}
               sousTone={c.raison === "lead_nouveau" && (c.attenteMin ?? 0) >= 120 ? "alerte" : undefined}
               action={c.geste === "appeler" ? "Appeler" : "✨ Écrire"}
