@@ -204,6 +204,11 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   transformation, et un élément transformé devient le repère des `position: fixed` qu'il contient.
   Les feuilles ouvertes depuis l'Accueil standard se posaient en bas de la PAGE. L'Accueil
   standard est en `lbRise … backwards` ; ne pas remettre `both`.
+- ⚠️ **Le shake du club se pose AU POINTAGE depuis le 23/09** (migration `20261215750000`) :
+  `bbc_add_visit` appelle `_journal_prerempli_club`. Avant, le pré-rempli n'était écrit que quand la
+  MEMBRE ouvrait son journal (`journal_jour`) — Thomas pointait Audrey à 8 h 03, regardait son journal
+  et le voyait VIDE, et la case « passée au club » de l'aperçu coach ne s'allumait presque jamais.
+  La fonction ne fait rien deux fois (garde `club_prerempli`) : retiré par la membre = reste retiré.
 - **Règles de Thomas, dans le code** : protéines = poids du DERNIER bilan pesé × coefficient
   réglé par la coach (1,2 · 1,4 · 1,5 · 2 — `journal_reglages`) ; eau = 1 L / 30 kg ; la
   boisson du club (40 cl) et le shake du club sont pré-remplis au pointage (une fois) ; le shake
