@@ -97,6 +97,8 @@ export interface Aliment {
   unite: string | null;
   indice: string | null;
   rangs: Partial<Record<Groupe, number>>;
+  /** Les mots qu'on tape vraiment : « formule 3 », « F3 », « PPP »… (23/09). */
+  synonymes?: string | null;
 }
 
 export interface Ligne {
@@ -270,8 +272,10 @@ export function chercher(aliments: Aliment[], q: string): Aliment[] {
   if (!mots.length) return [];
   return aliments
     .filter((a) => {
-      const nom = normaliser(a.nom);
-      return mots.every((m) => nom.includes(m));
+      // On cherche dans le nom ET dans les synonymes : Thomas tapait « formule 3 »
+      // et ne trouvait pas « Formula 3 », qui était pourtant là (23/09).
+      const texte = normaliser(`${a.nom} ${a.synonymes ?? ""}`);
+      return mots.every((m) => texte.includes(m));
     })
     .sort((a, b) => Number(b.herbalife) - Number(a.herbalife) || a.nom.localeCompare(b.nom, "fr"));
 }

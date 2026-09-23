@@ -324,3 +324,22 @@ describe("ta semaine (bloc B, 7)", () => {
     expect(libelleSemaine("2026-09-28")).toBe("28 sept. → 4 oct.");
   });
 });
+
+describe("la recherche lit aussi les synonymes (23/09)", () => {
+  const catalogue = [
+    { cle: "f3", nom: "Formula 3 (1 cuillère)", famille: null, herbalife: true, prot_portion: 5, prot_100g: null, portions: null, unite: "1 cuillère = 6 g", indice: null, rangs: { pdj: 5 }, synonymes: "formule 3 f3 ppp protein powder personalized" },
+    { cle: "banane", nom: "Banane", famille: null, herbalife: false, prot_portion: null, prot_100g: 1.1, portions: null, unite: null, indice: null, rangs: { pdj: 27 }, synonymes: null },
+  ] as unknown as Aliment[];
+
+  it("« formule 3 » et « F3 » trouvent le Formula 3 — le cas de Thomas", () => {
+    expect(chercher(catalogue, "formule 3").map((a) => a.cle)).toEqual(["f3"]);
+    expect(chercher(catalogue, "f3").map((a) => a.cle)).toEqual(["f3"]);
+    expect(chercher(catalogue, "ppp").map((a) => a.cle)).toEqual(["f3"]);
+  });
+
+  it("le nom écrit marche toujours, et un aliment sans synonyme aussi", () => {
+    expect(chercher(catalogue, "formula").map((a) => a.cle)).toEqual(["f3"]);
+    expect(chercher(catalogue, "banane").map((a) => a.cle)).toEqual(["banane"]);
+    expect(chercher(catalogue, "kiwi")).toEqual([]);
+  });
+});
