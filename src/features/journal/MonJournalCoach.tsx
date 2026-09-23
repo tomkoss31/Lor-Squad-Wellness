@@ -55,6 +55,9 @@ function PremiereFois({ onRelie, onEvaluation }: { onRelie: (token: string) => v
     return () => { fini = true; };
   }, []);
 
+  /** Celles qu'elle peut vraiment prendre (les autres sont déjà à quelqu'un). */
+  const libres = (fiches ?? []).filter((f) => !f.prise);
+
   const relier = async (f: FicheCoach) => {
     setOccupe(f.client_id);
     setErreur(null);
@@ -76,28 +79,48 @@ function PremiereFois({ onRelie, onEvaluation }: { onRelie: (token: string) => v
 
       {fiches?.length ? (
         <>
-          <div className="jr-sec">{fiches.length > 1 ? "Laquelle est la tienne ?" : "C'est bien ta fiche ?"}</div>
+          <div className="jr-sec">{libres.length > 1 ? "Laquelle est la tienne ?" : "C'est bien ta fiche ?"}</div>
           {fiches.map((f) => (
             <div key={f.client_id} className="jr-fiche">
               <span className="jr-fiche-av" aria-hidden="true">{(f.prenom.trim()[0] ?? "?").toUpperCase()}{f.initiale}</span>
               <span className="jr-grow">
                 <b>{f.prenom}{f.initiale ? ` ${f.initiale}.` : ""}</b>
                 <small>
-                  {f.raison === "mail" ? "même adresse que ton compte" : "dans tes membres"}
+                  {f.prise
+                    ? "déjà reliée à un autre compte"
+                    : f.raison === "mail"
+                      ? "même adresse que ton compte"
+                      : f.raison === "club"
+                        ? "membre de ton club"
+                        : "dans tes membres"}
                   {f.poids ? ` · dernier bilan pesé : ${String(f.poids).replace(".", ",")} kg` : " · pas encore de bilan pesé"}
                 </small>
               </span>
-              <button type="button" className="jr-cta" disabled={occupe !== null} onClick={() => void relier(f)}>
-                {occupe === f.client_id ? "…" : "C'est moi"}
-              </button>
+              {f.prise ? null : (
+                <button type="button" className="jr-cta" disabled={occupe !== null} onClick={() => void relier(f)}>
+                  {occupe === f.client_id ? "…" : "C'est moi"}
+                </button>
+              )}
             </div>
           ))}
         </>
       ) : null}
 
-      {fiches !== null ? (
+      {/* Une fiche à son nom existe déjà mais elle est prise : surtout pas d'évaluation,
+          ce serait un DOUBLON (le piège du 23/09 : Maria a une fiche avec 6 bilans). */}
+      {fiches !== null && !libres.length && fiches.length ? (
         <>
-          <div className="jr-sec">{fiches.length ? "Aucune n'est à toi ?" : "Pas encore de fiche à ton nom"}</div>
+          <div className="jr-sec">Une fiche à ton nom existe déjà</div>
+          <p className="jr-perso-t">
+            Elle est reliée à un autre compte. Demande à ta coach de la libérer : n'en crée pas une deuxième, tes
+            bilans sont sur celle-là.
+          </p>
+        </>
+      ) : null}
+
+      {fiches !== null && (libres.length > 0 || fiches.length === 0) ? (
+        <>
+          <div className="jr-sec">{libres.length ? "Aucune n'est à toi ?" : "Pas encore de fiche à ton nom"}</div>
           <p className="jr-perso-t">Fais ton évaluation sur toi, comme pour une membre : ton poids donne ton objectif de protéines, et ton journal s'ouvre ici.</p>
           <button type="button" className="jr-lien" onClick={onEvaluation}>Faire mon évaluation</button>
         </>
