@@ -185,9 +185,15 @@ export interface FicheCoach {
   client_id: string;
   prenom: string;
   initiale: string;
-  /** « mail » : même adresse que son compte de connexion ; « prenom » : une de SES membres à son prénom. */
-  raison: "mail" | "prenom";
+  /**
+   * « mail » : même adresse que son compte · « prenom » : une de SES clientes à son prénom ·
+   * « club » : une membre de SON club à son prénom, inscrite par une autre coach (23/09 — au club,
+   * une coach est presque toujours inscrite par une autre : le cas de Maria).
+   */
+  raison: "mail" | "prenom" | "club";
   relie: boolean;
+  /** Déjà reliée au compte de quelqu'un d'autre : on la montre, on ne la propose pas. */
+  prise: boolean;
   poids: number | null;
 }
 

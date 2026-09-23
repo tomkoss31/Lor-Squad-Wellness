@@ -209,6 +209,16 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   MEMBRE ouvrait son journal (`journal_jour`) — Thomas pointait Audrey à 8 h 03, regardait son journal
   et le voyait VIDE, et la case « passée au club » de l'aperçu coach ne s'allumait presque jamais.
   La fonction ne fait rien deux fois (garde `club_prerempli`) : retiré par la membre = reste retiré.
+- **« Mon journal » d'une coach** (`MonJournalCoach`, monté SEULEMENT dans `BbcApp` — le rond en haut
+  à droite, à gauche des « ⋯ ») : elle relie SA fiche de membre une fois (`journal_coach_mes_fiches`
+  → `journal_coach_relier`). ⚠️ Vécu le 23/09 avec Maria, coach ET membre : « Pas encore de fiche à ton
+  nom » alors qu'elle a 6 bilans. Trois causes empilées, toutes corrigées (migration `20261215760000`) :
+  sa fiche appartient à **Mélanie** (au club, une coach est inscrite par une AUTRE) → on accepte
+  maintenant une membre de SON club (`est_coach_de_mon_club` sur la coach qui la suit) ; sa fiche n'a
+  **pas d'email** ; et son prénom de fiche est « Maria Rosa » quand son compte dit « Maria » → on compare
+  le PREMIER prénom des deux côtés. Une fiche déjà reliée à un autre compte revient avec `prise = true` :
+  affichée sans bouton, et l'écran ne propose PLUS « Faire mon évaluation » dans ce cas — ça créait un
+  doublon. Sans club, `est_coach_de_mon_club(soi)` est vrai : une coach seule retrouve ses clientes.
 - **Règles de Thomas, dans le code** : protéines = poids du DERNIER bilan pesé × coefficient
   réglé par la coach (1,2 · 1,4 · 1,5 · 2 — `journal_reglages`) ; eau = 1 L / 30 kg ; la
   boisson du club (40 cl) et le shake du club sont pré-remplis au pointage (une fois) ; le shake
