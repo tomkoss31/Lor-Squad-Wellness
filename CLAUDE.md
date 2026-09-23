@@ -223,6 +223,15 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   réglé par la coach (1,2 · 1,4 · 1,5 · 2 — `journal_reglages`) ; eau = 1 L / 30 kg ; la
   boisson du club (40 cl) et le shake du club sont pré-remplis au pointage (une fois) ; le shake
   n'existe qu'en COMBO (jamais « F1 seul ») ; encas : Herbalife d'abord puis fromage blanc, skyr.
+- **Chercher un produit** (23/09) : la recherche lit le nom ET la colonne **`synonymes`**
+  (`chercher`, `journalCalculs`) — Thomas tapait « formule 3 » et ne trouvait pas « Formula 3 », qui
+  était pourtant au catalogue. ⚠️ Un aliment sans **rang** (`rangs = {}`) n'apparaît dans AUCUNE
+  suggestion : il n'existe que par la recherche. C'était le cas de F3 et Beta Heart, corrigé.
+  Le catalogue est gardé en sessionStorage (`ls-journal-aliments-v2`) : **changer la clé** à chaque
+  nouvelle colonne, sinon les anciens onglets cherchent sans elle. Ajoutés le 23/09 aux valeurs des
+  étiquettes Herbalife FR : Boisson multi-fibres (2554), Thé instantané (178K), Aloe concentré (0006).
+  ⚠️ `journal_aliments_une_seule_mesure` : un aliment se mesure à la PORTION ou aux 100 g, jamais les
+  deux (mettre `prot_100g`/`kcal_100g` à null pour un produit à la dose).
 - **Catalogue** `journal_aliments` : 95 aliments CIQUAL 2020 (source par ligne) + skyr
   (étiquettes) + 18 Herbalife FR + chiffres du club. Les protéines d'une ligne sont calculées
   par le SERVEUR puis figées. Ordre des suggestions : colonne `rangs` par créneau.

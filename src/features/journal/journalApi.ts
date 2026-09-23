@@ -15,7 +15,8 @@ import type { Activite, Aliment, Creneau, EtatJour, Habituel, Humeur, SemaineCoa
 // ~115 aliments, publics, qui changent rarement : chargés une fois par session.
 let catalogue: Aliment[] | null = null;
 let chargement: Promise<Aliment[]> | null = null;
-const CLE_CACHE = "ls-journal-aliments-v1";
+// v2 (23/09) : la colonne `synonymes` est arrivée — un vieux cache ferait rater les recherches.
+const CLE_CACHE = "ls-journal-aliments-v2";
 
 export function chargerAliments(): Promise<Aliment[]> {
   if (catalogue) return Promise.resolve(catalogue);
@@ -34,7 +35,7 @@ export function chargerAliments(): Promise<Aliment[]> {
     if (!sb) throw new Error("Connexion indisponible. Réessaie dans un instant.");
     const { data, error } = await sb
       .from("journal_aliments")
-      .select("cle, nom, famille, herbalife, prot_portion, prot_100g, portions, unite, indice, rangs")
+      .select("cle, nom, famille, herbalife, prot_portion, prot_100g, portions, unite, indice, rangs, synonymes")
       .eq("actif", true);
     if (error) throw new Error("Impossible de charger la liste des aliments.");
     catalogue = ((data ?? []) as Aliment[]).map((a) => ({
