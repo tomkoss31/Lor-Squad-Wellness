@@ -315,8 +315,10 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
 - **En prod depuis le 22/09** (main `04d0703f`, sans recette iPhone : Thomas le présentait le matin même).
 - Le mail de lancement aux **membres du club** : `docs/campagnes/journal-nutritionnel/mail-membres-bbc.html`,
   en brouillon dans /admin/campagnes (voir le README du dossier). Visuels en tableaux HTML, pas en PNG.
-- Reste à faire : la photo ; la version La Base 360 du mail pour les clients en suivi ; le mail aux
-  nouveaux clients.
+- **Le mail aux clientes La Base 360** (en suivi) : `docs/campagnes/journal-nutritionnel/mail-membres-labase360.html`
+  (teal, au vous), envoyé le 24/09 par Thomas (campagne « Journal nutritionnel — clientes La Base 360 », 39
+  destinataires). Celui du club a reçu un encart « Du nouveau » (non renvoyé).
+- Reste à faire : la photo ; le mail aux nouveaux clients.
 - **Vu du coach, en standard** (22/09, maquette XpS9uerQY6M627Zg9vXS99 : « on essaie, on verra ») :
   sur la fiche, le journal est EN TÊTE de « Mesures » et ouvert par défaut ; sur le Co-pilote, la carte
   « Le journal de tes clientes » (sous le RDV du jour) mène à **`/co-pilote/journal`**
@@ -328,6 +330,26 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   protéines ne porte que sur les jours à REPAS (un jour « eau seulement » la ferait chuter). Un seul
   appel partagé carte + écran, gardé 2 min, clé = personne + jour de Paris (`useJournalApercu`).
   Logique pure et testée : `apercuJournal.ts`. `/co-pilote/journal` n'est pas capté par le mode BBC.
+- **« Plus vivant »** (24/09, maquette ForqHsP3stVu45NSEvPnZZ : « c'est quand même plus dans l'esprit de l'app,
+  go fais-le ») — Thomas trouvait la liste et le récap « fadasses » (tout olive, et « 46 g » ne disait pas si
+  c'est bien). **La couleur porte le sens** : teal atteint (≥ 90 %) · ambre à moitié (50-90) · corail décroche
+  (< 50 %, ou rien depuis 3 jours ; la journée EN COURS n'est jamais corail) · bleu l'eau · hachures = « le
+  club seul ». Jetons par maison dans `journal.css` : `--jr-ok`, `--jr-mid`, `--jr-club`, `--jr-bandeau` —
+  au club, « atteint » est le **sauge** (l'orange est l'identité, le teal est l'eau).
+  **La liste** : bande de 3 chiffres (le tiennent · % des jours à l'objectif protéines · eau), filtres
+  (À féliciter / Sous l'objectif / Décroche ; sans bilan pesé = « neutre », dans aucun filtre), et par
+  cliente un liseré, l'anneau des jours notés, les barres jour par jour, « NN % de l'objectif », l'eau.
+  La base : `journal_apercu_coach()` rend en plus `prot_jours`, `eau_jours`, `obj_prot`, `obj_eau`
+  (migration `20261215820000`, objectifs = `_journal_objectifs`, déjà ouverte à `authenticated`).
+  **Le récap** (`JournalCoach`, même composant partout) : un en-tête `jr-rc` à trois cadrans (protéines, eau,
+  jours notés ; nom + niveau + « chez X » seulement sur /co-pilote/journal), la semaine en grandes barres,
+  « À retenir » en couleur (`Retenir.ton`), et **« Ses objectifs » replié en bas** (`<details>`).
+  **Une seule règle de calcul** pour la liste (`resumeApercu`) et le récap (`recapCoach`) : les jours FINIS
+  où ELLE a noté (`aNote` : repas `membre`/`noaly`, eau, sport — le pré-rempli du club seul n'en est pas un),
+  aujourd'hui seulement s'il n'y a rien d'autre ; `aRetenir` suit la même. Les deux écrans disent le même chiffre.
+  ⚠️ **`.jr-hero` est la classe de l'en-tête du journal DE LA MEMBRE** (`JournalMembre`) : la première version
+  du récap la réutilisait et aurait repeint l'écran des membres. Toute nouvelle classe `jr-*` : chercher
+  d'abord si elle existe (`grep` dans `src/`).
 
 ---
 
@@ -382,6 +404,14 @@ Migration `20261215780000_xp_membres.sql` (un seul lot), code `src/features/clie
 - **Le repas en détail** (bloc 6) : `journal_semaine_coach` rend `kcal` et `heure` par ligne ; dans
   `JournalCoach`, chaque repas est un bouton → `FeuilleRepasCoach` (lecture), « Un mot sur ce repas »
   pré-remplit la remarque.
+- **Sans compte au bar, rien n'est perdu** (migration `20261215810000`) : une semaine `sans_compte` garde son
+  `xp_bar` 60 jours et repart dans `xp_a_verser_bar` dès que le compte existe ; `xp_bar_resume_membre` rend
+  `en_attente` → « X XP t'attendent au bar » dans son espace (`XpBarMembre`), avec le lien de la **roue**
+  (`https://commande.labase-nutrition.com/jeu` : un tirage, puis la création du compte au bar sur place).
+  Mails d'invitation (au vous, un par maison, jamais signés d'un prénom : « L'équipe La Base 360 » en teal
+  pour le coaching, « Votre équipe du Breakfast Club » en orange pour le club) :
+  `docs/campagnes/bar-roue/`, envoyés le 24/09 (17 clientes en coaching, 4 membres du club) ; la liste des
+  destinataires est notée dans Notion (brouillon privé de Thomas).
 - Reste « après » (Thomas) : le challenge de la semaine (objectif + top 3, lot du bar).
 
 ---

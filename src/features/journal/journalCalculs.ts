@@ -566,9 +566,65 @@ export function jourRempli(j: JourCoach): boolean {
 
 export interface Retenir {
   faible: boolean;
+  /** La couleur de la ligne (24/09) : ok = acquis · mid = à surveiller · bas = à travailler. */
+  ton: "ok" | "mid" | "bas";
   icone: "proteines" | "eau" | "encas" | "vide";
   texte: string;
   gras: string;
+}
+
+/** Tous les jours · au moins la moitié · moins de la moitié. */
+function tonSur(ok: number, nb: number): Retenir["ton"] {
+  return ok >= nb ? "ok" : ok * 2 >= nb ? "mid" : "bas";
+}
+
+/**
+ * Elle a noté ce jour-là : un repas à elle (ou lu par Noaly), de l'eau, du sport.
+ * La règle de la liste du Co-pilote et du rappel de 20 h — le pré-rempli du club
+ * seul, ou une ligne ajoutée par la coach, ne compte pas.
+ */
+export function aNote(j: JourCoach): boolean {
+  return j.lignes.some((l) => l.origine === "membre" || l.origine === "noaly") || j.verres > 0 || j.activite != null;
+}
+
+export interface RecapCoach {
+  /** Protéines moyennes (g) et % de l'objectif — null sans repas noté (ou sans objectif pour le %). */
+  protMoy: number | null;
+  protPct: number | null;
+  /** Eau moyenne (L, au dixième) et % de l'objectif. */
+  eauMoy: number | null;
+  eauPct: number | null;
+  /** Jours notés sur les 7, et le dernier (AAAA-MM-JJ). */
+  notes: number;
+  dernier: string | null;
+}
+
+/**
+ * Les trois cadrans en tête de son journal (24/09, maquette ForqHsP3stVu45NSEvPnZZ).
+ * Mêmes règles que la liste du Co-pilote (resumeApercu) pour que les deux écrans
+ * disent le même chiffre : les jours FINIS où elle a noté ; aujourd'hui seulement
+ * s'il n'y a rien d'autre (une journée en cours ferait chuter la moyenne).
+ */
+export function recapCoach(s: SemaineCoach): RecapCoach {
+  const finis = s.jours.filter((j) => j.jour !== s.aujourdhui);
+  const auj = s.jours.find((j) => j.jour === s.aujourdhui);
+  const choisir = (f: (j: JourCoach) => boolean) => {
+    const a = finis.filter(f);
+    return a.length ? a : auj && f(auj) ? [auj] : [];
+  };
+  const moyenne = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+  const prot = moyenne(choisir((j) => aNote(j) && protJour(j.lignes) > 0).map((j) => protJour(j.lignes)));
+  const eau = moyenne(choisir((j) => aNote(j) && litres(j.verres, j.boisson_club) > 0).map((j) => litres(j.verres, j.boisson_club)));
+  const obj = s.objectifs;
+  const notes = s.jours.filter(aNote);
+  return {
+    protMoy: prot == null ? null : Math.round(prot),
+    protPct: prot == null || obj.proteines == null || obj.proteines <= 0 ? null : Math.round((prot / obj.proteines) * 100),
+    eauMoy: eau == null ? null : Math.round(eau * 10) / 10,
+    eauPct: eau == null || !(obj.eau_l > 0) ? null : Math.round((eau / obj.eau_l) * 100),
+    notes: notes.length,
+    dernier: notes.length ? notes[notes.length - 1].jour : null,
+  };
 }
 
 /**
@@ -576,33 +632,39 @@ export interface Retenir {
  * seulement — aujourd'hui n'est pas fini, il ne compte pas.
  */
 export function aRetenir(s: SemaineCoach, prenom: string): Retenir[] {
-  const faits = s.jours.filter((j) => j.jour !== s.aujourdhui && jourRempli(j));
-  const vides = s.jours.filter((j) => j.jour !== s.aujourdhui && !jourRempli(j));
+  // Les jours où ELLE a noté (24/09) : un jour « pré-rempli du club seul » n'est
+  // pas un jour noté, et ferait chuter ses moyennes — même règle que les cadrans.
+  const passes = s.jours.filter((j) => j.jour !== s.aujourdhui);
+  const faits = passes.filter(aNote);
+  const vides = passes.filter((j) => !aNote(j));
   const sortie: Retenir[] = [];
   const pluriel = (n: number) => (n > 1 ? "s" : "");
   if (!faits.length) {
-    return [{ faible: false, icone: "vide", gras: "Rien de noté ces derniers jours", texte: `${prenom} n'a pas encore rempli son journal.` }];
+    return [{ faible: false, ton: "mid", icone: "vide", gras: "Rien de noté ces derniers jours", texte: `${prenom} n'a pas encore rempli son journal.` }];
   }
   const nb = faits.length;
   const obj = s.objectifs;
-  if (obj.proteines != null) {
-    const moy = Math.round(faits.reduce((a, j) => a + protJour(j.lignes), 0) / nb);
-    const ok = faits.filter((j) => protJour(j.lignes) >= (obj.proteines ?? 0)).length;
-    sortie.push({ faible: ok < nb / 2, icone: "proteines", gras: `Protéines : ${moy} g en moyenne`, texte: `objectif atteint ${ok} jour${pluriel(ok)} sur ${nb}` });
+  const jp = faits.filter((j) => protJour(j.lignes) > 0);
+  if (obj.proteines != null && jp.length) {
+    const moy = Math.round(jp.reduce((a, j) => a + protJour(j.lignes), 0) / jp.length);
+    const ok = jp.filter((j) => protJour(j.lignes) >= (obj.proteines ?? 0)).length;
+    sortie.push({ faible: ok < jp.length / 2, ton: tonSur(ok, jp.length), icone: "proteines", gras: `Protéines : ${moy} g en moyenne`, texte: `objectif atteint ${ok} jour${pluriel(ok)} sur ${jp.length}` });
   }
-  const moyE = faits.reduce((a, j) => a + litres(j.verres, j.boisson_club), 0) / nb;
-  const okE = faits.filter((j) => eauAtteinte(obj.eau_l, j.verres, j.boisson_club)).length;
-  sortie.push({ faible: okE < nb / 2, icone: "eau", gras: `Eau : ${formatLitres(moyE)} L en moyenne`, texte: `objectif atteint ${okE} jour${pluriel(okE)} sur ${nb}` });
+  const avecEau = faits.filter((j) => litres(j.verres, j.boisson_club) > 0);
+  const je = avecEau.length ? avecEau : faits;
+  const moyE = je.reduce((a, j) => a + litres(j.verres, j.boisson_club), 0) / je.length;
+  const okE = je.filter((j) => eauAtteinte(obj.eau_l, j.verres, j.boisson_club)).length;
+  sortie.push({ faible: okE < je.length / 2, ton: tonSur(okE, je.length), icone: "eau", gras: `Eau : ${formatLitres(moyE)} L en moyenne`, texte: `objectif atteint ${okE} jour${pluriel(okE)} sur ${je.length}` });
   const encAm = faits.filter((j) => j.lignes.some((l) => l.creneau === "enc2")).length;
   sortie.push(
     encAm === 0
-      ? { faible: true, icone: "encas", gras: "Encas de l'après-midi : jamais noté", texte: "c'est souvent là qu'on décroche" }
-      : { faible: false, icone: "encas", gras: `Encas de l'après-midi`, texte: `noté ${encAm} jour${pluriel(encAm)} sur ${nb}` },
+      ? { faible: true, ton: "mid", icone: "encas", gras: "Encas de l'après-midi : jamais noté", texte: "c'est souvent là qu'on décroche" }
+      : { faible: false, ton: encAm * 2 >= nb ? "ok" : "mid", icone: "encas", gras: `Encas de l'après-midi`, texte: `noté ${encAm} jour${pluriel(encAm)} sur ${nb}` },
   );
   if (vides.length) {
     const noms = vides.map((j) => nomDuJour(j.jour));
     const liste = noms.length > 1 ? `${noms.slice(0, -1).join(", ")} et ${noms[noms.length - 1]}` : noms[0];
-    sortie.push({ faible: false, icone: "vide", gras: "", texte: `Rien de noté ${liste}` });
+    sortie.push({ faible: false, ton: "mid", icone: "vide", gras: "", texte: `Rien de noté ${liste}` });
   }
   return sortie;
 }

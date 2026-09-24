@@ -26,6 +26,100 @@ export interface ApercuJournal {
   protMoy: number | null;
   /** AAAA-MM-JJ : le dernier jour où elle a noté. */
   derniere: string | null;
+  /** Protéines (g) et eau (L) de chaque jour, de J-6 à aujourd'hui (24/09). */
+  protJours: number[];
+  eauJours: number[];
+  /** Ses objectifs (null sans bilan pesé pour les protéines). */
+  objProt: number | null;
+  objEau: number | null;
+}
+
+// ─── Les couleurs (maquette ForqHsP3stVu45NSEvPnZZ, 24/09) ───────────────────
+// teal = atteint (≥ 90 %) · ambre = à moitié (50-90 %) · corail = décroche (< 50 %,
+// ou rien depuis 3 jours). La journée EN COURS n'est jamais corail : elle n'est pas finie.
+export type Ton = "ok" | "mid" | "bas";
+/** Une ligne de la liste : « neutre » = elle note, mais sans bilan pesé on ne sait pas juger ses protéines. */
+export type TonLigne = Ton | "neutre";
+export type EtatBarre = "ok" | "mid" | "bas" | "encours" | "note" | "club" | "vide";
+
+export function tonDe(pct: number): Ton {
+  return pct >= 90 ? "ok" : pct >= 50 ? "mid" : "bas";
+}
+
+/** La couleur d'une barre du jour `i` (0 = J-6, 6 = aujourd'hui). */
+export function etatBarre(a: ApercuJournal, i: number): EtatBarre {
+  const c = a.jours[i];
+  if (c === 0) return "vide";
+  if (c === 2) return "club";
+  if (a.objProt == null || a.objProt <= 0) return "note";
+  const pct = ((a.protJours[i] ?? 0) / a.objProt) * 100;
+  const t = tonDe(pct);
+  return t === "ok" ? "ok" : i === 6 ? "encours" : t;
+}
+
+export interface ResumeApercu {
+  /** Protéines moyennes (g) des jours finis où elle a noté — le même chiffre que son récap (recapCoach). */
+  protMoy: number | null;
+  /** La même moyenne en % de l'objectif (null sans objectif). */
+  protPct: number | null;
+  ton: TonLigne;
+  /** Eau moyenne (L) des jours finis où elle en a noté, et combien de jours à l'objectif sur les 7. */
+  eauMoy: number | null;
+  eauJoursOk: number;
+  /** Jours pleins sans rien depuis le dernier noté. */
+  silence: number;
+}
+
+function joursEntre(a: string, b: string): number {
+  const [y1, m1, d1] = a.split("-").map(Number);
+  const [y2, m2, d2] = b.split("-").map(Number);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+}
+
+export function resumeApercu(a: ApercuJournal, jourIso: string): ResumeApercu {
+  // Les jours FINIS où elle a noté (case 1 : le pré-rempli du club seul ne compte
+  // pas) ; aujourd'hui seulement s'il n'y a rien d'autre — une journée en cours
+  // ferait chuter la moyenne. La même règle que son récap (recapCoach).
+  const jours = (v: number[]) => {
+    const finis = [0, 1, 2, 3, 4, 5].filter((i) => a.jours[i] === 1 && (v[i] ?? 0) > 0);
+    return finis.length ? finis : a.jours[6] === 1 && (v[6] ?? 0) > 0 ? [6] : [];
+  };
+  const moyenne = (v: number[]) => {
+    const js = jours(v);
+    return js.length ? js.reduce((s, i) => s + (v[i] ?? 0), 0) / js.length : null;
+  };
+  const moy = moyenne(a.protJours);
+  const eau = moyenne(a.eauJours);
+  const protPct = moy != null && a.objProt ? Math.round((moy / a.objProt) * 100) : null;
+  const eauJoursOk = a.objEau ? a.eauJours.filter((e) => e >= a.objEau! - 0.05).length : 0;
+  const silence = a.derniere ? Math.max(0, joursEntre(a.derniere, jourIso)) : 7;
+  const ton: TonLigne = silence >= 3 ? "bas" : protPct == null ? "neutre" : tonDe(protPct);
+  return {
+    protMoy: moy == null ? null : Math.round(moy),
+    protPct,
+    ton,
+    eauMoy: eau == null ? null : Math.round(eau * 10) / 10,
+    eauJoursOk,
+    silence,
+  };
+}
+
+/** La bande du haut : combien le tiennent, et la part des jours à l'objectif (jours finis seulement). */
+export function chiffresApercu(apercus: ApercuJournal[]): { tiennent: number; protPct: number | null; eauPct: number | null } {
+  let pJ = 0, pOk = 0, eJ = 0, eOk = 0;
+  for (const a of apercus) {
+    if (a.joursNotes <= 0) continue;
+    for (let i = 0; i < 6; i++) {
+      if (a.jours[i] !== 1) continue;
+      if (a.objProt && (a.protJours[i] ?? 0) > 0) { pJ++; if ((a.protJours[i] / a.objProt) * 100 >= 90) pOk++; }
+      if (a.objEau && (a.eauJours[i] ?? 0) > 0) { eJ++; if (a.eauJours[i] >= a.objEau - 0.05) eOk++; }
+    }
+  }
+  return {
+    tiennent: apercus.filter((a) => a.joursNotes > 0).length,
+    protPct: pJ ? Math.round((pOk / pJ) * 100) : null,
+    eauPct: eJ ? Math.round((eOk / eJ) * 100) : null,
+  };
 }
 
 export interface LigneApercu {
@@ -46,12 +140,25 @@ export function normaliserApercu(brut: unknown): ApercuJournal[] {
       return (v === 1 || v === 2 ? v : 0) as CaseJour;
     });
     const prot = Number(r.prot_moy);
+    const sept = (v: unknown) => {
+      const t = Array.isArray(v) ? (v as unknown[]) : [];
+      return Array.from({ length: 7 }, (_, i) => {
+        const n = Number(t[i]);
+        return Number.isFinite(n) && n > 0 ? n : 0;
+      });
+    };
+    const objP = Number(r.obj_prot);
+    const objE = Number(r.obj_eau);
     sortie.push({
       clientId,
       jours,
       joursNotes: Math.max(0, Number(r.jours_notes) || 0),
       protMoy: r.prot_moy == null || !Number.isFinite(prot) ? null : Math.round(prot),
       derniere: typeof r.derniere === "string" ? r.derniere : null,
+      protJours: sept(r.prot_jours),
+      eauJours: sept(r.eau_jours),
+      objProt: r.obj_prot != null && Number.isFinite(objP) && objP > 0 ? objP : null,
+      objEau: r.obj_eau != null && Number.isFinite(objE) && objE > 0 ? objE : null,
     });
   }
   return sortie;

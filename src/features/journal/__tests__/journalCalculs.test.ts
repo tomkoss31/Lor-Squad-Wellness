@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  aNote,
   aRetenir,
+  recapCoach,
   bilanSemaine,
   libelleSemaine,
   semaineEnTete,
@@ -213,6 +215,34 @@ describe("« À retenir » (coach)", () => {
     expect(r[1].texte).toBe("objectif atteint 1 jour sur 2");
     expect(r[2]).toMatchObject({ faible: true, gras: "Encas de l'après-midi : jamais noté" });
     expect(r[3].texte).toBe("Rien de noté vendredi, samedi, dimanche et lundi");
+  });
+
+  it("chaque ligne a sa couleur : acquis, à surveiller, à travailler", () => {
+    expect(aRetenir(s, "Camille").map((x) => x.ton)).toEqual(["mid", "mid", "mid", "mid"]);
+    const bien = { ...s, jours: s.jours.map((j) => (j.jour === "2026-09-16" ? { ...j, verres: 9, lignes: [...j.lignes, { creneau: "dej" as const, libelle: "c", grammes: 100, quantite: 1, prot_g: 30, origine: "membre" }] } : j)) };
+    const [p, e] = aRetenir(bien, "Camille");
+    expect([p.ton, e.ton]).toEqual(["ok", "ok"]);
+    const rien = { ...s, jours: s.jours.map((j) => (j.jour === "2026-09-17" ? { ...j, verres: 2, lignes: [{ ...j.lignes[0], prot_g: 20 }] } : j)) };
+    expect(aRetenir(rien, "Camille")[0].ton).toBe("bas");
+  });
+
+  it("les trois cadrans : les jours finis où ELLE a noté, comme la liste du Co-pilote", () => {
+    const r = recapCoach(s);
+    // 16 : 18 (club) + 45 = 63 g · 17 : 90 g → 76,5 → 77 g, 92 % de 83 ; aujourd'hui (club seul) ne compte pas
+    expect(r.protMoy).toBe(77);
+    expect(r.protPct).toBe(92);
+    // 1,5 L et 2,25 L → 1,875 → 1,9 L, 82 % de 2,3
+    expect(r.eauMoy).toBe(1.9);
+    expect(r.eauPct).toBe(82);
+    // le 22 n'a que le pré-rempli du club : pas noté
+    expect(r.notes).toBe(2);
+    expect(r.dernier).toBe("2026-09-17");
+    expect(aNote(s.jours[6])).toBe(false);
+  });
+
+  it("sans rien : des cadrans vides, jamais un 0 % trompeur", () => {
+    const r = recapCoach({ ...s, jours: s.jours.map((j) => ({ ...j, verres: 0, lignes: [] })) });
+    expect(r).toEqual({ protMoy: null, protPct: null, eauMoy: null, eauPct: null, notes: 0, dernier: null });
   });
 });
 
