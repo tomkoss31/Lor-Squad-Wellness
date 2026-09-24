@@ -136,9 +136,11 @@ async function verser(dryRun: boolean, lundi: string | null) {
     if (!profil) {
       bilan.sans_compte++;
       if (!dryRun) {
+        // La semaine est GARDÉE (xp_bar = son montant) : versée dès qu'elle aura un compte, 60 jours au plus.
         await sb.from("xp_versements_bar").insert({
-          client_id: r.client_id, motif: "semaine", semaine: r.semaine, xp_coaching: r.xp_coaching, xp_bar: 0,
-          statut: "sans_compte", detail: r.email ? `Aucun compte au bar pour ${r.email}` : "Pas d'e-mail sur la fiche",
+          client_id: r.client_id, motif: "semaine", semaine: r.semaine, xp_coaching: r.xp_coaching,
+          xp_bar: Math.min(r.xp_coaching * TAUX, PLAFOND_MOIS),
+          statut: "sans_compte", detail: r.email ? `Aucun compte au bar pour ${r.email} — gardé 60 jours` : "Pas d'e-mail sur la fiche — gardé 60 jours",
         });
       }
       detail.push({ prenom: r.prenom, statut: "sans_compte" });
@@ -181,7 +183,7 @@ async function verser(dryRun: boolean, lundi: string | null) {
       reste -= paye;
       await sb.from("xp_versements_bar").update({
         statut: "verse", xp_bar: paye, bar_user_id: profil.id, verse_le: maintenant,
-        detail: paye < du ? `Bonus ${du} versé pour ${paye} (plafond du mois), le reste est perdu` : `Bonus de niveau versé`,
+        detail: paye < du ? `${du} en attente, versé ${paye} (plafond du mois), le reste est perdu` : `Versé (bonus de niveau ou semaine gardée)`,
       }).eq("id", id);
     }
     detail.push({ prenom: r.prenom, statut: "verse", xp_bar: r.a_verser, nouveau_solde: res.newXp });
@@ -261,7 +263,7 @@ serve(async (req) => {
         candidats.push({ client_id: c.id, nom, email_coaching: masque(c.email), statut: c.lifecycle_status,
           candidats: memePrenom.map((p) => ({ bar_user_id: p.id, email_bar: masque(p.email), bar_xp: Number(p.xp ?? 0) })) });
       } else {
-        sans.push({ nom, email_coaching: masque(c.email), statut: c.lifecycle_status });
+        sans.push({ client_id: c.id, nom, email_coaching: masque(c.email), statut: c.lifecycle_status });
       }
     }
     return jsonResponse({ ok: true, total: (clients ?? []).length, deja_relies: relies.length, par_email: parMail.length, a_trancher: candidats, sans_compte: sans });

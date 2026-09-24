@@ -13,10 +13,12 @@ import { getSupabaseClient } from "../../services/supabaseClient";
 import "../journal/journal.css";
 
 const BAR_URL = "https://commande.labase-nutrition.com";
+// La roue publique du bar : le compte s'y crée après le tirage (Thomas, 24/09).
+const ROUE_URL = "https://commande.labase-nutrition.com/jeu";
 
 interface Solde {
   bar: { compte: boolean; xp: number; prochain: { id: string; cout: number; titre: string } | null; configure?: boolean };
-  resume: { dernier?: { xp_bar: number; le: string; motif: string } | null; ce_mois?: number; plafond?: number; sans_compte?: boolean; versements?: Array<{ motif: string; xp_bar: number; statut: string; verse_le: string | null }> } | null;
+  resume: { dernier?: { xp_bar: number; le: string; motif: string } | null; ce_mois?: number; plafond?: number; en_attente?: number; sans_compte?: boolean; versements?: Array<{ motif: string; xp_bar: number; statut: string; verse_le: string | null }> } | null;
   taux: number;
   plafond: number;
 }
@@ -59,7 +61,9 @@ export function XpBarMembre({ token, format }: { token: string; format: "bbc" | 
       <section className="jr-card" aria-label="Tes XP au bar">
         <div className="jr-row">
           <div className="jr-eye jr-grow">Tes XP au bar</div>
-          <span className="jr-eye" style={{ color: "var(--jr-acc-tx)" }}>{bar.compte ? `${bar.xp} XP` : "pas encore de compte"}</span>
+          <span className="jr-eye" style={{ color: "var(--jr-acc-tx)" }}>
+            {bar.compte ? `${bar.xp} XP` : resume?.en_attente ? `${resume.en_attente} XP t'attendent` : "pas encore de compte"}
+          </span>
         </div>
         {bar.compte ? (
           <>
@@ -71,11 +75,15 @@ export function XpBarMembre({ token, format }: { token: string; format: "bbc" | 
           </>
         ) : (
           <div className="jr-tiny">
-            Ta régularité ici te fait gagner des XP au Shake Bar : chaque lundi, ta semaine × {solde.taux} (jusqu'à {solde.plafond} par mois).
-            Crée ton compte au bar avec la même adresse e-mail, et tout ce qui t'attend y arrive.
+            Chaque lundi, ta régularité ici devient des XP au Shake Bar (× {solde.taux}, jusqu'à {solde.plafond} par mois).
+            Tourne la roue avec <b>ton adresse e-mail habituelle</b> : ton compte se crée, un cadeau t'attend, et tes XP y arrivent.
           </div>
         )}
-        <a className="jr-lien" href={BAR_URL} target="_blank" rel="noreferrer">{bar.compte ? "Voir mes cadeaux au bar ›" : "Créer mon compte au bar ›"}</a>
+        {bar.compte ? (
+          <a className="jr-lien" href={BAR_URL} target="_blank" rel="noreferrer">Voir mes cadeaux au bar ›</a>
+        ) : (
+          <a className="jr-roue" href={ROUE_URL} target="_blank" rel="noreferrer">🎰 Tourner la roue au bar</a>
+        )}
       </section>
     </div>
   );
