@@ -98,7 +98,9 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
 
   const obj = s.objectifs;
   const remplis = s.jours.filter(jourRempli).length;
-  const idx = choix >= 0 ? choix : s.jours.length - 1;
+  // À l'ouverture : le DERNIER jour noté — un « aujourd'hui » encore vide ne dit rien (24/09).
+  const dernierRempli = s.jours.map(jourRempli).lastIndexOf(true);
+  const idx = choix >= 0 ? choix : dernierRempli >= 0 ? dernierRempli : s.jours.length - 1;
   const j = s.jours[idx];
   const protJ = protJour(j.lignes);
   const humeur = HUMEURS.find((h) => h.cle === j.humeur);
@@ -179,6 +181,7 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
         <div className="jr-legende-mini">
           <span><i style={{ background: "var(--jr-acc)" }} />protéines</span>
           <span><i style={{ background: "var(--jr-eau)" }} />eau</span>
+          <span className="jr-legende-aide">touche un jour pour le lire</span>
         </div>
       </section>
 
@@ -197,8 +200,14 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
 
       {/* Le jour choisi */}
       <section className="jr-card" aria-label="Détail du jour">
-        <div className="jr-eye">
-          {nomDuJour(j.jour)} {Number(j.jour.slice(8))}{j.jour === s.aujourdhui ? " · aujourd'hui" : ""}
+        <div className="jr-eye jr-jour-tete">
+          {idx > 0 ? (
+            <button type="button" className="jr-jour-nav" onClick={() => setChoix(idx - 1)} aria-label="Jour précédent">‹ {nomDuJour(s.jours[idx - 1].jour)}</button>
+          ) : <span />}
+          <span>{nomDuJour(j.jour)} {Number(j.jour.slice(8))}{j.jour === s.aujourdhui ? " · aujourd'hui" : ""}</span>
+          {idx < s.jours.length - 1 ? (
+            <button type="button" className="jr-jour-nav" onClick={() => setChoix(idx + 1)} aria-label="Jour suivant">{nomDuJour(s.jours[idx + 1].jour)} ›</button>
+          ) : <span />}
         </div>
         {!jourRempli(j) ? (
           <div className="jr-vide">{j.jour === s.aujourdhui ? "Rien de noté pour l'instant." : "Rien de noté ce jour-là."}</div>

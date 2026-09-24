@@ -351,6 +351,13 @@
 }
 .jr-liste button small { font-family: var(--jr-fm); font-size: 11px; color: var(--jr-mut); white-space: nowrap; }
 .jr-liste .jr-sous { display: block; font-size: 11.5px; color: var(--jr-hint); margin-top: 1px; }
+/* Déjà noté à ce repas (24/09) : la ligne le dit, « +1 » ajoute une portion à la ligne existante. */
+.jr-liste button.deja { background: var(--jr-acc-soft); border-radius: 10px; margin: 2px -6px; padding-left: 8px; padding-right: 6px; border-top-color: transparent; }
+.jr-liste .jr-deja-sous { color: var(--jr-acc-tx); font-weight: 600; }
+.jr-plus1 {
+  flex: none; min-height: 36px; padding: 0 12px; border-radius: 11px; display: inline-flex; align-items: center;
+  font-family: var(--jr-fm); font-size: 12px; font-weight: 700; background: var(--jr-acc); color: var(--jr-acc-ink);
+}
 .jr-sec { font-family: var(--jr-fm); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--jr-hint); padding: 12px 2px 4px; }
 .jr-hier {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; border: 1px solid var(--jr-ln2);
@@ -558,8 +565,22 @@
 .jr-jour b { font-family: var(--jr-fm); font-size: 11px; color: var(--jr-tx); }
 .jr-mini { display: flex; gap: 2px; align-items: flex-end; height: 18px; }
 .jr-mini i { width: 5px; border-radius: 2px; display: block; }
-.jr-jour.on { border-color: var(--jr-acc); background: var(--jr-acc-soft); }
+/* Le jour choisi se voit (24/09) : cadre plein, chiffre en couleur, une pointe vers le détail dessous. */
+.jr-jour { position: relative; }
+.jr-jour.on { border: 2px solid var(--jr-acc); background: color-mix(in srgb, var(--jr-acc) 16%, transparent); color: var(--jr-acc-tx); }
+.jr-jour.on b { color: var(--jr-acc-tx); }
+.jr-jour.on::after {
+  content: ""; position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%);
+  border: 6px solid transparent; border-bottom: 0; border-top-color: var(--jr-acc);
+}
 .jr-jour.vide { opacity: 0.45; }
+.jr-jour.vide.on { opacity: 0.8; }
+.jr-legende-aide { margin-left: auto; color: var(--jr-hint); }
+.jr-jour-tete { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.jr-jour-nav {
+  background: transparent; border: 0; padding: 0 4px; min-height: 44px; color: var(--jr-acc-tx);
+  font-family: var(--jr-fb); font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; white-space: nowrap;
+}
 .jr-pastille { font-family: var(--jr-fm); font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 999px; background: var(--jr-acc-soft); color: var(--jr-acc-tx); white-space: nowrap; }
 .jr-legende-mini { display: flex; gap: 12px; margin-top: 8px; font-size: 11px; color: var(--jr-mut); }
 .jr-legende-mini i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }

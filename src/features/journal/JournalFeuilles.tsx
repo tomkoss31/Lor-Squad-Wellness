@@ -87,15 +87,35 @@ function valeurAliment(a: Aliment): string {
   return a.prot_portion != null ? `${String(a.prot_portion).replace(".", ",")} g` : `${String(a.prot_100g ?? 0).replace(".", ",")} g / 100 g`;
 }
 
-function BoutonAliment({ a, onClick }: { a: Aliment; onClick: () => void }) {
+/** Ce qu'une ligne déjà notée porte comme quantité, en clair. */
+function quantiteLigne(l: Ligne): string {
+  if (l.grammes) return `${Math.round(l.grammes)} g`;
+  return l.quantite > 1 ? `× ${l.quantite}` : "1 portion";
+}
+
+function BoutonAliment({ a, deja, badge = true, onClick, onPlusUn }: {
+  a: Aliment;
+  /** La ligne du jour déjà notée à ce repas avec cet aliment (24/09 : « déjà noté · +1 ? »). */
+  deja?: Ligne;
+  /** Le badge « Herbalife » : inutile sous le titre HERBALIFE, utile quand produits et aliments se mélangent. */
+  badge?: boolean;
+  onClick: () => void;
+  onPlusUn?: (l: Ligne) => void;
+}) {
+  // Un produit à la portion déjà noté : « +1 » passe la ligne à × 2, pas une 2e ligne.
+  // Un aliment au poids déjà noté est signalé, mais une 2e quantité reste un vrai choix.
+  const plusUn = deja && a.prot_portion != null && onPlusUn ? () => onPlusUn(deja) : undefined;
   return (
-    <button type="button" onClick={onClick}>
+    <button type="button" className={deja ? "deja" : undefined} onClick={plusUn ?? onClick}>
       <span>
         {a.nom}
-        {a.herbalife ? <span className="jr-herb">Herbalife</span> : null}
-        {a.indice || a.unite ? <span className="jr-sous">{a.indice ?? a.unite}</span> : null}
+        {badge && a.herbalife ? <span className="jr-herb">Herbalife</span> : null}
+        {deja ? (
+          <span className="jr-sous jr-deja-sous">✓ déjà noté · {quantiteLigne(deja)}</span>
+        ) : a.indice || a.unite ? <span className="jr-sous">{a.indice ?? a.unite}</span> : null}
       </span>
       <small>{valeurAliment(a)}</small>
+      {plusUn ? <span className="jr-plus1" aria-hidden="true">+1</span> : null}
     </button>
   );
 }
@@ -202,10 +222,12 @@ function BoutonHabituel({ h, creneau, aliments, occupe, onClick }: {
   );
 }
 
-export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onReprendreVeille, onLireRepas, onAjouterLot, onAjouterHabituel }: {
+export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onPlusUn, onReprendreVeille, onLireRepas, onAjouterLot, onAjouterHabituel }: {
   creneau: Creneau; etat: EtatJour; aliments: Aliment[]; occupe: boolean;
   onFermer: () => void;
   onAjouter: (a: Aliment, grammes: number | null, quantite: number) => void;
+  /** Une portion de plus sur une ligne déjà notée à ce repas (24/09) — absent : pas de « +1 ». */
+  onPlusUn?: (l: Ligne) => void;
   onReprendreVeille: () => void;
   /** Un habituel, noté d'un toucher (bloc B, 6) — absent : pas de section « Tes habituels ». */
   onAjouterHabituel?: (h: Habituel) => void;
@@ -234,6 +256,12 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
     return { herbalife: s.herbalife.filter((a) => !pris.has(a.cle)), autres: s.autres.filter((a) => !pris.has(a.cle)) };
   }, [aliments, creneau, habituels]);
   const trouves = useMemo(() => chercher(aliments, q), [aliments, q]);
+  // Ce qui est déjà noté à ce repas, par aliment du catalogue : la liste le dit au lieu de doubler.
+  const dejaNotes = useMemo(() => {
+    const m = new Map<string, Ligne>();
+    for (const l of etat.lignes) if (l.creneau === creneau && l.aliment && !m.has(l.aliment)) m.set(l.aliment, l);
+    return m;
+  }, [etat.lignes, creneau]);
   const titre = `Ajouter : ${NOM_CRENEAU[creneau].toLowerCase()}`;
 
   function choisir(a: Aliment) {
@@ -401,7 +429,7 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
       <div className="jr-liste">
         {q.trim() ? (
           trouves.length ? (
-            trouves.slice(0, 30).map((a) => <BoutonAliment key={a.cle} a={a} onClick={() => choisir(a)} />)
+            trouves.slice(0, 30).map((a) => <BoutonAliment key={a.cle} a={a} deja={dejaNotes.get(a.cle)} onPlusUn={onPlusUn} onClick={() => choisir(a)} />)
           ) : (
             <div className="jr-vide">
               {onLireRepas ? "Pas dans la liste : écris-le à Noaly, elle le calcule." : "Pas dans la liste : choisis l'aliment le plus proche, ou demande à ta coach de l'ajouter."}
@@ -410,9 +438,9 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
         ) : (
           <>
             {idees.herbalife.length ? <div className="jr-sec">Herbalife</div> : null}
-            {idees.herbalife.map((a) => <BoutonAliment key={a.cle} a={a} onClick={() => choisir(a)} />)}
+            {idees.herbalife.map((a) => <BoutonAliment key={a.cle} a={a} badge={false} deja={dejaNotes.get(a.cle)} onPlusUn={onPlusUn} onClick={() => choisir(a)} />)}
             {idees.autres.length ? <div className="jr-sec">{idees.herbalife.length ? "Autres idées" : "Idées"}</div> : null}
-            {idees.autres.map((a) => <BoutonAliment key={a.cle} a={a} onClick={() => choisir(a)} />)}
+            {idees.autres.map((a) => <BoutonAliment key={a.cle} a={a} deja={dejaNotes.get(a.cle)} onPlusUn={onPlusUn} onClick={() => choisir(a)} />)}
           </>
         )}
       </div>

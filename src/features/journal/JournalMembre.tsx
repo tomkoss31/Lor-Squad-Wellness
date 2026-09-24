@@ -449,6 +449,7 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
         <FeuilleAjout
           creneau={feuille.creneau} etat={e} aliments={aliments} occupe={occupe} onFermer={fermer}
           onAjouter={(a, g, q) => { fermer(); void agir(() => journalMembre.ajouter(token!, e.jour, feuille.creneau, a.cle, g, q), "Noté"); }}
+          onPlusUn={(l) => { fermer(); void agir(() => journalMembre.modifier(token!, l.id, l.aliment, l.grammes, l.quantite + 1), `${l.libelle} × ${l.quantite + 1}`); }}
           onReprendreVeille={() => { fermer(); void agir(() => journalMembre.reprendreVeille(token!, e.jour, feuille.creneau), "Repris d'hier"); }}
           onLireRepas={(texte) => noaly.lireRepas(token!, feuille.creneau, texte)}
           onAjouterLot={(lignes) => { fermer(); void agir(() => journalMembre.ajouterLot(token!, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}

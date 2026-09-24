@@ -241,6 +241,16 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   met plus un produit en minuscule (« formula 3 » → « Formula 3 » : un nom avec chiffre ou majuscule
   interne garde la sienne). Vu et laissé : les libellés de la barre de la PWA standard sont à 9 px
   (« Noaly » compris) — c'est tout le système `client-pwa`, pas le journal.
+  **Puis quatre retouches, maquette 5PbECr4zhbgDUTkvY3S6D5 validée (« 1 ok, 2 ok, 3 ok, 4 ok, go ! »)** :
+  ① côté coach, les 7 jours se touchent — le jour choisi est plein avec une pointe vers le détail, le détail
+  porte « ‹ lundi · Mardi 22 · mercredi › », et à l'ouverture c'est le DERNIER jour noté (pas un aujourd'hui
+  vide) ; ② le badge « Herbalife » disparaît sous le titre HERBALIFE de la feuille Ajouter (`badge={false}`),
+  il reste dans la recherche, les habituels et les lignes du jour ; ③ la barre du bas de la PWA standard
+  passe de 9 à 11 px (`PwaClientApp`, les deux `fontSize`), le reste de `client-pwa` n'est pas touché ;
+  ④ « déjà noté · +1 » : dans Ajouter, un produit à la portion déjà noté à ce repas est teinté (`.deja`) et
+  « +1 » passe SA ligne à × n+1 par `journal_modifier` (jamais une 2e ligne) — un aliment au poids est
+  seulement signalé, une 2e quantité reste un vrai choix. Vérifié sur le journal de Thomas (ligne de test
+  ajoutée puis retirée).
 - **Catalogue** `journal_aliments` : 95 aliments CIQUAL 2020 (source par ligne) + skyr
   (étiquettes) + 18 Herbalife FR + chiffres du club. Les protéines d'une ligne sont calculées
   par le SERVEUR puis figées. Ordre des suggestions : colonne `rangs` par créneau.
