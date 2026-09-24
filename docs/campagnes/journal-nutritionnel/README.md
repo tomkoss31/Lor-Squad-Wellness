@@ -42,3 +42,19 @@ quand les images sont bloquées. Seul le logo est une image (déjà en ligne sur
 - Le texte parle de « votre coach, **qui** vous envoie votre lien » : pas de « elle », des
   membres sont suivies par Thomas.
 - Reste : la version La Base 360 pour les clients en suivi, et l'envoi aux nouveaux clients.
+
+## La version La Base 360 — `mail-membres-labase360.html` (24/09/2026)
+
+Faite depuis le mail du club, aux couleurs La Base 360 (teal, Noaly en teal comme dans l'espace standard,
+en-tête texte « La Base 360 » au lieu du logo du club). « Ce qui est déjà fait » : le shake du club est
+remplacé par « les produits Herbalife proposés en premier ». Signé « L'équipe La Base 360 ».
+
+**Encart « Du nouveau depuis le lancement »**, ajouté aux DEUX versions : les produits retrouvés par leur
+petit nom (Formula 3, Beta Heart, aloe, thé, multi-fibres), le « +1 » sur un produit déjà noté, et les XP
+qui deviennent des cadeaux au Shake Bar (lien vers la roue `/jeu`). La version club n'est pas renvoyée
+à celles qui l'ont déjà reçue : elle sert aux nouvelles membres.
+
+Destinataires La Base 360 : clientes en coaching (non club) actives ou pas encore démarrées, avec un
+espace, une adresse valide, sans les fiches des coachs, et n'ayant jamais reçu le mail du journal.
+Brouillons dans /admin/campagnes : « TEST — Journal · La Base 360 (Thomas seul) » et « Journal
+nutritionnel — clientes La Base 360 ».
