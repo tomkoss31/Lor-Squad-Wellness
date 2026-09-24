@@ -11,6 +11,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
+import { isDeadLifecycle } from "../../types/domain";
 import { NiveauPastille, titreNiveau } from "./NiveauPastille";
 import { monteRecemment, silencieuse, useXpApercu } from "./useXpApercu";
 import "../journal/journal.css";
@@ -95,8 +96,12 @@ export function XpNiveauxCarte({ userId, personnes, format, onOuvrir, onTous }: 
 export function XpNiveauxCoPilote() {
   const { currentUser, visibleClients } = useAppContext();
   const navigate = useNavigate();
+  // Seulement les clientes vivantes : une cliente perdue ou arrêtée n'a rien à gagner,
+  // elle ne « stagne » pas — sinon la liste « rien gagné depuis 14 jours » disait tout le monde.
   const personnes = useMemo(
-    () => visibleClients.map((c) => ({ id: c.id, nom: `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() })),
+    () => visibleClients
+      .filter((c) => !isDeadLifecycle(c.lifecycleStatus ?? "active"))
+      .map((c) => ({ id: c.id, nom: `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim() })),
     [visibleClients],
   );
   return (
