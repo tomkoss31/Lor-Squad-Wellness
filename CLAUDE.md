@@ -331,6 +331,51 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
 
 ---
 
+## 🏅 Les XP des membres — voir, donner, le club, le bar (24/09/2026)
+
+Maquette v2 (artifact YDW71DpnUpiPxWdoFqEESB) validée par Thomas : « × 5, plafond 750 par mois (= un extra,
+donc achat de quelque chose), go pour les 6 blocs ». **Principe gravé** : les XP sont un indicateur de
+régularité et un jeu — ils n'ajoutent AUCUN chiffre à la lecture prot / eau / kcal du journal (chez la membre :
+la pastille et la barre déjà là ; chez la coach : une pastille sur les listes, une ligne dans la fiche).
+Migration `20261215780000_xp_membres.sql` (un seul lot), code `src/features/client-xp/`.
+- **Le cœur** : `_record_client_xp_interne(client_id, action, suffixe, coach, mot)` — `record_client_xp(jeton, action)`
+  ne fait plus que résoudre le jeton. Nouvelles actions : `club_visite` +5 (1/jour), `club_10_visites` +50,
+  `club_carte_finie` +50 (par carte, suffixe = id de la carte), `coach_bravo` +10 · `coach_defi` +20 ·
+  `coach_club` +10 (clé `coach_don_<jour>` : UN geste coach par jour et par membre). Les montants vivent
+  en SQL ET dans `actions.ts`. Le niveau (`_xp_niveau` : 100/300/700/1500) se compare avant/après : une
+  montée pose un bonus bar (`xp_versements_bar`, motif `niveau_n`) et appelle l'edge de niveau.
+- **Voir** : `xp_apercu_coach()` (SECURITY INVOKER — le RLS de `clients` décide, policy `client_xp_events_coach_lit`
+  = sous-requête sur clients, jamais `::uuid`) → `useXpApercu` (un appel, 2 min de cache, `invaliderXpApercu()`
+  après un don). `NiveauPastille` (jetons `.jr[data-format]`, jamais de hex — `ClientXpStatsCard` réécrite
+  avec), `XpNiveauxCarte` sur le Matin (club) et le Co-pilote (`XpNiveauxCoPilote`) : montées de ≤ 7 j,
+  « rien gagné depuis 14 j ». Pastille dans « Membres » (BbcCrm) et « Dossiers clients » dès le niveau 2.
+- **Ça remonte** : la montée → `client-app-level-up-notify` (jeton de la membre OU `client_id` + service_role
+  depuis la base) → **push à la coach** (« Joel passe Champion·ne 🥇 », dédupée cliente + niveau). ⚠️ Avant,
+  l'edge écrivait dans `coach_reminders` qu'AUCUN écran ne lit : 5 montées (août → 22/09) jamais vues, closes
+  par la migration. 8e règle de `contacter.ts` : `niveau` (montée ≤ 7 j, clé `membre:<id>:niveau<n>`).
+- **Donner** : `xp_donner_coach(client, raison, mot)` (admin ou sa cliente : même règle que la fiche) →
+  `DonnerXpSheet` (fiche club, volet Visites & carte ; fiche standard, carte XP). Trigger `xp_don_notifier`
+  → edge `xp-don-notifier` → push membre « Thomas t'a donné 20 XP · défi tenu » + son mot.
+- **Le club** : `bbc_add_visit` donne les XP après l'insertion de la visite (rend `xp_gained`, affiché
+  « +1 visite ✓ · +5 XP »). Les Cœurs ne changent pas : deux monnaies (parrainage / régularité).
+- **Le bar** (`xp-vers-le-bar`, cron `10 5 * * 1` UTC) : le bar (`labase-shakesbar`, SON Supabase) a déjà
+  comptes par e-mail, QR scanné au comptoir, catalogue (extra 750 · boisson 1 500 · combo gaufre 2 200 ·
+  cadeau du mois 3 800) et l'API `profile?action=credit-xp-manual` (Bearer = ADMIN_PASSWORD du bar). On
+  VERSE, on n'invente rien : chaque lundi `xp_a_verser_bar()` (service_role) = XP coaching de la semaine × 5
+  + bonus de niveau (250 / 500 / 750 / 750), **plafond 750 XP bar par mois** (bonus compris ; le surplus
+  d'un bonus est perdu, la semaine au-delà du plafond est notée `plafond`), compte trouvé par e-mail
+  (`ilike`), sans compte → `sans_compte` (son espace lui propose d'en créer un). Mode `solde` (jeton membre
+  ou JWT coach) → « Tes XP au bar » (`XpBarMembre` sous les défis, `XpBarCoach` dans la fiche).
+  ⚠️ **Secrets à poser par Thomas** : `BAR_SUPABASE_URL`, `BAR_SERVICE_KEY`, `BAR_API_URL`, `BAR_ADMIN_PASSWORD`
+  — sans eux, `verser` ne fait rien et le dit ; `{"mode":"verser","dry_run":true}` compte sans créditer.
+  Les cadeaux du bar sont des 2-pour-1 ou des suppléments : un cadeau = une venue + un achat.
+- **Le repas en détail** (bloc 6) : `journal_semaine_coach` rend `kcal` et `heure` par ligne ; dans
+  `JournalCoach`, chaque repas est un bouton → `FeuilleRepasCoach` (lecture), « Un mot sur ce repas »
+  pré-remplit la remarque.
+- Reste « après » (Thomas) : le challenge de la semaine (objectif + top 3, lot du bar).
+
+---
+
 ## 🔀 Workflow dev / prod
 
 Voir « Repères » en tête de fichier : `main` = prod, `dev/thomas-test` = dev, `feat/x` depuis dev,
@@ -1211,7 +1256,9 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `send-colis-welcome-email` | fetch (funnel `/colis`) | Mail de remerciement du funnel colis (08/07/2026) |
 | `update-colis-lead-action` | fetch (funnel `/colis`) | Affine le choix final du funnel colis |
 | `client-app-save-measurement` | fetch (PWA cliente) | PWA v2 (07/2026) : enregistre une session de mensurations de la cliente |
-| `client-app-level-up-notify` | fetch (PWA cliente) | PWA v2 : prévient le coach quand la cliente passe un niveau |
+| `client-app-level-up-notify` | fetch (PWA cliente, jeton) + la base (`_record_client_xp_interne`, service_role, `client_id`) | La cliente passe un niveau → **push à la coach** (24/09 ; avant : une ligne dans `coach_reminders` que rien ne lisait) |
+| `xp-don-notifier` | trigger Postgres (`client_xp_events`, coach_id non nul) | Le geste coach « +XP » en notification à la membre, avec son mot (24/09). Service_role seulement ; `{dry_run:true}` |
+| `xp-vers-le-bar` | cron `10 5 * * 1` UTC (mode `verser`) + fetch (mode `solde`, jeton membre ou JWT coach) | Le pont vers le Shake Bar (24/09) : verse les XP coaching × 5 (plafond 750/mois) sur le compte du bar par e-mail via l'API du bar ; `solde` = ses XP au bar et le prochain cadeau. Secrets `BAR_*` à poser |
 | `journal-noaly` | fetch (espace membre, jeton) | Journal nutritionnel (21/09) : `lire_repas` (repas écrit → lignes du catalogue, ou estimées par Noaly hors catalogue avec protéines ET kcal pour 100 g, Sonnet 5) et `conseil` (« le mot de Noaly », gardé sur la journée). verify_jwt=false, jeton vérifié dedans |
 | `journal-rappel` | cron `16 18,19 * * *` UTC (20 h 16 Paris) + cron `journal-semaine` `10 17,18 * * 0` (dimanche 19 h 10) | Journal : notification de 20 h si rien n'est noté ce jour-là ; mode « semaine » : « ta semaine en 3 chiffres » le dimanche (≥ 3 jours notés). Service_role seulement ; `{dry_run:true}` compte sans envoyer |
 | `journal-remarque-notifier` | trigger Postgres (`journal_remarques`, AFTER INSERT) | Journal : la remarque de la coach en notification (« Thomas t'a laissé un mot dans ton journal »). Relit tout en base à partir de `remarque_id` ; service_role seulement ; `{dry_run:true}` montre la notification sans l'envoyer |

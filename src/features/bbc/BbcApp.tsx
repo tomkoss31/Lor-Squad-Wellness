@@ -59,6 +59,8 @@ import { useBbcSignaux } from "./useBbcSignaux";
 import { useBbcMembers } from "./useBbcMembers";
 import { useBbcHearts } from "./useBbcHearts";
 import { aContacter, type AContacter } from "./contacter";
+import { useXpApercu } from "../client-xp/useXpApercu";
+import { titreNiveau } from "../client-xp/NiveauPastille";
 import { DEFAULT_CLUB_SETTINGS } from "./useClubSettings";
 import { Feuille, Toast } from "./ui";
 import { JournalAccueil } from "../journal/JournalAccueil";
@@ -264,9 +266,16 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const heartsApi = useBbcHearts(userId);
   const { signaux } = useBbcSignaux(userId);
   const cdj = useContactsDuJour(userId);
+  // Les niveaux XP (24/09) : la 8e règle de Contacter — féliciter une montée de niveau.
+  const xp = useXpApercu(userId);
+  const niveaux = useMemo(() => {
+    const m = new Map<string, { niveau: number; monteLe: string | null; titre: string }>();
+    xp.donnees?.forEach((x, id) => m.set(id, { niveau: x.niveau, monteLe: x.monteLe, titre: titreNiveau(x.niveau) }));
+    return m;
+  }, [xp.donnees]);
   const contacts = useMemo(
-    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members, signaux }),
-    [leadsApi.leads, membresApi.members, heartsApi.members, signaux],
+    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members, signaux, niveaux }),
+    [leadsApi.leads, membresApi.members, heartsApi.members, signaux, niveaux],
   );
   const faits = useMemo(() => new Set(cdj.faits.keys()), [cdj.faits]);
   const [contact, setContact] = useState<AContacter | null>(null);

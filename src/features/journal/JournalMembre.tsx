@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { JournalIcone } from "./JournalIcone";
 import { FeuilleAjout, FeuilleConseils, FeuilleJournee, FeuilleModifier, FeuilleRepas, type AlerteSport } from "./JournalFeuilles";
 import { CarteSemaine, FeuilleSemaine } from "./JournalSemaine";
+import { XpBarMembre } from "../client-xp/XpBarLigne";
 import { chargerAliments, journalMembre, noaly, prevenirCoachNiveau, signalerXp } from "./journalApi";
 import {
   ACTIVITES,
@@ -367,6 +368,9 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           Une erreur ce jour-là ? <b style={{ color: "var(--jr-tx)" }}>Touche le repas</b> pour la corriger. Les défis, eux, se jouent le jour même.
         </div>
       )}
+
+      {/* Tes XP au bar (24/09, bloc 5) : une ligne sous les défis, jamais dans le journal du jour. */}
+      {aujourdhui && token ? <XpBarMembre token={token} format={format} /> : null}
 
       {/* Mes repas : une ligne chacun (les kcal en gris, si sa coach ne les a pas masquées) */}
       <section className="jr-card" style={{ paddingTop: 12, paddingBottom: 6 }} aria-label="Mes repas">

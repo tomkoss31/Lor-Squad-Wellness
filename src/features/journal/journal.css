@@ -554,6 +554,44 @@
 .jr-coef small { font-size: 11px; line-height: 1.15; color: var(--jr-hint); text-align: center; }
 .jr-coef.on { border-color: var(--jr-acc); background: var(--jr-acc-soft); }
 .jr-coef.on small { color: var(--jr-mut); }
+/* ── Les XP des membres (24/09) : la pastille de niveau, le bloc « niveaux », le geste +XP ──
+   Un indicateur de régularité : une pastille, jamais un chiffre de plus dans le journal. */
+.jr-niv {
+  display: inline-flex; align-items: center; gap: 5px; font-family: var(--jr-fm); font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 999px; border: 1px solid transparent; white-space: nowrap; line-height: 1.3;
+  background: color-mix(in srgb, var(--jr-mut) 12%, transparent); color: var(--jr-mut);
+}
+.jr-niv.petit { font-size: 10.5px; padding: 2px 7px; }
+.jr-niv i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; display: inline-block; flex: none; }
+.jr-niv .jr-niv-xp { font-weight: 500; opacity: 0.85; }
+.jr-niv .jr-niv-up { color: var(--jr-win-tx); font-weight: 800; }
+/* 2 En route = bronze (ambre) · 3 Engagé·e = argent (muted) · 4 Champion·ne = or (m3) · 5 Légende = violet */
+.jr-niv.n2 { background: color-mix(in srgb, var(--jr-m3) 16%, transparent); color: var(--jr-m3); border-color: color-mix(in srgb, var(--jr-m3) 40%, transparent); }
+.jr-niv.n3 { background: color-mix(in srgb, var(--jr-tx) 10%, transparent); color: var(--jr-tx); border-color: color-mix(in srgb, var(--jr-tx) 22%, transparent); }
+.jr-niv.n4 { background: color-mix(in srgb, var(--jr-win) 18%, transparent); color: var(--jr-win-tx); border-color: color-mix(in srgb, var(--jr-win) 45%, transparent); }
+.jr-niv.n5 { background: color-mix(in srgb, var(--jr-xp) 16%, transparent); color: var(--jr-xp); border-color: color-mix(in srgb, var(--jr-xp) 40%, transparent); }
+.jr-xp-ligne { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 0; border-top: 1px solid var(--jr-ln); font-size: 13px; min-height: 44px; }
+.jr-xp-ligne:first-of-type { border-top: 0; }
+.jr-xp-ligne b { font-weight: 600; color: var(--jr-tx); }
+.jr-xp-ligne small { display: block; font-size: 11.5px; color: var(--jr-mut); }
+.jr-xp-ligne button { background: transparent; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.jr-xp-pile { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.jr-xp-pile button {
+  display: inline-flex; align-items: center; gap: 6px; background: var(--jr-s2); border: 1px solid var(--jr-ln); border-radius: 999px;
+  padding: 5px 10px 5px 5px; font-size: 12px; color: var(--jr-tx); min-height: 34px;
+}
+.jr-xp-pile button i { width: 22px; height: 22px; border-radius: 50%; background: var(--jr-s1); border: 1px solid var(--jr-ln2); display: grid; place-items: center; font-family: var(--jr-fm); font-size: 10px; font-weight: 700; font-style: normal; color: var(--jr-acc-tx); }
+.jr-raisons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+.jr-raison {
+  border: 1.5px solid var(--jr-ln2); border-radius: 12px; padding: 10px 6px; text-align: center; min-height: 64px;
+  background: transparent; color: var(--jr-tx); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+}
+.jr-raison b { font-family: var(--jr-fm); font-size: 15px; color: var(--jr-acc-tx); }
+.jr-raison small { font-size: 11.5px; color: var(--jr-mut); }
+.jr-raison.on { border-color: var(--jr-acc); background: var(--jr-acc-soft); }
+.jr-raison:disabled { opacity: 0.6; }
+.jr-bar-jauge { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--jr-tx) 10%, transparent); overflow: hidden; margin-top: 8px; }
+.jr-bar-jauge i { display: block; height: 100%; background: linear-gradient(90deg, var(--jr-acc), var(--jr-m3)); border-radius: 999px; }
 .jr-obj { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; margin-top: 9px; }
 .jr-obj span { display: inline-flex; align-items: center; gap: 7px; color: var(--jr-mut); }
 .jr-obj b { font-family: var(--jr-fm); font-size: 13px; }
@@ -590,6 +628,16 @@
 .jr-stat small { font-size: 11px; color: var(--jr-hint); }
 .jr-detail { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--jr-mut); border-top: 1px solid var(--jr-ln); padding: 9px 0 3px; margin-top: 6px; }
 .jr-detail b { color: var(--jr-tx); font-weight: 600; }
+/* Le repas se touche (24/09) : le même rang, en bouton, avec son chevron. */
+.jr-detail-btn { width: 100%; background: transparent; border: 0; border-top: 1px solid var(--jr-ln); text-align: left; cursor: pointer; min-height: 44px; font: inherit; color: var(--jr-mut); align-items: center; }
+.jr-detail-btn svg { color: var(--jr-hint); flex: none; }
+.jr-repas-l { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--jr-ln); font-size: 14px; min-height: 50px; }
+.jr-repas-l:first-child { border-top: 0; }
+.jr-repas-l .jr-sous { display: block; font-size: 11.5px; color: var(--jr-hint); margin-top: 1px; }
+.jr-repas-g { font-family: var(--jr-fm); font-size: 12px; font-weight: 600; color: var(--jr-acc-tx); white-space: nowrap; text-align: right; }
+.jr-repas-g small { display: block; font-size: 10.5px; font-weight: 500; color: var(--jr-hint); }
+.jr-repas-tot { display: flex; justify-content: space-between; gap: 8px; padding: 10px 2px 2px; border-top: 2px solid var(--jr-ln2); font-weight: 700; font-size: 13px; }
+.jr-repas-tot span:last-child { font-family: var(--jr-fm); color: var(--jr-acc-tx); }
 .jr-retenir { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.45; color: var(--jr-mut); padding: 8px 0; border-top: 1px solid var(--jr-ln); }
 .jr-retenir:first-of-type { border-top: 0; }
 .jr-retenir svg { margin-top: 2px; color: var(--jr-mut); }

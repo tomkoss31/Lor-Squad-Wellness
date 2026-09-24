@@ -176,3 +176,8 @@ verify_jwt = false
 # reglage precedent de la fonction persiste au redeploiement.
 [functions.test-twilio-sms]
 verify_jwt = true
+
+[functions.xp-don-notifier]
+verify_jwt = false
+[functions.xp-vers-le-bar]
+verify_jwt = false

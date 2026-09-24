@@ -21,6 +21,7 @@ import { useMaintenant } from "../agenda/useMaintenant";
 import { useBbcVisits, visitLevel } from "../useBbcVisits";
 import type { AContacter } from "../contacter";
 import { Carte, Ligne, Rond, Vide } from "../ui";
+import { XpNiveauxCarte } from "../../client-xp/XpNiveauxCarte";
 
 export type VueCible = "agenda" | "contacter" | "crm" | "club" | "messages" | "appels" | "plus";
 
@@ -239,6 +240,16 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
           <button type="button" onClick={() => onGo("appels")} style={lien}>Les appels →</button>
         </div>
       </Carte>
+
+      {/* 6b · Les niveaux de tes membres (24/09) — qui vient de monter, qui n'a rien gagné
+          depuis 14 jours. Un indicateur de régularité, jamais un chiffre du journal. */}
+      <XpNiveauxCarte
+        userId={userId}
+        personnes={visites.members.map((m) => ({ id: m.id, nom: m.name }))}
+        format="bbc"
+        onOuvrir={onMembre}
+        onTous={() => onGo("crm")}
+      />
 
       {/* 7 · Tes liens — en attente, remontera « quand posé sur le BBC » */}
       <Carte eye="Tes liens" right={<button type="button" onClick={onLiens} style={lien}>Mes liens →</button>}>

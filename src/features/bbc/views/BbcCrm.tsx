@@ -25,6 +25,12 @@ import type { Club } from "../../../types/domain";
 import { BbcSupprimerMembre } from "./BbcSupprimerMembre";
 import { ClientAccessModal } from "../../../components/client/ClientAccessModal";
 import { useAppContext } from "../../../context/AppContext";
+import { monteRecemment, useXpApercu, type XpApercu } from "../../client-xp/useXpApercu";
+import { NiveauPastille } from "../../client-xp/NiveauPastille";
+import { NiveauLigne } from "../../client-xp/XpNiveauxCarte";
+import { XpBarCoach } from "../../client-xp/XpBarLigne";
+import { DonnerXpSheet } from "../../client-xp/DonnerXpSheet";
+import "../../journal/journal.css";
 
 function objLabel(o?: string) {
   const map: Record<string, string> = {
@@ -99,6 +105,8 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId, 
   const rechargerMembres = live.refetch;
   const [open, setOpen] = useState<string | null>(ouvrirId ?? null);
   useEffect(() => { if (ouvrirId) setOpen(ouvrirId); }, [ouvrirId]);
+  // Le niveau XP de chaque membre (24/09) : une pastille sur la ligne, une ligne dans la fiche.
+  const xp = useXpApercu(userId);
   // Le bilan des 10 (check-list en 9 points), ouvert depuis « Prochaine étape ».
   const [bilan, setBilan] = useState<BbcMember | null>(null);
   // Un admin voit tout le club (décision Thomas, 17/08). Le filtre n'est là que
@@ -223,6 +231,7 @@ export function BbcCrm({ userId, onNouveauMembre, club, apercu, onGo, ouvrirId, 
         ) : (
           members.map((m) => (
             <MemberRow key={m.id} m={m} userId={userId} open={open === m.id} onToggle={() => setOpen(open === m.id ? null : m.id)} onPesee={setPesee} cleCorps={cleCorps}
+              xp={xp.donnees?.get(m.id)} jourXp={xp.jour} onXpDonne={() => void xp.recharger(true)}
               onCorpsCharge={(id, nb) => setNbReleves((p) => (p[id] === nb ? p : { ...p, [id]: nb }))} onSupprimer={setASupprimer} onCarte={setCarteFor} onRattache={rechargerMembres} onBilan={setBilan} onGo={onGo} onCalerPesee={onCalerPesee} />
           ))
         )}
@@ -356,9 +365,11 @@ const VOLETS: [Volet, string][] = [["visites", "Visites & carte"], ["corps", "So
 const ICONE_ETAPE: Record<ActionEtape, string> = { bilan: "📋", carte: "🎟️", pesee: "⚖️", coeurs: "❤️", appels: "📞" };
 
 function MemberRow({
-  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache, onBilan, onGo, onCalerPesee,
+  m, open, onToggle, userId, onPesee, cleCorps, onCorpsCharge, onSupprimer, onCarte, onRattache, onBilan, onGo, onCalerPesee, xp, jourXp, onXpDonne,
 }: {
   m: BbcMember; open: boolean; onToggle: () => void; userId?: string;
+  /** Ses XP (24/09) : niveau, total, montée récente. */
+  xp?: XpApercu; jourXp?: string; onXpDonne?: () => void;
   onSupprimer: (m: BbcMember) => void;
   /** Ouvre le bilan des 10 pour ce membre (livraison C). */
   onBilan: (m: BbcMember) => void;
@@ -380,6 +391,8 @@ function MemberRow({
   // (sans mot de passe, sans tuto) : Gwen l'a ajouté à l'écran d'accueil et est
   // tombée sur la page de connexion.
   const [acces, setAcces] = useState(false);
+  // « Donner des XP » (24/09) : la feuille, ouverte depuis la fiche.
+  const [donnerXp, setDonnerXp] = useState(false);
   const prenomM = (m.name || "").trim().split(/\s+/)[0] || "";
   const nomM = (m.name || "").trim().split(/\s+/).slice(1).join(" ");
   // On ne le dit que quand c'est une information : « inscrite par moi » n'en
@@ -395,6 +408,11 @@ function MemberRow({
             {m.started ? "membre" : "à démarrer"} · {objLabel(m.objective)}
             {parQui ? <> · inscrite par {parQui}</> : null}
           </div>
+          {xp && xp.niveau >= 2 ? (
+            <span className="jr" data-format="bbc" style={{ display: "inline-flex", marginTop: 3 }}>
+              <NiveauPastille total={xp.total} niveau={xp.niveau} up={jourXp ? monteRecemment(xp, jourXp) : false} taille="petit" />
+            </span>
+          ) : null}
         </div>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: lvlColor }}>{visitLabel(m)}</span>
         <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 12, color: "var(--ls-bbc-lime-text)" }}>{m.hearts}♥</span>
@@ -475,6 +493,27 @@ function MemberRow({
                 <Stat label="cœurs" value={`${m.hearts}`} color="var(--ls-bbc-lime-text)" sub={m.pendingHearts ? `${m.pendingHearts} à valider` : "à jour"} />
                 <Stat label="statut" value={lifeLabel(m.lifecycleStatus)} color="var(--ls-bbc-text)" small sub="" />
               </div>
+
+              {/* Ses XP (24/09) : le niveau, ce qui l'attend au bar, et le geste « Donner des XP ».
+                  Un indicateur de régularité — jamais un chiffre du journal. */}
+              <div className="jr" data-format="bbc" style={{ gap: 0 }}>
+                <div className="jr-xp-ligne" style={{ borderTop: 0 }}>
+                  <span>
+                    <b>Sa régularité</b>
+                    <small>{xp ? `${xp.gains7j} XP ces 7 jours${xp.dernier ? "" : " · rien encore"}` : "pas encore d'XP : son espace, son journal, ses visites"}</small>
+                  </span>
+                  {xp ? <NiveauLigne total={xp.total} niveau={xp.niveau} up={jourXp ? monteRecemment(xp, jourXp) : false} /> : null}
+                </div>
+                <XpBarCoach clientId={m.id} format="bbc" />
+                <button type="button" className="bbc-pression" onClick={() => setDonnerXp(true)}
+                  style={{ minHeight: 46, padding: "10px 16px", borderRadius: 12, cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700, textAlign: "left", background: "var(--ls-bbc-s2)", border: "1px solid var(--ls-bbc-line)", color: "var(--ls-bbc-text)", marginTop: 6 }}>
+                  ✨ Donner des XP à {prenomM || "elle"}
+                </button>
+              </div>
+              {donnerXp ? (
+                <DonnerXpSheet clientId={m.id} prenom={prenomM || "elle"} total={xp?.total ?? null} format="bbc"
+                  onFermer={() => setDonnerXp(false)} onDonne={() => onXpDonne?.()} />
+              ) : null}
 
               {/* La carte, ici : c'est en ouvrant quelqu'un qu'on se demande où
                   il en est (Thomas, 03/09). */}

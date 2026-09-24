@@ -40,6 +40,14 @@ export type ClientXpActionKey =
   | "journal_eau"
   | "journal_complete"
   | "journal_actif"
+  // Le club (24/09/2026) — un pointage +5 (1x/jour), la 10e visite +50, une carte finie +50 (par carte)
+  | "club_visite"
+  | "club_10_visites"
+  | "club_carte_finie"
+  // Le geste d'une coach (24/09/2026) — un seul par jour et par membre, quelle que soit la raison
+  | "coach_bravo"
+  | "coach_defi"
+  | "coach_club"
   // 1x/semaine
   | "measurement_added"     // V2 weekly (avant : 1x/jour)
   // no cap
@@ -174,6 +182,14 @@ export const CLIENT_XP_ACTIONS: ClientXpActionDef[] = [
   { key: "journal_eau", emoji: "💧", label: "Boire ton eau du jour", hint: "1 L par 30 kg", xp: 5, cap: "daily", category: "daily" },
   { key: "journal_complete", emoji: "⭐", label: "Une journée complète", hint: "Petit-déj, déjeuner, dîner et un encas", xp: 5, cap: "daily", category: "daily" },
   { key: "journal_actif", emoji: "🏃", label: "1 h de sport ou plus", hint: "Noté dans ta journée", xp: 5, cap: "daily", category: "daily" },
+  // Le club (24/09/2026) — montants et plafonds : _record_client_xp_interne (migration 20261215780000).
+  { key: "club_visite", emoji: "☕", label: "Passer au club", hint: "Chaque pointage, 1× par jour", xp: 5, cap: "daily", category: "daily" },
+  { key: "club_10_visites", emoji: "🔟", label: "10 visites au club", hint: "Un jalon, une fois", xp: 50, cap: "lifetime", category: "milestone" },
+  { key: "club_carte_finie", emoji: "🎟️", label: "Une carte terminée", hint: "À chaque carte", xp: 50, cap: "none", category: "milestone" },
+  // Le geste d'une coach (24/09/2026) — un par jour et par membre.
+  { key: "coach_bravo", emoji: "👏", label: "Un bravo de ta coach", hint: "Un encouragement", xp: 10, cap: "daily", category: "engage" },
+  { key: "coach_defi", emoji: "🏁", label: "Défi tenu, dit ta coach", hint: "Une semaine de journal, un objectif atteint", xp: 20, cap: "daily", category: "engage" },
+  { key: "coach_club", emoji: "🤝", label: "Un geste pour le club", hint: "Une amie amenée, un coup de main", xp: 10, cap: "daily", category: "engage" },
 
   // ─── Engage (lifetime / weekly) ───────────────────────────────────────────
   {

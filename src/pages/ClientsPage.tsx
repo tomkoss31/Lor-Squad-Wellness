@@ -39,9 +39,14 @@ import { ClientsFiltersMenu } from "../components/clients/ClientsFiltersMenu";
 import { ClientsMobileView } from "../components/clients/ClientsMobileView";
 import type { FiltersSheetState } from "../components/clients/FiltersBottomSheet";
 import { getInitials } from "../lib/utils/getInitials";
+import { useXpApercu, monteRecemment } from "../features/client-xp/useXpApercu";
+import { NiveauPastille } from "../features/client-xp/NiveauPastille";
+import "../features/journal/journal.css";
 
 export function ClientsPage() {
   const { currentUser, users, visibleClients, visibleFollowUps, pvTransactions, setClientLifecycleStatus } = useAppContext();
+  // Le niveau XP de chaque cliente (24/09) : une pastille sur la ligne, rien de plus.
+  const xp = useXpApercu(currentUser?.id);
   // C V3 (2026-04-28) : lecture du ?owner=<id> depuis URL pour pre-selectionner
   // un distributeur (utile quand on arrive depuis Analytics drill-down).
   const [searchParams] = useSearchParams();
@@ -793,6 +798,14 @@ export function ClientsPage() {
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {client.firstName} {client.lastName}
                     </span>
+                    {(() => {
+                      const x = xp.donnees?.get(client.id);
+                      return x && x.niveau >= 2 ? (
+                        <span className="jr" data-format="coach" style={{ display: "inline-flex", flex: "none" }}>
+                          <NiveauPastille total={x.total} niveau={x.niveau} xp={false} up={monteRecemment(x, xp.jour)} taille="petit" />
+                        </span>
+                      ) : null;
+                    })()}
                     {/* Chantier tri priorité (2026-04-24) : badge 'Mien' pour l'admin */}
                     {isAdmin && client.distributorId === currentUser?.id ? (
                       <span

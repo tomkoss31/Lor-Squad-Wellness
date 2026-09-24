@@ -73,7 +73,9 @@ export type EntityType =
   /** Quelqu'un vient d'ouvrir un lien de paiement — le signal le plus chaud
    *  de l'app. Dédupé sur l'id du BILAN, pas de la commande : deux clics font
    *  deux commandes, mais ne doivent faire qu'une notification. */
-  | "payment_intent";
+  | "payment_intent"
+  /** Une cliente passe un niveau (XP) — dédupé sur cliente + niveau. */
+  | "client_level_up";
 
 export interface SendPushOptions {
   userId: string;

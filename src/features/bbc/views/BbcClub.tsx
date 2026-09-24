@@ -88,7 +88,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
     } else if (r.alreadyCounted) {
       direEtEffacer(`${nom} était déjà pointé·e il y a moins de 10 min — c'est bon, la visite est comptée.`, "deja");
     } else {
-      direEtEffacer(`${nom} : +1 visite ✓`, "ok");
+      direEtEffacer(`${nom} : +1 visite ✓${r.xpGained ? ` · +${r.xpGained} XP` : ""}`, "ok");
     }
   }
 

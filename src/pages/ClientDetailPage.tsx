@@ -641,7 +641,7 @@ export function ClientDetailPage() {
           {/* Etape 3 chantier client XP (2026-05-08) : niveau + barre +
               5 derniers events. Donne au coach une lecture immediate de
               l engagement du client dans son espace. */}
-          <ClientXpStatsCard clientId={client.id} />
+          <ClientXpStatsCard clientId={client.id} prenom={client.firstName} />
 
           {/* Chantier V3 (2026-04-24) : 4 MetricTiles Poids départ/jour/
               cible/RDV supprimées — fusion dans le WeightSummaryBlock en
