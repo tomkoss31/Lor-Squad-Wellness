@@ -196,6 +196,7 @@ export function JournalAccueil({ token, format, coachPrenom, onOuvrirJournal, al
         <FeuilleAjout
           creneau={feuille.creneau} etat={e} aliments={aliments} occupe={occupe} onFermer={() => setFeuille(null)}
           onAjouter={(a, g, q) => { setFeuille(null); void agir(() => journalMembre.ajouter(token, e.jour, feuille.creneau, a.cle, g, q), "Noté"); }}
+          onPlusUn={(l) => { setFeuille(null); void agir(() => journalMembre.modifier(token, l.id, l.aliment, l.grammes, l.quantite + 1), `${l.libelle} × ${l.quantite + 1}`); }}
           onReprendreVeille={() => { setFeuille(null); void agir(() => journalMembre.reprendreVeille(token, e.jour, feuille.creneau), "Repris d'hier"); }}
           onLireRepas={(texte) => noaly.lireRepas(token, feuille.creneau, texte)}
           onAjouterLot={(lignes) => { setFeuille(null); void agir(() => journalMembre.ajouterLot(token, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}

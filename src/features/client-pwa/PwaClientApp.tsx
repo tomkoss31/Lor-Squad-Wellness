@@ -377,7 +377,7 @@ export function PwaClientApp({
         }}
       >
         {item.icon}
-        <span style={{ fontSize: 9, fontWeight: 600, letterSpacing: '.01em' }}>{item.label}</span>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.01em' }}>{item.label}</span>
         {item.key === 'messages' && (
           <span style={{ position: 'absolute', top: 4, right: 'calc(50% - 15px)', width: 7, height: 7, borderRadius: '50%', background: 'var(--coral)', border: '1.5px solid var(--bg)' }} />
         )}
@@ -626,7 +626,7 @@ export function PwaClientApp({
             <span style={{ position: 'absolute', inset: 0, borderRadius: 17, background: 'var(--teal)', opacity: 0.5, animation: 'lbPing 2.6s ease-out infinite', pointerEvents: 'none' }} />
             <svg width="26" height="26" viewBox="0 0 24 24" fill="#04201b" style={{ position: 'relative' }}><path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9z" /></svg>
           </span>
-          <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--teal)', letterSpacing: '.01em' }}>Noaly</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--teal)', letterSpacing: '.01em' }}>Noaly</span>
         </button>
         {rightNav.map(renderNavBtn)}
       </div>
