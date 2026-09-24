@@ -236,6 +236,36 @@ serve(async (req) => {
     if (!isServiceRole(req.headers.get("Authorization") ?? "")) return jsonResponse({ error: "unauthorized" }, 401);
     return verser(Boolean(body.dry_run), body.lundi ?? null);
   }
+  // Outil (service_role) : le rapprochement complet — pour chaque cliente qui a des XP, son compte
+  // au bar (relié, ou trouvé par e-mail), sinon les comptes du bar au même prénom (e-mails masqués).
+  if (mode === "rapprocher") {
+    if (!isServiceRole(req.headers.get("Authorization") ?? "")) return jsonResponse({ error: "unauthorized" }, 401);
+    if (!barConfigure) return jsonResponse({ error: "bar non configuré" }, 400);
+    const sb = getServiceClient({ reessais: true });
+    const { data: ev } = await sb.from("client_xp_events").select("client_id");
+    const ids = [...new Set((ev ?? []).map((e) => String(e.client_id)))];
+    const { data: clients } = await sb.from("clients").select("id, first_name, last_name, email, bar_user_id, lifecycle_status").in("id", ids);
+    const { data: profils } = await barClient().from("profiles").select("id, email, first_name, xp");
+    const masque = (e: string | null) => (e ? e.replace(/^(.{2}).*(@.*)$/, "$1…$2") : null);
+    const norm = (s: string | null | undefined) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+    const parEmail = new Map<string, { id: string; xp: number }>();
+    for (const p of profils ?? []) if (p.email) parEmail.set(norm(p.email), { id: String(p.id), xp: Number(p.xp ?? 0) });
+    const relies: unknown[] = [], parMail: unknown[] = [], candidats: unknown[] = [], sans: unknown[] = [];
+    for (const c of clients ?? []) {
+      const nom = `${c.first_name ?? ""} ${(c.last_name ?? "").charAt(0)}.`.trim();
+      if (c.bar_user_id) { relies.push({ nom }); continue; }
+      const m = c.email ? parEmail.get(norm(c.email)) : undefined;
+      if (m) { parMail.push({ nom, bar_xp: m.xp }); continue; }
+      const memePrenom = (profils ?? []).filter((p) => norm(p.first_name) === norm(c.first_name));
+      if (memePrenom.length) {
+        candidats.push({ client_id: c.id, nom, email_coaching: masque(c.email), statut: c.lifecycle_status,
+          candidats: memePrenom.map((p) => ({ bar_user_id: p.id, email_bar: masque(p.email), bar_xp: Number(p.xp ?? 0) })) });
+      } else {
+        sans.push({ nom, email_coaching: masque(c.email), statut: c.lifecycle_status });
+      }
+    }
+    return jsonResponse({ ok: true, total: (clients ?? []).length, deja_relies: relies.length, par_email: parMail.length, a_trancher: candidats, sans_compte: sans });
+  }
   // Outil (service_role) : « elle a un compte au bar, pourquoi rien ne part ? » — les comptes du bar
   // dont le prénom ou l'e-mail ressemble, e-mail masqué (jamais en clair dans une réponse d'outil).
   if (mode === "chercher") {

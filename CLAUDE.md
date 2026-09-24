@@ -373,6 +373,12 @@ Migration `20261215780000_xp_membres.sql` (un seul lot), code `src/features/clie
   AUTRE adresse. `clients.bar_user_id` (migration `20261215790000`) = l'id de son profil au bar, lu AVANT l'e-mail ;
   posé à la main en SQL pour l'instant. Pour retrouver un compte : `{"mode":"chercher","q":"prénom"}` (service_role,
   e-mails masqués) — le prénom seul ne suffit pas (trois Océane au bar). Les secrets sont posés depuis le 24/09.
+- ⚠️ **Piège vécu le 24/09 (le journal coach tombé ~1 h en prod)** : `journal_semaine_coach` est SECURITY
+  INVOKER — elle s'exécute avec les droits de la COACH. Lui faire appeler une `_journal_*` interne (fermée à
+  `authenticated`) donne « permission denied » et TOUT le journal coach affiche « Ça n'a pas marché ». Réparé
+  par `grant execute … _journal_kcal_ligne … to authenticated` (migration `20261215800000` : calcul pur sur le
+  catalogue public). **Avant d'appeler une fonction depuis une fonction INVOKER, vérifier
+  `has_function_privilege('authenticated', …)`.**
 - **Le repas en détail** (bloc 6) : `journal_semaine_coach` rend `kcal` et `heure` par ligne ; dans
   `JournalCoach`, chaque repas est un bouton → `FeuilleRepasCoach` (lecture), « Un mot sur ce repas »
   pré-remplit la remarque.
