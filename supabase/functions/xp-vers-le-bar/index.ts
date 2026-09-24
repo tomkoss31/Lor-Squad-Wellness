@@ -63,10 +63,16 @@ function barClient() {
   return createClient(BAR_SUPABASE_URL, BAR_SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-/** Le compte du bar d'une personne, par e-mail (insensible à la casse). */
-async function profilBar(email: string | null | undefined): Promise<{ id: string; xp: number; first_name: string | null } | null> {
-  if (!barConfigure || !email) return null;
-  const { data } = await barClient()
+/** Le compte du bar d'une personne : par son id relié (clients.bar_user_id) d'abord, sinon par e-mail. */
+async function profilBar(email: string | null | undefined, barUserId?: string | null): Promise<{ id: string; xp: number; first_name: string | null } | null> {
+  if (!barConfigure) return null;
+  const bar = barClient();
+  if (barUserId) {
+    const { data } = await bar.from("profiles").select("id, xp, first_name").eq("id", barUserId).maybeSingle();
+    if (data) return { id: String(data.id), xp: Number(data.xp ?? 0), first_name: data.first_name ?? null };
+  }
+  if (!email) return null;
+  const { data } = await bar
     .from("profiles")
     .select("id, xp, first_name")
     .ilike("email", email.trim())
@@ -102,7 +108,7 @@ async function verser(dryRun: boolean, lundi: string | null) {
   if (error) return jsonResponse({ error: error.message }, 500);
   const rows = (lignes ?? []) as Array<{
     client_id: string; email: string | null; prenom: string | null; semaine: string;
-    xp_coaching: number; bonus_ids: string[] | null; bonus_xp: number; deja_ce_mois: number; a_verser: number;
+    xp_coaching: number; bonus_ids: string[] | null; bonus_xp: number; deja_ce_mois: number; a_verser: number; bar_user_id: string | null;
   }>;
   if (!barConfigure) return jsonResponse({ ok: false, skipped: "bar non configuré (BAR_SUPABASE_URL / BAR_SERVICE_KEY)", a_traiter: rows.length });
 
@@ -126,7 +132,7 @@ async function verser(dryRun: boolean, lundi: string | null) {
       continue;
     }
 
-    const profil = await profilBar(r.email);
+    const profil = await profilBar(r.email, r.bar_user_id);
     if (!profil) {
       bilan.sans_compte++;
       if (!dryRun) {
@@ -213,8 +219,8 @@ async function solde(req: Request, body: { token?: string; client_id?: string })
   }
 
   if (!clientId) return jsonResponse({ error: "invalid_token" }, 403);
-  const { data: client } = await sb.from("clients").select("email").eq("id", clientId).maybeSingle();
-  const profil = await profilBar(client?.email);
+  const { data: client } = await sb.from("clients").select("email, bar_user_id").eq("id", clientId).maybeSingle();
+  const profil = await profilBar(client?.email, client?.bar_user_id ?? null);
   const bar = profil
     ? { compte: true, xp: profil.xp, prochain: prochainCadeau(profil.xp), cadeaux: CADEAUX }
     : { compte: false, xp: 0, prochain: CADEAUX[0], cadeaux: CADEAUX, configure: barConfigure };
@@ -229,6 +235,18 @@ serve(async (req) => {
   if (mode === "verser") {
     if (!isServiceRole(req.headers.get("Authorization") ?? "")) return jsonResponse({ error: "unauthorized" }, 401);
     return verser(Boolean(body.dry_run), body.lundi ?? null);
+  }
+  // Outil (service_role) : « elle a un compte au bar, pourquoi rien ne part ? » — les comptes du bar
+  // dont le prénom ou l'e-mail ressemble, e-mail masqué (jamais en clair dans une réponse d'outil).
+  if (mode === "chercher") {
+    if (!isServiceRole(req.headers.get("Authorization") ?? "")) return jsonResponse({ error: "unauthorized" }, 401);
+    const q = String((body as { q?: string }).q ?? "").trim();
+    if (!barConfigure || q.length < 2) return jsonResponse({ error: "q requis (2 caractères) ou bar non configuré" }, 400);
+    const { data, error } = await barClient().from("profiles").select("id, email, first_name, xp, created_at")
+      .or(`first_name.ilike.%${q}%,email.ilike.%${q}%`).limit(10);
+    if (error) return jsonResponse({ error: error.message }, 500);
+    const masque = (e: string | null) => (e ? e.replace(/^(.{2}).*(@.*)$/, "$1…$2") : null);
+    return jsonResponse({ ok: true, comptes: (data ?? []).map((p) => ({ id: p.id, prenom: p.first_name, email: masque(p.email), xp: p.xp, depuis: p.created_at })) });
   }
   return solde(req, body);
 });
