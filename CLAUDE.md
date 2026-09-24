@@ -232,6 +232,15 @@ mène au journal. Côté coach : 4e volet de la fiche BBC (`BbcCrm`) et section 
   étiquettes Herbalife FR : Boisson multi-fibres (2554), Thé instantané (178K), Aloe concentré (0006).
   ⚠️ `journal_aliments_une_seule_mesure` : un aliment se mesure à la PORTION ou aux 100 g, jamais les
   deux (mettre `prot_100g`/`kcal_100g` à null pour un produit à la dose).
+- **Passe visuelle du 24/09** (Chrome, prod, les 6 écrans en clair ET en sombre) : un seul vrai défaut —
+  en standard et côté coach, **`--jr-eau` valait le teal des protéines** : les deux barres du « 7 derniers
+  jours » de `JournalCoach` étaient de la même couleur et la légende ne disait rien. L'eau est maintenant un
+  bleu **dérivé des jetons de la maison** (`color-mix(teal 55 %, violet)`, jamais un hex : il suit le clair
+  et le sombre). Au club, orange/teal étaient déjà distincts. Dans la foulée : les « légumes » de l'assiette
+  idéale prennent `--jr-m2` (sauge au club, teal en standard) au lieu du jeton de l'eau, et `resume()` ne
+  met plus un produit en minuscule (« formula 3 » → « Formula 3 » : un nom avec chiffre ou majuscule
+  interne garde la sienne). Vu et laissé : les libellés de la barre de la PWA standard sont à 9 px
+  (« Noaly » compris) — c'est tout le système `client-pwa`, pas le journal.
 - **Catalogue** `journal_aliments` : 95 aliments CIQUAL 2020 (source par ligne) + skyr
   (étiquettes) + 18 Herbalife FR + chiffres du club. Les protéines d'une ligne sont calculées
   par le SERVEUR puis figées. Ordre des suggestions : colonne `rangs` par créneau.
