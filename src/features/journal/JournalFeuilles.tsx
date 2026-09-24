@@ -556,8 +556,10 @@ export function FeuilleJournee({ etat, onFermer, onActivite, onHumeur }: {
 // ─── Mes conseils du jour ─────────────────────────────────────────────────────
 const ASSIETTES: Record<"bbc" | "std", Array<[string, number, string]>> = {
   // Repris de l'ancien onglet Conseils de chaque app (rien ne se perd).
-  bbc: [["protéines", 40, "var(--jr-acc)"], ["légumes", 30, "var(--jr-eau)"], ["féculents", 18, "var(--jr-xp)"], ["bons gras", 12, "var(--jr-coral)"]],
-  std: [["légumes", 50, "var(--jr-eau)"], ["protéines", 25, "var(--jr-coral)"], ["glucides complets", 25, "var(--jr-m3)"]],
+  // Les légumes prennent la 2e couleur de la maison (sauge au club, teal en standard),
+  // pas le jeton de l'eau : depuis le 24/09 l'eau est bleue en standard.
+  bbc: [["protéines", 40, "var(--jr-acc)"], ["légumes", 30, "var(--jr-m2)"], ["féculents", 18, "var(--jr-xp)"], ["bons gras", 12, "var(--jr-coral)"]],
+  std: [["légumes", 50, "var(--jr-m2)"], ["protéines", 25, "var(--jr-coral)"], ["glucides complets", 25, "var(--jr-m3)"]],
 };
 
 export function FeuilleConseils({ etat, aliments, format, coachPrenom, alertes, maintenant, chargerMot, onFermer }: {

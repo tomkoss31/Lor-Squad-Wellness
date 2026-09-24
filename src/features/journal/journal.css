@@ -76,7 +76,10 @@
   --jr-cta: linear-gradient(140deg, var(--teal), var(--teal-d));
   --jr-cta-ink: #04201b;
   --jr-cta-ombre: 0 14px 28px -16px rgba(0, 0, 0, 0.6);
-  --jr-eau: var(--teal);
+  /* L'eau n'est PAS le teal des protéines (24/09 : côté coach, les deux barres du
+     « 7 derniers jours » étaient de la même couleur et la légende ne disait rien).
+     Un bleu tiré des jetons de la maison, qui suit le clair et le sombre tout seul. */
+  --jr-eau: color-mix(in srgb, var(--teal) 55%, var(--violet));
   --jr-xp: var(--violet);
   --jr-coral: var(--coral);
   --jr-m1: var(--lime);
@@ -119,7 +122,7 @@
   --jr-cta: linear-gradient(140deg, var(--ls-teal), var(--ls-teal-dark));
   --jr-cta-ink: #04201b;
   --jr-cta-ombre: none;
-  --jr-eau: var(--ls-teal);
+  --jr-eau: color-mix(in srgb, var(--ls-teal) 55%, var(--ls-purple));
   --jr-xp: var(--ls-purple);
   --jr-coral: var(--ls-coral);
   --jr-m1: var(--ls-lime);

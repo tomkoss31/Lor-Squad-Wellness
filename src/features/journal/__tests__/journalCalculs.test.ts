@@ -186,6 +186,10 @@ describe("résumé d'un repas", () => {
   it("se lit comme une phrase, sans parenthèses de cuisson", () => {
     expect(resume([{ libelle: "Poulet (blanc), cuit", quantite: 1 }, { libelle: "Pâtes, cuites", quantite: 1 }])).toBe("Poulet, pâtes");
     expect(resume([{ libelle: "Barre aux protéines", quantite: 2 }])).toBe("Barre aux protéines × 2");
+    // Un produit garde sa majuscule après le premier (24/09 : « formula 3 » dans le journal de Thomas)
+    expect(resume([{ libelle: "Shake F1 + ½ sachet PDM", quantite: 1 }, { libelle: "Formula 3 (1 cuillère)", quantite: 1 }, { libelle: "Beta Heart (1 cuillère)", quantite: 1 }, { libelle: "Poulet (blanc), cuit", quantite: 1 }]))
+      .toBe("Shake F1 + ½ sachet PDM, Formula 3 (1 cuillère), Beta Heart (1 cuillère), poulet");
+    expect(resume([{ libelle: "Riz, cuit", quantite: 1 }, { libelle: "Poulet (blanc), cuit", quantite: 2 }])).toBe("Riz, poulet × 2");
   });
 });
 

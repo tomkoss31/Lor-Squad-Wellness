@@ -447,8 +447,12 @@ export function protHabituel(h: Habituel, aliments: Aliment[]): number {
 export function resume(lignes: Array<{ libelle: string; quantite: number }>): string {
   return lignes
     .map((l, i) => {
-      const n = nomCourt(l.libelle) + (l.quantite > 1 ? ` × ${l.quantite}` : "");
-      return i > 0 && /^.[a-zà-ÿœ]/.test(n) ? n.charAt(0).toLowerCase() + n.slice(1) : n;
+      const nom = nomCourt(l.libelle);
+      // Un nom de produit (Formula 3, Beta Heart, Shake F1) garde sa majuscule ;
+      // un aliment courant (poulet, pâtes) passe en minuscule après le premier.
+      const produit = /\d|[A-Z]/.test(nom.slice(1));
+      const n = nom + (l.quantite > 1 ? ` × ${l.quantite}` : "");
+      return i > 0 && !produit && /^.[a-zà-ÿœ]/.test(n) ? n.charAt(0).toLowerCase() + n.slice(1) : n;
     })
     .join(", ");
 }
