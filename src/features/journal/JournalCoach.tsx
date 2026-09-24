@@ -3,12 +3,18 @@
 //
 // BBC : 4e volet de la fiche membre (Visites & carte · Son corps · Journal ·
 // Prochaine étape). Standard : une section de l'onglet « Mesures » de la fiche
-// client — pas de 6e onglet (règle des 5).
+// client — pas de 6e onglet (règle des 5). Et /co-pilote/journal (22/09).
 //
 // Ce qu'il remplace : le carnet que la membre remplit, puis la recopie sur la
 // feuille « Journal nutritionnel », qui se perd. Ici la coach lit les 7 derniers
 // jours, ce qu'il faut en retenir, règle le coefficient protéines, et laisse une
 // remarque que la membre voit en haut de son journal.
+//
+// « Plus vivant » (24/09, maquette ForqHsP3stVu45NSEvPnZZ validée) : l'écran
+// s'ouvre sur un en-tête coloré à trois cadrans (protéines, eau, jours notés) —
+// teal en standard, orange au club —, la semaine en barres dont la couleur dit
+// l'objectif, « À retenir » en couleur, et les réglages repliés tout en bas :
+// on les touche une fois par mois, on lit le reste tous les jours.
 //
 // Accès : le RLS de la coach (journal_semaine_coach est SECURITY INVOKER) — elle
 // voit le journal des personnes qu'elle voit déjà, rien de plus.
@@ -19,11 +25,14 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { JournalIcone } from "./JournalIcone";
 import { Feuille } from "./JournalFeuilles";
 import { journalCoach } from "./journalApi";
+import { tonDe } from "./apercuJournal";
+import { titreNiveau } from "../client-xp/NiveauPastille";
 import {
   ACTIVITES,
   COEFFICIENTS,
   HUMEURS,
   NOM_CRENEAU,
+  aNote,
   aRetenir,
   eauAtteinte,
   formatLitres,
@@ -31,6 +40,7 @@ import {
   litres,
   nomDuJour,
   protJour,
+  recapCoach,
   type Creneau,
   type JourCoach,
   type SemaineCoach,
@@ -47,6 +57,9 @@ const ICONE_RETENIR = { proteines: "viande", eau: "goutte", encas: "lait", vide:
 const ORDRE: Creneau[] = ["pdj", "enc1", "dej", "enc2", "din", "aut"];
 
 const ORIGINE_TEXTE: Record<string, string> = { club: "pris au club", noaly: "lu par Noaly", coach: "noté par toi" };
+
+/** Un nombre et son unité ne se séparent jamais en fin de ligne. */
+const NBSP = " ";
 
 /** Le repas en détail (24/09, bloc 6) : aliment par aliment, quantité, protéines, kcal, d'où ça vient. */
 function FeuilleRepasCoach({ creneau, jour, prenom, objectif, kcalVisibles, onFermer, onMot }: {
@@ -93,20 +106,45 @@ function FeuilleRepasCoach({ creneau, jour, prenom, objectif, kcalVisibles, onFe
   );
 }
 
+/** Un cadran de l'en-tête : l'anneau dit la part de l'objectif, la couleur dit si c'est atteint. */
+function Cadran({ c, p, centre, titre, sous }: {
+  c: "ok" | "mid" | "bas" | "eau" | "neutre";
+  p: number;
+  centre: string;
+  titre: string;
+  sous: string;
+}) {
+  return (
+    <div className="jr-cadran">
+      <span className={`jr-cadran-rg c-${c}`} style={{ ["--p" as string]: Math.max(0, Math.min(100, Math.round(p))) }}>
+        <span>{centre}</span>
+      </span>
+      <small><b>{titre}</b>{sous}</small>
+    </div>
+  );
+}
+
 export interface JournalCoachProps {
   clientId: string;
   prenom: string;
   format: "bbc" | "coach";
+  /** Son nom en tête (Co-pilote › Journal) — dans une fiche, le nom est déjà au-dessus. */
+  titre?: string;
+  /** « chez Mélanie » : un admin voit les clientes de toute l'équipe. */
+  chez?: string | null;
+  /** Son niveau (XP) : une pastille discrète dans l'en-tête, jamais un chiffre de plus. */
+  niveau?: { total: number; niveau: number };
 }
 
-export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
+export function JournalCoach({ clientId, prenom, format, titre, chez, niveau }: JournalCoachProps) {
   const [s, setS] = useState<SemaineCoach | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [occupe, setOccupe] = useState(false);
   const [choix, setChoix] = useState<number>(-1);
   const [texte, setTexte] = useState("");
   const [changements, setChangements] = useState<string[]>([]);
-  const [info, setInfo] = useState<string | null>(null);
+  // Le mot de confirmation s'affiche là où l'on a agi (la remarque ou les réglages).
+  const [info, setInfo] = useState<{ texte: string; lieu: "remarque" | "reglages" } | null>(null);
   // Le repas ouvert en détail (24/09).
   const [repas, setRepas] = useState<Creneau | null>(null);
 
@@ -120,20 +158,21 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
   }, [clientId]);
   useEffect(() => { void charger(); }, [charger]);
 
-  const agir = useCallback(async (appel: () => Promise<SemaineCoach>, confirmation: string) => {
+  const agir = useCallback(async (appel: () => Promise<SemaineCoach>, confirmation: string, lieu: "remarque" | "reglages" = "remarque") => {
     setOccupe(true);
     try {
       setS(await appel());
-      setInfo(confirmation);
+      setInfo({ texte: confirmation, lieu });
       window.setTimeout(() => setInfo(null), 2500);
     } catch (e) {
-      setInfo((e as Error).message);
+      setInfo({ texte: (e as Error).message, lieu });
     } finally {
       setOccupe(false);
     }
   }, []);
 
   const retenir = useMemo(() => (s ? aRetenir(s, prenom) : []), [s, prenom]);
+  const recap = useMemo(() => (s ? recapCoach(s) : null), [s]);
 
   if (erreur) {
     return (
@@ -145,103 +184,130 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
       </div>
     );
   }
-  if (!s) return <div className="jr" data-format={format}><div className="jr-card jr-vide">Le journal arrive…</div></div>;
+  if (!s || !recap) return <div className="jr" data-format={format}><div className="jr-card jr-vide">Le journal arrive…</div></div>;
 
   const obj = s.objectifs;
-  const remplis = s.jours.filter(jourRempli).length;
+  // Un jour « à lire » : une ligne (même du club), ou de l'eau / du sport notés.
+  const aLire = (x: JourCoach) => jourRempli(x) || aNote(x);
   // À l'ouverture : le DERNIER jour noté — un « aujourd'hui » encore vide ne dit rien (24/09).
-  const dernierRempli = s.jours.map(jourRempli).lastIndexOf(true);
+  const dernierRempli = s.jours.map(aLire).lastIndexOf(true);
   const idx = choix >= 0 ? choix : dernierRempli >= 0 ? dernierRempli : s.jours.length - 1;
   const j = s.jours[idx];
   const protJ = protJour(j.lignes);
   const humeur = HUMEURS.find((h) => h.cle === j.humeur);
   const activite = ACTIVITES.find((a) => a.cle === j.activite);
 
+  // ── L'en-tête : trois cadrans ────────────────────────────────────────────
+  const iDernier = s.jours.map(aNote).lastIndexOf(true);
+  const silence = iDernier < 0 ? 7 : s.jours.length - 1 - iDernier;
+  const tonRegularite = silence >= 3 || recap.notes < 3 ? "bas" : recap.notes >= 5 ? "ok" : "mid";
+  const sousRegularite =
+    iDernier < 0 ? "rien cette semaine"
+      : silence === 0 ? "noté aujourd'hui"
+        : silence === 1 ? "noté hier"
+          : `rien depuis ${nomDuJour(s.jours[iDernier + 1].jour)}`;
+
+  /** La couleur de la barre des protéines d'un jour (même règle que la liste du Co-pilote). */
+  const etatProt = (x: JourCoach): string => {
+    if (!jourRempli(x)) return "vide";
+    if (!aNote(x)) return x.lignes.some((l) => l.origine === "club") ? "club" : "note";
+    if (obj.proteines == null || obj.proteines <= 0) return "note";
+    const t = tonDe((protJour(x.lignes) / obj.proteines) * 100);
+    return t === "ok" ? "ok" : x.jour === s.aujourdhui ? "encours" : t;
+  };
+
+  const kcalVisibles = s.kcal_visibles !== false;
+  const coef = String(obj.coef).replace(".", ",");
+
   return (
     <div className="jr" data-format={format}>
-      {/* Ses objectifs (le coefficient se règle ici, la membre le voit tout de suite) */}
-      <section className="jr-card" aria-label="Ses objectifs">
-        <div className="jr-eye">Ses objectifs</div>
-        <div className="jr-obj">
-          <span><JournalIcone nom="viande" taille={16} />Protéines</span>
-          <b>{obj.poids != null && obj.proteines != null ? `${String(obj.poids).replace(".", ",")} kg × ${String(obj.coef).replace(".", ",")} = ${obj.proteines} g` : "au prochain bilan pesé"}</b>
-        </div>
-        <div className="jr-coefs" role="group" aria-label="Coefficient protéines">
-          {COEFFICIENTS.map((c) => {
-            const on = Math.abs(c.coef - obj.coef) < 0.01;
-            return (
-              <button key={c.coef} type="button" className={`jr-coef${on ? " on" : ""}`} aria-pressed={on} disabled={occupe || on}
-                onClick={() => void agir(() => journalCoach.reglerCoef(clientId, c.coef), `Objectif de ${prenom} mis à jour`)}>
-                <b>× {String(c.coef).replace(".", ",")}</b>
-                <small>{c.libelle}</small>
-              </button>
-            );
-          })}
-        </div>
-        <div className="jr-obj">
-          <span><JournalIcone nom="goutte" taille={16} />Eau</span>
-          <b>{formatLitres(obj.eau_l)} L</b>
-        </div>
-        <div className="jr-tiny" style={{ marginTop: 8 }}>
-          1 L par 30 kg{obj.poids == null ? " (2 L tant qu'aucun bilan n'est pesé)" : ""}. {prenom} voit son objectif changer tout de suite dans son journal.
-        </div>
-        {/* Les kcal (bloc B, 9) : affichées en gris par défaut ; la coach peut les masquer. */}
-        <div className="jr-obj" style={{ marginTop: 12 }}>
-          <span><JournalIcone nom="info" taille={16} />Les kcal dans son journal</span>
-        </div>
-        <div className="jr-coefs deux" role="group" aria-label="Les kcal dans son journal">
-          {[
-            { visibles: true, titre: "Affichées", sous: "en gris, sans objectif" },
-            { visibles: false, titre: "Masquées", sous: "protéines et eau seulement" },
-          ].map((o) => {
-            const on = (s.kcal_visibles !== false) === o.visibles;
-            return (
-              <button key={o.titre} type="button" className={`jr-coef${on ? " on" : ""}`} aria-pressed={on} disabled={occupe || on}
-                onClick={() => void agir(() => journalCoach.reglerKcal(clientId, o.visibles), o.visibles ? `Kcal affichées pour ${prenom}` : `Kcal masquées pour ${prenom}`)}>
-                <b>{o.titre}</b>
-                <small>{o.sous}</small>
-              </button>
-            );
-          })}
+      {/* L'essentiel en un regard (24/09) */}
+      <section className="jr-rc" aria-label="Son journal en un regard">
+        <div className="jr-rc-eye">Son journal · 7 derniers jours</div>
+        {titre ? <h1 className="jr-rc-titre">{titre}</h1> : null}
+        {niveau || chez ? (
+          <div className="jr-rc-pastilles">
+            {niveau ? (
+              <span className="jr-rc-pastille" title={`${titreNiveau(niveau.niveau)} · ${niveau.total} XP`}>
+                <i aria-hidden="true" />{titreNiveau(niveau.niveau)} · {niveau.total}{NBSP}XP
+              </span>
+            ) : null}
+            {chez ? <span className="jr-rc-pastille">{chez}</span> : null}
+          </div>
+        ) : null}
+        <div className="jr-cadrans">
+          <Cadran
+            c={recap.protPct != null ? tonDe(recap.protPct) : "neutre"}
+            p={recap.protPct ?? 0}
+            centre={recap.protPct != null ? `${recap.protPct}${NBSP}%` : recap.protMoy != null ? `${recap.protMoy}${NBSP}g` : "—"}
+            titre="protéines"
+            sous={recap.protMoy == null ? "aucun repas noté" : obj.proteines != null ? `${recap.protMoy} g sur ${obj.proteines}` : "sans bilan pesé"}
+          />
+          <Cadran
+            c="eau"
+            p={recap.eauPct ?? 0}
+            centre={recap.eauPct != null ? `${recap.eauPct}${NBSP}%` : "—"}
+            titre="eau"
+            sous={recap.eauMoy != null ? `${formatLitres(recap.eauMoy)} L sur ${formatLitres(obj.eau_l)}` : "rien de noté"}
+          />
+          <Cadran
+            c={tonRegularite}
+            p={(recap.notes / 7) * 100}
+            centre={`${recap.notes}/7`}
+            titre="jours notés"
+            sous={sousRegularite}
+          />
         </div>
       </section>
 
-      {/* Les 7 derniers jours */}
-      <section className="jr-card" aria-label="7 derniers jours">
+      {/* La semaine : la hauteur = la part de l'objectif, la couleur = atteint ou pas */}
+      <section className="jr-card" aria-label="La semaine">
         <div className="jr-row">
-          <div className="jr-eye jr-grow">7 derniers jours</div>
-          <span className="jr-pastille">{remplis} / 7 jours remplis</span>
+          <div className="jr-eye jr-grow">La semaine</div>
+          <span className="jr-legende-aide">touche un jour pour le lire</span>
         </div>
-        <div className="jr-semaine">
+        <div className="jr-semaine grande">
           {s.jours.map((x, i) => {
             const p = protJour(x.lignes);
             const e = litres(x.verres, x.boisson_club);
             const nom = nomDuJour(x.jour);
+            const etat = etatProt(x);
+            const hP = etat === "vide" ? 4 : Math.max(6, Math.min(40, obj.proteines ? (p / obj.proteines) * 36 : 20));
+            const hE = e > 0 ? Math.max(6, Math.min(40, obj.eau_l > 0 ? (e / obj.eau_l) * 36 : 20)) : 4;
             return (
-              <button key={x.jour} type="button" className={`jr-jour${i === idx ? " on" : ""}${jourRempli(x) ? "" : " vide"}`} aria-label={`${nom} ${x.jour.slice(8)}`} onClick={() => setChoix(i)}>
+              <button
+                key={x.jour}
+                type="button"
+                className={`jr-jour${i === idx ? " on" : ""}${aLire(x) ? "" : " vide"}`}
+                aria-label={`${nom} ${Number(x.jour.slice(8))} : ${Math.round(p)} g de protéines, ${formatLitres(e)} L d'eau`}
+                aria-pressed={i === idx}
+                onClick={() => setChoix(i)}
+              >
                 <span>{nom.charAt(0).toUpperCase()}</span>
                 <b>{Number(x.jour.slice(8))}</b>
                 <span className="jr-mini" aria-hidden="true">
-                  <i style={{ height: Math.max(2, Math.min(18, obj.proteines ? (p / obj.proteines) * 18 : 0)), background: "var(--jr-acc)" }} />
-                  <i style={{ height: Math.max(2, Math.min(18, (e / obj.eau_l) * 18)), background: "var(--jr-eau)" }} />
+                  <i className={`b-${etat}`} style={{ height: hP }} />
+                  <i className={e > 0 ? "b-eau" : "b-vide"} style={{ height: hE }} />
                 </span>
               </button>
             );
           })}
         </div>
         <div className="jr-legende-mini">
-          <span><i style={{ background: "var(--jr-acc)" }} />protéines</span>
-          <span><i style={{ background: "var(--jr-eau)" }} />eau</span>
-          <span className="jr-legende-aide">touche un jour pour le lire</span>
+          <span><i className="b-ok" />protéines atteintes</span>
+          <span><i className="b-mid" />à moitié</span>
+          <span><i className="b-bas" />sous 50{NBSP}%</span>
+          <span><i className="b-club" />club seul</span>
+          <span><i className="b-eau" />eau</span>
         </div>
       </section>
 
-      {/* À retenir */}
+      {/* À retenir : la couleur dit quoi en faire (teal acquis · ambre à surveiller · corail à travailler) */}
       <section className="jr-card" aria-label="À retenir">
-        <div className="jr-eye" style={{ color: "var(--jr-acc-tx)" }}>À retenir</div>
-        <div style={{ marginTop: 6 }}>
+        <div className="jr-eye">À retenir</div>
+        <div className="jr-retenirs">
           {retenir.map((r, i) => (
-            <div key={i} className={`jr-retenir${r.faible ? " faible" : ""}`}>
+            <div key={i} className={`jr-retenir t-${r.ton}`}>
               <JournalIcone nom={ICONE_RETENIR[r.icone]} taille={18} />
               <span>{r.gras ? <><b>{r.gras}</b>{r.texte ? ` · ${r.texte}` : ""}</> : r.texte}</span>
             </div>
@@ -260,13 +326,13 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
             <button type="button" className="jr-jour-nav" onClick={() => setChoix(idx + 1)} aria-label="Jour suivant">{nomDuJour(s.jours[idx + 1].jour)} ›</button>
           ) : <span />}
         </div>
-        {!jourRempli(j) ? (
+        {!aLire(j) ? (
           <div className="jr-vide">{j.jour === s.aujourdhui ? "Rien de noté pour l'instant." : "Rien de noté ce jour-là."}</div>
         ) : (
           <>
             <div className="jr-stats">
               <div className="jr-stat">
-                <b style={{ color: obj.proteines != null && protJ >= obj.proteines ? "var(--jr-win-tx)" : "var(--jr-tx)" }}>{Math.round(protJ)} g</b>
+                <b style={{ color: obj.proteines != null && protJ >= obj.proteines ? "var(--jr-ok)" : "var(--jr-tx)" }}>{Math.round(protJ)} g</b>
                 <small>{obj.proteines != null ? `/ ${obj.proteines} g prot` : "protéines"}</small>
               </div>
               <div className="jr-stat">
@@ -311,7 +377,7 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
           jour={j}
           prenom={prenom}
           objectif={obj.proteines ?? null}
-          kcalVisibles={s.kcal_visibles !== false}
+          kcalVisibles={kcalVisibles}
           onFermer={() => setRepas(null)}
           onMot={() => {
             const debut = `Ton ${NOM_CRENEAU[repas].toLowerCase()} de ${nomDuJour(j.jour)} : `;
@@ -352,9 +418,65 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
           Envoyer à {prenom}
         </button>
         <div className="jr-tiny" style={{ marginTop: 7, textAlign: "center" }}>
-          {info ?? `${prenom} le voit en haut de son journal.`}
+          {info?.lieu === "remarque" ? info.texte : `${prenom} le voit en haut de son journal.`}
         </div>
       </section>
+
+      {/* Ses objectifs — repliés en bas (24/09) : on les règle une fois par mois */}
+      <details className="jr-card jr-reglages">
+        <summary>
+          <span className="jr-grow">
+            <span className="jr-eye">Ses objectifs</span>
+            <span className="jr-reglages-resume">
+              × {coef} · {obj.proteines != null ? `${obj.proteines} g` : "sans bilan pesé"} · {formatLitres(obj.eau_l)} L · kcal {kcalVisibles ? "affichées" : "masquées"}
+            </span>
+          </span>
+          <span className="jr-reglages-ouvrir">Régler <JournalIcone nom="droite" taille={16} /></span>
+        </summary>
+        <div className="jr-obj">
+          <span><JournalIcone nom="viande" taille={16} />Protéines</span>
+          <b>{obj.poids != null && obj.proteines != null ? `${String(obj.poids).replace(".", ",")} kg × ${coef} = ${obj.proteines} g` : "au prochain bilan pesé"}</b>
+        </div>
+        <div className="jr-coefs" role="group" aria-label="Coefficient protéines">
+          {COEFFICIENTS.map((c) => {
+            const on = Math.abs(c.coef - obj.coef) < 0.01;
+            return (
+              <button key={c.coef} type="button" className={`jr-coef${on ? " on" : ""}`} aria-pressed={on} disabled={occupe || on}
+                onClick={() => void agir(() => journalCoach.reglerCoef(clientId, c.coef), `Objectif de ${prenom} mis à jour`, "reglages")}>
+                <b>× {String(c.coef).replace(".", ",")}</b>
+                <small>{c.libelle}</small>
+              </button>
+            );
+          })}
+        </div>
+        <div className="jr-obj">
+          <span><JournalIcone nom="goutte" taille={16} />Eau</span>
+          <b>{formatLitres(obj.eau_l)} L</b>
+        </div>
+        <div className="jr-tiny" style={{ marginTop: 8 }}>
+          1 L par 30 kg{obj.poids == null ? " (2 L tant qu'aucun bilan n'est pesé)" : ""}. {prenom} voit son objectif changer tout de suite dans son journal.
+        </div>
+        {/* Les kcal (bloc B, 9) : affichées en gris par défaut ; la coach peut les masquer. */}
+        <div className="jr-obj" style={{ marginTop: 12 }}>
+          <span><JournalIcone nom="info" taille={16} />Les kcal dans son journal</span>
+        </div>
+        <div className="jr-coefs deux" role="group" aria-label="Les kcal dans son journal">
+          {[
+            { visibles: true, titre: "Affichées", sous: "en gris, sans objectif" },
+            { visibles: false, titre: "Masquées", sous: "protéines et eau seulement" },
+          ].map((o) => {
+            const on = kcalVisibles === o.visibles;
+            return (
+              <button key={o.titre} type="button" className={`jr-coef${on ? " on" : ""}`} aria-pressed={on} disabled={occupe || on}
+                onClick={() => void agir(() => journalCoach.reglerKcal(clientId, o.visibles), o.visibles ? `Kcal affichées pour ${prenom}` : `Kcal masquées pour ${prenom}`, "reglages")}>
+                <b>{o.titre}</b>
+                <small>{o.sous}</small>
+              </button>
+            );
+          })}
+        </div>
+        {info?.lieu === "reglages" ? <div className="jr-tiny" role="status" style={{ marginTop: 8, textAlign: "center" }}>{info.texte}</div> : null}
+      </details>
     </div>
   );
 }
