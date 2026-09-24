@@ -43,7 +43,9 @@ export type RaisonContact =
   | "absente"
   | "contente"
   | "journal"
-  | "coeur";
+  | "coeur"
+  /** Montée de niveau (XP) depuis moins de 7 jours : la féliciter (24/09). */
+  | "niveau";
 
 export interface AContacter {
   /** Stable : sert de clé React et de `contact_label` quand on note le geste. */
@@ -96,11 +98,24 @@ export function aContacter(args: {
   /** Dernière visite et visites sur 30 j, par membre (livraison B). Sans elles, les règles
    *  « absente » et « contente » ne s'appliquent pas — jamais de fausse alerte. */
   signaux?: Map<string, SignalVisites>;
+  /** Le niveau XP de chaque membre et le jour de sa dernière montée (24/09, useXpApercu). */
+  niveaux?: Map<string, { niveau: number; monteLe: string | null; titre?: string }>;
   maintenant?: Date;
 }): AContacter[] {
   const now = args.maintenant ?? new Date();
   const JOUR = 24 * 60 * 60 * 1000;
   const out: AContacter[] = [];
+
+  // 8e règle (24/09) : une montée de niveau de moins de 7 jours, pas encore fêtée — la clé
+  // porte le niveau, donc chaque montée est un nouveau contact, et « déjà fait » tient.
+  for (const m of args.membres) {
+    const x = args.niveaux?.get(m.id);
+    if (!x || x.niveau < 2 || !x.monteLe) continue;
+    const depuis = (now.getTime() - new Date(x.monteLe + "T00:00:00").getTime()) / JOUR;
+    if (depuis < 0 || depuis > 7) continue;
+    const titre = x.titre ?? `niveau ${x.niveau}`;
+    out.push({ key: `membre:${m.id}:niveau${x.niveau}`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "niveau", texte: `${titre} depuis ${depuis < 1 ? "aujourd'hui" : depuis < 2 ? "hier" : `${Math.floor(depuis)} jours`} — la féliciter`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+  }
 
   for (const l of args.leads) {
     if (l.dormant || l.status === "converted" || l.status === "lost") continue;
@@ -190,5 +205,7 @@ export function messagePour(c: AContacter, coachPrenom: string): string {
       return `${c.nom}, ça fait plaisir de te voir aussi régulière 💪 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
     case "coeur":
       return `${c.nom}, tu es à un cœur du palier suivant 💛 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
+    case "niveau":
+      return `${c.nom}, tu viens de passer un niveau dans ton app 🎉 C'est ta régularité qui paie — continue comme ça, et tes XP te font gagner des cadeaux au bar.`;
   }
 }

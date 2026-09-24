@@ -164,6 +164,20 @@ describe("le nom dans la liste, le prénom dans le message", () => {
     expect(messagePour(c, "Thomas")).toMatch(/^Gwendoline, ta carte est finie/);
   });
 
+  it("une montée de niveau de moins de 7 jours devient un contact : la féliciter (24/09)", () => {
+    const m = membre({ id: "m9", name: "Joel Furnon", prenom: "Joel", card: { type: 10, used: 3, remaining: 7, expired: false } });
+    const niveaux = new Map([["m9", { niveau: 4, monteLe: "2026-09-15", titre: "Champion.ne" }]]);
+    const l = aContacter({ leads: [], membres: [m], coeurs: [], niveaux, maintenant: now });
+    expect(l).toHaveLength(1);
+    expect(l[0].raison).toBe("niveau");
+    expect(l[0].key).toBe("membre:m9:niveau4");
+    expect(l[0].texte).toContain("Champion.ne depuis 3 jours");
+    expect(messagePour(l[0], "Thomas")).toMatch(/^Joel, tu viens de passer un niveau/);
+    // Plus vieux que 7 jours, ou niveau 1 : rien.
+    expect(aContacter({ leads: [], membres: [m], coeurs: [], niveaux: new Map([["m9", { niveau: 4, monteLe: "2026-09-01" }]]), maintenant: now })).toHaveLength(0);
+    expect(aContacter({ leads: [], membres: [m], coeurs: [], niveaux: new Map([["m9", { niveau: 1, monteLe: null }]]), maintenant: now })).toHaveLength(0);
+  });
+
   it("la liste se range par nom complet (deux Sandrine ne se mélangent plus)", () => {
     const l = aContacter({
       leads: [

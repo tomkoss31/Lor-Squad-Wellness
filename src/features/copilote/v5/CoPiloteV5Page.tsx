@@ -34,6 +34,7 @@ import { useTimeContext } from "./hooks/useTimeContext";
 // rendez-vous d'aujourd'hui — juste un rappel de l'agenda. »
 import { RdvDuJour } from "./components/RdvDuJour";
 import { JournalApercuCarte } from "../../journal/JournalApercuCarte";
+import { XpNiveauxCoPilote } from "../../client-xp/XpNiveauxCarte";
 import { BandeauDemarrage } from "./components/BandeauDemarrage";
 // RentabJourney reste utilisé par la vue superviseur passif (CoPilotePassiveView).
 import { RentabJourney } from "./components/RentabJourney";
@@ -246,6 +247,10 @@ export function CoPiloteV5Page() {
           « N le tiennent ces 7 derniers jours » → /co-pilote/journal. Un seul
           appel léger (journal_apercu_coach), partagé avec l'écran et gardé 2 min. */}
       <JournalApercuCarte />
+
+      {/* Les niveaux de ses clientes (24/09) : qui vient de monter, qui n'a rien gagné
+          depuis 14 jours — un indicateur de régularité, sous le journal. */}
+      <XpNiveauxCoPilote />
 
       {/* Simplification 2026-07-27 (LOT 1) : « Mes expositions de la semaine »
           retiré — 2 lignes enregistrées en base depuis la mise en service.

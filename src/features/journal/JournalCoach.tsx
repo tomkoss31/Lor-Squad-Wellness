@@ -17,6 +17,7 @@
 import "./journal.css";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { JournalIcone } from "./JournalIcone";
+import { Feuille } from "./JournalFeuilles";
 import { journalCoach } from "./journalApi";
 import {
   ACTIVITES,
@@ -31,6 +32,7 @@ import {
   nomDuJour,
   protJour,
   type Creneau,
+  type JourCoach,
   type SemaineCoach,
 } from "./journalCalculs";
 
@@ -43,6 +45,53 @@ const CHANGEMENTS: Array<{ cle: string; libelle: string }> = [
 ];
 const ICONE_RETENIR = { proteines: "viande", eau: "goutte", encas: "lait", vide: "calendrier" } as const;
 const ORDRE: Creneau[] = ["pdj", "enc1", "dej", "enc2", "din", "aut"];
+
+const ORIGINE_TEXTE: Record<string, string> = { club: "pris au club", noaly: "lu par Noaly", coach: "noté par toi" };
+
+/** Le repas en détail (24/09, bloc 6) : aliment par aliment, quantité, protéines, kcal, d'où ça vient. */
+function FeuilleRepasCoach({ creneau, jour, prenom, objectif, kcalVisibles, onFermer, onMot }: {
+  creneau: Creneau; jour: JourCoach; prenom: string; objectif: number | null; kcalVisibles: boolean;
+  onFermer: () => void; onMot: () => void;
+}) {
+  const ls = jour.lignes.filter((l) => l.creneau === creneau);
+  const prot = protJour(ls);
+  const kcal = ls.reduce((s, l) => s + (l.kcal ?? 0), 0);
+  const kcalConnues = ls.some((l) => l.kcal != null);
+  const estime = ls.some((l) => l.estime);
+  const totalJour = protJour(jour.lignes);
+  const heure = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", " h ") : null);
+  return (
+    <Feuille titre={`${NOM_CRENEAU[creneau]} · ${Math.round(prot)} g`} surTitre={`${nomDuJour(jour.jour)} ${Number(jour.jour.slice(8))} · ${prenom}`} onFermer={onFermer}>
+      <div className="jr-liste">
+        {ls.map((l, i) => (
+          <div key={i} className="jr-repas-l">
+            <span>
+              {l.libelle}
+              {l.origine !== "membre" && ORIGINE_TEXTE[l.origine] ? <span className={`jr-tag${l.origine === "noaly" ? " nly" : ""}`}>{ORIGINE_TEXTE[l.origine]}</span> : null}
+              {l.estime ? <span className="jr-tag nly">estimé par Noaly</span> : null}
+              <span className="jr-sous">
+                {[l.grammes ? `${Math.round(l.grammes)} g` : l.quantite > 1 ? `× ${l.quantite}` : "1 portion", heure(l.heure) ? `noté à ${heure(l.heure)}` : null].filter(Boolean).join(" · ")}
+              </span>
+            </span>
+            <span className="jr-repas-g">
+              {Math.round(l.prot_g * 10) / 10} g
+              {kcalVisibles && l.kcal != null ? <small>{Math.round(l.kcal)} kcal</small> : null}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="jr-repas-tot">
+        <span>Ce repas</span>
+        <span>{Math.round(prot)} g{kcalVisibles && kcalConnues ? ` · ${estime ? "≈ " : ""}${Math.round(kcal)} kcal` : ""}</span>
+      </div>
+      <div className="jr-tiny">
+        {objectif != null ? `Objectif du jour ${objectif} g · ` : ""}sur la journée elle en est à {Math.round(totalJour)} g.
+        {kcalVisibles ? " Les kcal restent une indication, jamais un objectif." : ""}
+      </div>
+      <button type="button" className="jr-lien" onClick={onMot}>Un mot sur ce repas ›</button>
+    </Feuille>
+  );
+}
 
 export interface JournalCoachProps {
   clientId: string;
@@ -58,6 +107,8 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
   const [texte, setTexte] = useState("");
   const [changements, setChangements] = useState<string[]>([]);
   const [info, setInfo] = useState<string | null>(null);
+  // Le repas ouvert en détail (24/09).
+  const [repas, setRepas] = useState<Creneau | null>(null);
 
   const charger = useCallback(async () => {
     setErreur(null);
@@ -230,11 +281,12 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
                 <small>humeur</small>
               </div>
             </div>
+            {/* Chaque repas se touche (24/09) : la feuille dit tout ce qu'elle a mangé. */}
             {ORDRE.map((c) => {
               const ls = j.lignes.filter((l) => l.creneau === c);
               if (!ls.length) return null;
               return (
-                <div key={c} className="jr-detail">
+                <button key={c} type="button" className="jr-detail jr-detail-btn" onClick={() => setRepas(c)} aria-label={`${NOM_CRENEAU[c]} en détail`}>
                   <span>
                     <b>{NOM_CRENEAU[c]}</b>
                     <br />
@@ -242,13 +294,33 @@ export function JournalCoach({ clientId, prenom, format }: JournalCoachProps) {
                       {ls.map((l) => `${l.libelle}${l.grammes ? ` ${Math.round(l.grammes)} g` : ""}${l.quantite > 1 ? ` × ${l.quantite}` : ""}${l.origine === "club" ? " (club)" : ""}${l.estime ? " (estimé par Noaly)" : ""}`).join(" · ")}
                     </span>
                   </span>
-                  <span style={{ fontFamily: "var(--jr-fm)", color: "var(--jr-acc-tx)", fontWeight: 700 }}>{Math.round(protJour(ls))} g</span>
-                </div>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontFamily: "var(--jr-fm)", color: "var(--jr-acc-tx)", fontWeight: 700 }}>{Math.round(protJour(ls))} g</span>
+                    <JournalIcone nom="droite" taille={16} />
+                  </span>
+                </button>
               );
             })}
           </>
         )}
       </section>
+
+      {repas ? (
+        <FeuilleRepasCoach
+          creneau={repas}
+          jour={j}
+          prenom={prenom}
+          objectif={obj.proteines ?? null}
+          kcalVisibles={s.kcal_visibles !== false}
+          onFermer={() => setRepas(null)}
+          onMot={() => {
+            const debut = `Ton ${NOM_CRENEAU[repas].toLowerCase()} de ${nomDuJour(j.jour)} : `;
+            setTexte((t) => (t.trim() ? t : debut));
+            setRepas(null);
+            window.setTimeout(() => document.querySelector<HTMLTextAreaElement>(".jr-texte")?.focus(), 50);
+          }}
+        />
+      ) : null}
 
       {/* Ta remarque */}
       <section className="jr-card" aria-label="Ta remarque">

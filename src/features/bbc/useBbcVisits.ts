@@ -62,6 +62,8 @@ export interface AddVisitResult {
   alreadyCounted: boolean;
   /** Le prénom rendu par la RPC, pour l'écrire dans le message. */
   name: string;
+  /** Les XP que ce pointage lui a donnés (24/09) — 0 si déjà pointée aujourd'hui. */
+  xpGained?: number;
 }
 
 export interface UseBbcVisitsResult {
@@ -219,7 +221,7 @@ export function useBbcVisits(userId?: string | null, clubId?: string | null): Us
         if (alreadyCounted) rate();
         // relit compteurs + carte (la carte a pu se fermer)
         void refetch();
-        return { ok: true, alreadyCounted, name: String(r.client_name ?? "") };
+        return { ok: true, alreadyCounted, name: String(r.client_name ?? ""), xpGained: Number(r.xp_gained ?? 0) || 0 };
       } catch {
         rate();
         return { ok: false, alreadyCounted: false, name: "" };
