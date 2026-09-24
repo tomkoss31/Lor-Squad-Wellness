@@ -369,6 +369,10 @@ Migration `20261215780000_xp_membres.sql` (un seul lot), code `src/features/clie
   ⚠️ **Secrets à poser par Thomas** : `BAR_SUPABASE_URL`, `BAR_SERVICE_KEY`, `BAR_API_URL`, `BAR_ADMIN_PASSWORD`
   — sans eux, `verser` ne fait rien et le dit ; `{"mode":"verser","dry_run":true}` compte sans créditer.
   Les cadeaux du bar sont des 2-pour-1 ou des suppléments : un cadeau = une venue + un achat.
+  ⚠️ **L'e-mail ne suffit pas toujours** (premier dry_run, 24/09) : Virgile et Océane ont un compte au bar sous une
+  AUTRE adresse. `clients.bar_user_id` (migration `20261215790000`) = l'id de son profil au bar, lu AVANT l'e-mail ;
+  posé à la main en SQL pour l'instant. Pour retrouver un compte : `{"mode":"chercher","q":"prénom"}` (service_role,
+  e-mails masqués) — le prénom seul ne suffit pas (trois Océane au bar). Les secrets sont posés depuis le 24/09.
 - **Le repas en détail** (bloc 6) : `journal_semaine_coach` rend `kcal` et `heure` par ligne ; dans
   `JournalCoach`, chaque repas est un bouton → `FeuilleRepasCoach` (lecture), « Un mot sur ce repas »
   pré-remplit la remarque.
