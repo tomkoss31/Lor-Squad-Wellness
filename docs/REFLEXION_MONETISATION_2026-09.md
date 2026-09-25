@@ -151,6 +151,29 @@ Proposé pour le lancement (un seul paquet, pour un club) :
   (la société n'existe pas encore). La liste mesure la demande.
 - Plus tard : une formule moins chère pour un coach seul, sans club (point 3).
 
+### Le prix, revu (25/09, 5e échange)
+
+Thomas : « qui paie 149 € une app ? C'est vraiment cher, non ? » — pour un petit club, oui.
+- Le marché (recherche web du 25/09) : logiciels de salles et studios = 49-100 €/mois pour les petites
+  structures, 100-200 € les moyennes ; Deciplus à partir de 69-79 € HT (jusqu'à 299 €), bsport ~150 €.
+- Le club de Thomas = **15 membres** dans l'app (mesuré le 25/09). Cartes ≈ 1 200 €/mois : 149 € = 12 %.
+
+**Proposition revue — le prix suit la taille du club** (tout compris : app, agenda, journal + Noaly,
+mises à jour, guide) :
+| Membres actifs | Prix HT / mois |
+|---|---|
+| jusqu'à 30 | 69 € (moins qu'une carte de 10 visites) |
+| 31 à 80 | 109 € |
+| plus de 80 | 149 € |
++ 290 € de mise en route.
+
+- Compatible avec « un prix ne se remonte jamais » : le prix de chaque palier ne bouge pas, mais le club
+  change de palier en grandissant. Le revenu suit la réussite des clubs sans hausse de prix.
+- Phase pilote : 5 petits clubs = 345 €/mois pour ~510 € de coûts → ~165 €/mois d'investissement,
+  couverts ~9 mois par les 5 mises en route (1 450 €). Point mort ≈ 8 petits clubs.
+- À 50 clubs (60 % petits, 30 % moyens, 10 % grands ≈ 89 € en moyenne) : ~3 000 à 3 500 €/mois de reste.
+- Plancher ~69 € : le support prend autant de temps pour un petit club que pour un grand.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
