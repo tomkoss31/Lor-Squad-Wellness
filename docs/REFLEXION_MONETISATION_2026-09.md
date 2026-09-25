@@ -102,9 +102,38 @@ Le vrai coût = le temps de Thomas (support ~30 min par abonné et par mois au d
 Avant le premier euro : ~2 500 € (création de la SAS, CGV + contrat de sous-traitance RGPD, marque INPI)
 + plusieurs semaines de chantier (bulles, marque par organisation, paiement de l'abonnement, inscription).
 
+### 50, 100, 1 000 abonnés (25/09, 3e échange)
+
+Thomas : « aucune idée » du nombre qu'il peut toucher ; « l'outil est incroyable ; s'il est rentable, peu cher,
+utile, il risque de marcher fort face à un outil de coaching. C'est possible. Imagine 50, 100, 1 000 ? »
+
+Un « abonné » = un coach ou un club qui paie. 1 000 abonnés ≈ 30 000 à 100 000 personnes dans les apps.
+
+| Abonnés | Encaissé / mois | Coûts / mois | Reste / mois | Reste / an |
+|---|---|---|---|---|
+| 50 | 4 000 € | ~930 € | ~3 000 € | ~37 000 € |
+| 100 | 8 000 € | ~2 900 € (dont un mi-temps support ~1 500 €) | ~5 000 € | ~60 000 € |
+| 1 000 | 80 000 € | ~42 000 € | ~38 000 € | ~450 000 € |
+
+Coûts à 1 000 : équipe de 5 (2 support, 1 mise en route / vente, 2 dev) ~25 000 € ; hébergement, outils, avocat,
+comptable, assurance, audit de sécurité ~4 500 € ; Noaly + Stripe ~7 500 € ; faire connaître l'app ~5 000 €.
+
+Ce qui change à chaque palier :
+- **50** — tenable seul avec Claude, à trois conditions : une base de TEST séparée (aujourd'hui dev et prod
+  partagent la même base), l'hébergement payant, les bulles étanches testées comme l'audit du 29/07.
+- **100** — un mi-temps au support, inscription et paiement sans Thomas, les tutos vidéo, un suivi des erreurs
+  (aucun outil aujourd'hui : ni Sentry ni équivalent), une 2e personne capable de faire tourner la machine.
+- **1 000** — une entreprise : équipe, autres pays francophones (catalogues et prix par pays, puis traduction),
+  avis d'avocat sur l'hébergement de données de santé (HDS : si oui, changer d'hébergeur), et Herbalife le verra.
+
+Conseil : ne pas viser 1 000, viser **5 clubs pilotes** hors lignée, à prix réduit contre leurs retours.
+Ils valident le prix, l'utilité et le temps de support ; le reste, c'est les répéter.
+
 ## Questions ouvertes
 
-- Combien de clubs et de coachs hors lignée Thomas peut-il toucher en 12 mois ? (25 ou 100 ?)
+- Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
+  grandeur à demander à l'upline / au réseau : c'est ce qui dit si 1 000 est un objectif ou un rêve.
+- Qui seraient les 5 clubs pilotes ?
 - Le Playbook BBC appartient à qui ? (conditionne l'option formation)
 - Protection de la distribution Herbalife : produit neutre (pas de nom ni de logo Herbalife), catalogue
   rempli par chaque club, société séparée.
