@@ -126,8 +126,30 @@ Ce qui change à chaque palier :
 - **1 000** — une entreprise : équipe, autres pays francophones (catalogues et prix par pays, puis traduction),
   avis d'avocat sur l'hébergement de données de santé (HDS : si oui, changer d'hébergeur), et Herbalife le verra.
 
-Conseil : ne pas viser 1 000, viser **5 clubs pilotes** hors lignée, à prix réduit contre leurs retours.
-Ils valident le prix, l'utilité et le temps de support ; le reste, c'est les répéter.
+Conseil : ne pas viser 1 000, viser **5 clubs pilotes** hors lignée. Ils valident le prix, l'utilité et le
+temps de support ; le reste, c'est les répéter.
+
+### Le prix de lancement (25/09, 4e échange)
+
+**Décision de Thomas** : « rien de gratuit, rien ne se donne ». Pas de prix réduit pour les pilotes : un prix bas
+annoncé une fois devient la référence et ne se remonte jamais. Ordre prévu : créer l'entreprise, investir pour
+dupliquer sur 5 clubs, puis plus.
+
+Proposé pour le lancement (un seul paquet, pour un club) :
+> App coach + app des membres + agenda partagé + journal nutritionnel avec Noaly, mises à jour et guide en ligne
+> compris : **149 € HT / mois** (178,80 € TTC pour qui ne récupère pas la TVA) + **290 € de mise en route**
+> (réglages, import des fiches, prise en main).
+
+- Pourquoi pas 119 € : à 149 €, la machine se paie dès le 4e club (4 × 149 = 596 € > 470 € de frais + ~14 € par
+  club) ; à 119 €, 5 clubs couvrent tout juste les frais, pendant la phase la plus chargée en support.
+- Argument : moins de deux cartes de 10 visites (2 × 80 €).
+- Mises en route : 5 × 290 = 1 450 € sur les ~2 500 € de départ ; le reste couvert en ~5 mois (≈ 205 € de reste
+  par mois à 5 clubs).
+- Dire « mises à jour et nouveautés incluses », pas « dev inclus » : un développement pour UN club = sur devis.
+- Pas d'essai gratuit : une démo sur le club de Thomas (sa meilleure preuve).
+- En parler dès maintenant = « en préparation » + liste des clubs intéressés, sans encaisser ni donner de date
+  (la société n'existe pas encore). La liste mesure la demande.
+- Plus tard : une formule moins chère pour un coach seul, sans club (point 3).
 
 ## Questions ouvertes
 
