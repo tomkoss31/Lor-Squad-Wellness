@@ -13,6 +13,7 @@ import { useBbcMembers } from "../useBbcMembers";
 import { useClubSettings } from "../useClubSettings";
 import { RECETTE_CLUB, PALIERS_REMISE, coutVisiteDepuisCarte, dosesParDefaut } from "../data/bbcClubPrices";
 import { CLUB100, ECHELLE_ORG, DEFAULT_RENTA, calculerRenta, type RentaInput } from "../data/bbcClub100";
+import { RentabiliteDuMois } from "../caisse/RentabiliteDuMois";
 
 const eur = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -105,6 +106,12 @@ export function BbcClub100({ userId, clubId }: BbcClub100Props) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20, maxWidth: 860 }}>
+      {/* ── CE MOIS-CI AU CLUB (comptoir, lot 4) : propriétaire et admins seulement ── */}
+      <RentabiliteDuMois
+        coutVisite={coutVisite}
+        prixCartes={{ "10": settings.cards?.["10"]?.price ?? null, "30": settings.cards?.["30"]?.price ?? null }}
+      />
+
       {/* ── LE MODÈLE (sourcé) ─────────────────────────────────────────── */}
       <div style={{ background: "var(--ls-bbc-s1)", border: "1px solid var(--ls-bbc-line)", borderRadius: 20, padding: "22px 24px" }}>
         <Eye>le modèle club 100</Eye>

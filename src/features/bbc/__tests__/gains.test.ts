@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   lireMaCaisse,
+  lireRentabilite,
+  rentabiliteDuMois,
   nomDuMois,
   parMembre,
   remiseDuRang,
@@ -128,5 +130,55 @@ describe("sa journée", () => {
   it("nomme le mois", () => {
     expect(nomDuMois("2026-09")).toBe("Septembre");
     expect(nomDuMois("2026-08")).toBe("Août");
+  });
+});
+
+describe("ce qui reste au club (lot 4)", () => {
+  const f1 = (qte: number) => [{ carte_id: "f1", nom: "Formula 1", prix: 3.8, qte }];
+  const brut = {
+    mois: "2026-09",
+    cartes: [{ type: 10, prix: 80 }, { type: 30, prix: "185" }, { type: 10, prix: null }],
+    visites: 186,
+    carte: [{ id: "f1", ref: "4466", portions: 21, maison: { f1: 1 }, recette: null }],
+    ventes: [
+      { id: "a", created_at: "2026-09-26T06:00:00Z", vendeur_id: "romane", total: 19, lignes: f1(5) },
+      { id: "b", created_at: "2026-09-26T07:00:00Z", vendeur_id: "thomas", total: 7.6, lignes: f1(2) },
+      { id: "c", created_at: "2026-09-26T08:00:00Z", vendeur_id: "maria", total: 3.8, lignes: f1(1) },
+    ],
+    vendeurs: [
+      { id: "romane", prenom: "Romane", rang: "senior_consultant_35", proprio: false },
+      { id: "thomas", prenom: "Thomas", rang: "active_world_team_50", proprio: true },
+      { id: "maria", prenom: "Maria", rang: "supervisor_50", proprio: false },
+    ],
+  };
+
+  it("cartes − produits servis + vos ventes + écarts", () => {
+    const d = lireRentabilite(brut)!;
+    const r = rentabiliteDuMois(d, 3.67, { "10": 80, "30": 185 });
+    // Une carte sans prix prend le tarif du club.
+    expect(r.cartes).toEqual({ total: 345, nb10: 2, nb30: 1, autres: 0, estimees: 1 });
+    expect(r.produitsServis).toBe(682.62);
+    // Thomas (propriétaire, 50 %) : 2 F1 → 7,60 € vendus, 2 × (3,80 − 1,51) gagnés.
+    expect(r.vosVentes).toEqual({ vendu: 7.6, gagne: 4.58, prenoms: ["Thomas"] });
+    // Romane à 35 % : 5 F1 = 5,7 PV × 15 % × 1,78 € ; Maria à 50 % ne donne pas d'écart.
+    expect(r.ecarts).toEqual([{ id: "romane", prenom: "Romane", remise: 35, pv: 5.7, ecart: 1.52 }]);
+    // 345 − 682,62 + 4,58 + 1,52, au centime.
+    expect(r.reste).toBe(-331.52);
+  });
+
+  it("le calcul de la maquette : 159 PV à 35 % font 42 € d'écart", () => {
+    const d = { ...lireRentabilite(brut)!, ventes: [], vendeurs: [] };
+    expect(rentabiliteDuMois(d, 3.67, {}).ecarts).toEqual([]);
+    expect(Math.round((159 * (50 - 35) * 1.78) / 100)).toBe(42);
+  });
+
+  it("sans coût de visite, pas de « reste » inventé", () => {
+    const r = rentabiliteDuMois(lireRentabilite(brut)!, null, { "10": 80, "30": 185 });
+    expect(r.produitsServis).toBeNull();
+    expect(r.reste).toBeNull();
+  });
+
+  it("rien pour quelqu'un qui n'est pas propriétaire", () => {
+    expect(lireRentabilite(null)).toBeNull();
   });
 });

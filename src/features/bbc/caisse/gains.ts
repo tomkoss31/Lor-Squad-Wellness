@@ -13,7 +13,7 @@
 
 import { getProductByRef } from "../../../data/herbalifeCatalog";
 import { pvProductCatalog } from "../../../data/pvCatalog";
-import { tierPctForRank } from "../../../lib/herbalifeFormulas";
+import { PV_TO_EUR_RATIO, tierPctForRank } from "../../../lib/herbalifeFormulas";
 import { RECETTE_CLUB } from "../data/bbcClubPrices";
 import { lireAchats, type Achat, type LigneVendue } from "./caisse";
 import { DOSES, jourParis, lireDoses, type Dose, type Doses } from "./maison";
@@ -204,4 +204,146 @@ export function nomDuMois(mois: string): string {
   const m = Number(mois.slice(5, 7));
   const nom = MOIS[m - 1] ?? "";
   return nom ? nom[0].toUpperCase() + nom.slice(1) : "";
+}
+
+// =============================================================================
+// Lot 4 (26/09) : « Ce qui reste au club » — le mois du club, pour le propriétaire.
+// Maquette v3, écran 5 : cartes encaissées − produits servis + vos ventes + écarts.
+// L'écart d'une coach = ses PV vendus × (50 % − sa remise) × 1,78 € : ce que
+// Herbalife verse à sa lignée, estimé (le vrai montant arrive dans Bizworks).
+// =============================================================================
+
+export interface VendeurClub {
+  id: string;
+  prenom: string;
+  rang: string | null;
+  /** Le propriétaire ou un admin : ses ventes sont « vos ventes », pas un écart. */
+  proprio: boolean;
+}
+
+export interface VenteClub extends Achat {
+  vendeurId: string;
+}
+
+export interface DonneesRentabilite {
+  mois: string;
+  cartes: Array<{ type: number; prix: number | null }>;
+  visites: number;
+  valeurs: Map<string, ValeurUnite | null>;
+  ventes: VenteClub[];
+  vendeurs: VendeurClub[];
+}
+
+/** Relit `club_rentabilite`. null : pas le propriétaire (la base ne rend rien). */
+export function lireRentabilite(brut: unknown): DonneesRentabilite | null {
+  if (!brut || typeof brut !== "object") return null;
+  const o = brut as Record<string, unknown>;
+  const base = lireMaCaisse({ mois: o.mois, carte: o.carte, ventes: o.ventes });
+  const brutes = Array.isArray(o.ventes) ? o.ventes : [];
+  const ventes: VenteClub[] = base.ventes.map((v) => {
+    const r = (brutes.find((b) => b && typeof b === "object" && (b as Record<string, unknown>).id === v.id) ?? {}) as Record<string, unknown>;
+    return { ...v, vendeurId: typeof r.vendeur_id === "string" ? r.vendeur_id : "" };
+  });
+  const cartes = (Array.isArray(o.cartes) ? o.cartes : [])
+    .map((c) => (c && typeof c === "object" ? (c as Record<string, unknown>) : null))
+    .filter((c): c is Record<string, unknown> => c !== null && Number.isFinite(Number(c.type)))
+    .map((c) => {
+      const prix = c.prix == null ? NaN : Number(c.prix);
+      return { type: Number(c.type), prix: Number.isFinite(prix) ? prix : null };
+    });
+  const vendeurs = (Array.isArray(o.vendeurs) ? o.vendeurs : [])
+    .map((v) => (v && typeof v === "object" ? (v as Record<string, unknown>) : null))
+    .filter((v): v is Record<string, unknown> => v !== null && typeof v.id === "string")
+    .map((v) => ({
+      id: v.id as string,
+      prenom: typeof v.prenom === "string" && v.prenom ? v.prenom : "Coach",
+      rang: typeof v.rang === "string" ? v.rang : null,
+      proprio: v.proprio === true,
+    }));
+  const visites = Number(o.visites);
+  return { mois: base.mois, cartes, visites: Number.isFinite(visites) ? visites : 0, valeurs: base.valeurs, ventes, vendeurs };
+}
+
+export interface EcartCoach {
+  id: string;
+  prenom: string;
+  remise: number;
+  pv: number;
+  ecart: number;
+}
+
+export interface Rentabilite {
+  cartes: { total: number; nb10: number; nb30: number; autres: number; estimees: number };
+  visites: number;
+  /** Visites × coût d'une visite ; null tant que la recette n'est pas complète. */
+  produitsServis: number | null;
+  vosVentes: { vendu: number; gagne: number; prenoms: string[] };
+  ecarts: EcartCoach[];
+  totalEcarts: number;
+  /** Ce qui reste au club avant loyer et charges ; null sans coût de visite. */
+  reste: number | null;
+}
+
+const cents = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Le mois du club. Une carte sans prix enregistré prend le tarif du club
+ * (`prixCartes`) et compte dans `estimees`. Une vendeuse à 50 % qui n'est pas
+ * propriétaire ne donne pas d'écart : elle garde ses gains, le club n'y touche pas.
+ */
+export function rentabiliteDuMois(
+  d: DonneesRentabilite,
+  coutVisite: number | null,
+  prixCartes: Partial<Record<"10" | "30", number | null>>,
+): Rentabilite {
+  let total = 0;
+  let nb10 = 0;
+  let nb30 = 0;
+  let autres = 0;
+  let estimees = 0;
+  for (const c of d.cartes) {
+    if (c.type === 10) nb10 += 1;
+    else if (c.type === 30) nb30 += 1;
+    else autres += 1;
+    const tarif = c.type === 10 || c.type === 30 ? prixCartes[String(c.type) as "10" | "30"] ?? null : null;
+    if (c.prix != null) total += c.prix;
+    else if (tarif != null) {
+      total += tarif;
+      estimees += 1;
+    }
+  }
+
+  const parVendeuse = new Map<string, VenteClub[]>();
+  for (const v of d.ventes) parVendeuse.set(v.vendeurId, [...(parVendeuse.get(v.vendeurId) ?? []), v]);
+
+  let vendu = 0;
+  let gagne = 0;
+  const prenoms: string[] = [];
+  const ecarts: EcartCoach[] = [];
+  for (const vendeuse of d.vendeurs) {
+    const ventes = parVendeuse.get(vendeuse.id) ?? [];
+    if (!ventes.length) continue;
+    const remise = remiseDuRang(vendeuse.rang);
+    const t = totalVentes(ventes, d.valeurs, remise);
+    if (vendeuse.proprio) {
+      vendu += t.vendu;
+      gagne += t.gagne;
+      prenoms.push(vendeuse.prenom);
+    } else if (remise < 50) {
+      ecarts.push({ id: vendeuse.id, prenom: vendeuse.prenom, remise, pv: t.pv, ecart: cents((t.pv * (50 - remise) * PV_TO_EUR_RATIO) / 100) });
+    }
+  }
+  ecarts.sort((a, b) => b.ecart - a.ecart);
+  const totalEcarts = cents(ecarts.reduce((s, e) => s + e.ecart, 0));
+  const produitsServis = coutVisite != null ? cents(d.visites * coutVisite) : null;
+  const vosVentes = { vendu: cents(vendu), gagne: cents(gagne), prenoms };
+  return {
+    cartes: { total: cents(total), nb10, nb30, autres, estimees },
+    visites: d.visites,
+    produitsServis,
+    vosVentes,
+    ecarts,
+    totalEcarts,
+    reste: produitsServis == null ? null : cents(total - produitsServis + vosVentes.gagne + totalEcarts),
+  };
 }
