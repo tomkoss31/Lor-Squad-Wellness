@@ -5,7 +5,7 @@
 
 import { Carte, Ligne, Rond, Vide } from "../ui";
 
-export type VuePlus = "club" | "appels" | "boites" | "coeurs" | "messages" | "scripts" | "formation" | "lexique" | "prelancement" | "club100" | "clubs" | "reglages";
+export type VuePlus = "club" | "caisse" | "appels" | "boites" | "coeurs" | "messages" | "scripts" | "formation" | "lexique" | "prelancement" | "club100" | "clubs" | "reglages";
 
 interface Props {
   onGo: (v: VuePlus) => void;
@@ -18,6 +18,7 @@ interface Props {
 
 const ENTREES: { v: VuePlus; icone: string; titre: string; sous: string }[] = [
   { v: "club", icone: "📷", titre: "Les visites", sous: "pointage, scanner un QR, cartes, bilan des 10" },
+  { v: "caisse", icone: "🧾", titre: "Ma caisse", sous: "ce que tu as vendu et gagné, tes PV" },
   { v: "messages", icone: "✉️", titre: "Messages", sous: "les membres qui t'écrivent" },
   { v: "appels", icone: "📞", titre: "Les appels", sous: "Ambassadeur · Cœurs · Académie : inscrire, pointer" },
   { v: "coeurs", icone: "❤️", titre: "Les cœurs", sous: "paliers, recommandations à valider, le mur" },
