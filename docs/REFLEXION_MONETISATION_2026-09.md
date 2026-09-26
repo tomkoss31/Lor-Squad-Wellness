@@ -179,7 +179,10 @@ mises à jour, guide) :
 Thomas : « OK pour le business de l'app ! » (après la proposition des paliers 69 / 109 / 149 € + 290 €).
 Puis : « concernant l'optimisation de l'app, on commence par quoi ? »
 
-## Le chantier technique — l'ordre proposé (26/09)
+## La duplication — l'ordre du chantier (partie BUSINESS, 26/09)
+
+Thomas : « Garde ça en mémoire ! Ça appartient au business. » Ce chantier sert la vente de l'app ;
+il ne se lance qu'avec le projet de duplication (SAS, hébergement payant).
 
 1. **Dès maintenant, sans payer ni toucher à la prod :**
    a. le plan des bulles sur papier (qui voit quoi : propriétaire, coachs, stagiaire, membres, et Thomas en
@@ -195,6 +198,37 @@ Puis : « concernant l'optimisation de l'app, on commence par quoi ? »
 5. **Inscription, paiement de l'abonnement, mise en route**, guide en ligne.
 6. **Avant le premier pilote** : la prod sur l'hébergement payant + alertes d'erreurs.
 En parallèle, hors code : SAS, avocat (CGV, contrat RGPD), marque INPI. L'« à emporter » vient après.
+
+## Point 4 — l'« à emporter » : par où commencer (26/09)
+
+Thomas : « je parle seulement des idées que j'avais inscrites sur le suivi de la rentabilité, avec qui a
+acheté quoi, quand ». C'est ÇA « l'optimisation de l'app » (distinct de la duplication).
+
+Mesuré en base le 26/09 :
+- les 14 coachs actifs ont leur rang (`users.current_rank`) : 4 à 25 %, 4 à 35 %, 1 à 42 %, 5 à 50 % ;
+  la table `herbalife_margins` donne la marge de chaque rang → « sa marge selon son rang » est calculable ;
+- l'écran Rentabilité (`get_users_rentability`) calcule CA + marge par coach, mais SEULEMENT sur les
+  produits des fiches (`pv_client_products`, 514 lignes, vivant) : ni les cartes du club, ni le comptoir ;
+- ventes comptoir (`consumption_orders`) : 25 ventes, dernière le 04/09, sans fiche cliente ;
+- `pv_transactions` : 422 lignes (398 commandes, 24 reprises sur place), dernière le 24/08 ;
+- cartes de membres : 17, dont 16 avec leur prix.
+
+Manque : la question au pointage, le catalogue du club avec SES prix, le lien vente ↔ membre ↔ personne en
+caisse, l'écran de rentabilité du club (propriétaire) et « ce que j'ai gagné » (stagiaire).
+
+Règles proposées par défaut (à valider par Thomas) :
+1. Les cartes de visites → le club ; les add-ons → la personne en caisse, avec sa marge selon son rang.
+   **Question n°1 : elle vend SON stock ou celui du club ?**
+2. Un seul prix par produit pour tout le club, fixé par le propriétaire ; pas de remise en caisse.
+3. « À la maison » seulement pour ce qui dure (sachets F1, thé, aloé) : date d'achat + nombre de jours =
+   date de fin → règle de Contacter « son F1 arrive au bout ». Barres, chips : dans le chiffre, pas à la maison.
+4. L'upgrade sur place (grand thé-aloé) = un add-on, et il remplace la boisson du club dans son journal.
+5. Le propriétaire voit tout le club ; une stagiaire ne voit que ses ventes et ce qu'elle a gagné.
+6. Une seule caisse : avec une membre pointée = son « à emporter » ; sans membre = vente comptoir.
+
+La liste attendue de Thomas (8 produits pour commencer) : nom · prix de vente au club · son prix de
+revient à lui (50 %) · pour ce qui dure, combien de jours. Plus les upgrades et leur supplément.
+Ensuite : maquette des 3 écrans (pointage, « À la maison » sur la fiche, rentabilité), puis le code.
 
 ## Questions ouvertes
 
