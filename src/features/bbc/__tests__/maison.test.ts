@@ -56,10 +56,33 @@ describe("ce qu'elle a à la maison", () => {
     expect(s!.sur).toMatchObject({ f1: 5, pdm: 6 });
     expect(s!.joursSansClub).toBe(2);
     expect(s!.jours).toEqual([
-      { jour: "2026-09-26", auClub: false },
-      { jour: "2026-09-27", auClub: false },
-      { jour: "2026-09-28", auClub: true },
+      { jour: "2026-09-26", auClub: false, note: false },
+      { jour: "2026-09-27", auClub: false, note: false },
+      { jour: "2026-09-28", auClub: true, note: false },
     ]);
+  });
+
+  it("le journal fait foi quand elle note ses shakes (lot 5)", () => {
+    const base = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6, the: 3 } }], visites: ["2026-09-25", "2026-09-28"] };
+    // Samedi noté (1 shake), dimanche rien noté : le même compte que la règle, mais « shake noté ».
+    const a = stockMaison({ ...base, notes: { "2026-09-26": 1 } }, "2026-09-28");
+    expect(a!.restant).toMatchObject({ f1: 3, pdm: 4, the: 1 });
+    expect(a!.jours[0]).toEqual({ jour: "2026-09-26", auClub: false, note: true });
+    // Deux shakes notés samedi : deux sachets partis ce jour-là. Le thé garde la règle.
+    const b = stockMaison({ ...base, notes: { "2026-09-26": 2 } }, "2026-09-28");
+    expect(b!.restant).toMatchObject({ f1: 2, pdm: 3, the: 1 });
+  });
+
+  it("noté aujourd'hui : un sachet de moins tout de suite", () => {
+    const s = stockMaison({ achats: [{ jour: "2026-09-26", doses: { f1: 5 } }], visites: [], notes: { "2026-09-27": 1 } }, "2026-09-27");
+    // Samedi 26 : achat (pas pointée, rien noté → un sachet compté) ; dimanche 27 : noté.
+    expect(s!.restant.f1).toBe(3);
+    expect(s!.jours).toEqual([{ jour: "2026-09-27", auClub: false, note: true }]);
+  });
+
+  it("un shake noté un soir de club compte aussi", () => {
+    const s = stockMaison({ achats: [{ jour: "2026-09-21", doses: { f1: 3 } }], visites: ["2026-09-21", "2026-09-22"], notes: { "2026-09-22": 1 } }, "2026-09-23");
+    expect(s!.restant.f1).toBe(2);
   });
 
   it("ne descend jamais sous zéro, et un nouvel achat repart de ce qui reste", () => {
@@ -209,7 +232,7 @@ describe("lecture de la base", () => {
     });
     expect(r.horaires?.holidays).toEqual(["2026-11-02"]);
     expect([...r.membres.keys()]).toEqual(["m1"]);
-    expect(r.membres.get("m1")).toEqual({ achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"] });
+    expect(r.membres.get("m1")).toEqual({ achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"], notes: {} });
   });
 
   it("donne le jour de Paris, pas celui du fuseau de l'appareil", () => {
