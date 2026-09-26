@@ -488,6 +488,19 @@ ordinateur : `PLUS` de `BbcApp`).
 - **En prod depuis le 26/09** (« go main » de Thomas, sans recette sur la preview : la première vraie vente
   au club remplira l'écran).
 
+### Lot 4 : « Ce mois-ci au club » (26/09/2026)
+
+« go lot 4 et 5 d'affilée ». Migration `20261215860000` (`club_rentabilite(mois)`, propriétaire et admins
+seulement : `_club_proprio`, rien pour les autres). Section `caisse/RentabiliteDuMois.tsx` EN TÊTE de
+« Rentabilité » (`BbcClub100`, pas de nouvel écran) ; calcul pur dans `gains.ts` (`rentabiliteDuMois`).
+- **Ce qui reste au club** (avant loyer et charges) = cartes de visites du mois (`member_cards` créées dans le mois ;
+  une carte sans `price_eur` prend le tarif `clubs.settings.cards` et l'écran le dit) − produits servis (visites
+  du mois × le coût d'une visite de la recette, calculé juste en dessous) + « vos ventes » (le gagné du propriétaire
+  et des admins sur leurs ventes au comptoir) + les écarts Herbalife estimés.
+- **L'écart d'une coach** = ses PV vendus au comptoir × (50 % − sa remise) × 1,78 € (`PV_TO_EUR_RATIO`) : ce que
+  Herbalife verse à la lignée, le vrai montant arrive dans Bizworks. Une coach à 50 % qui n'est pas propriétaire
+  (Maria) ne donne pas d'écart. Sans coût de visite (recette incomplète), pas de « reste » affiché.
+
 ---
 
 ## 🔀 Workflow dev / prod

@@ -28,11 +28,18 @@ export interface AchatMaison {
 export interface DonneesMaison {
   achats: AchatMaison[];
   visites: string[];
+  /**
+   * Lot 5 (26/09) : les shakes de ses sachets du club qu'ELLE a notés dans son journal,
+   * par jour (AAAA-MM-JJ → nombre). Le journal affine la règle, il ne la bloque pas.
+   */
+  notes?: Record<string, number>;
 }
 
 export interface JourSansClub {
   jour: string;
   auClub: boolean;
+  /** Elle a noté son shake de sachets ce jour-là (lot 5). */
+  note?: boolean;
 }
 
 export interface StockMaison {
@@ -93,7 +100,14 @@ export function lireMaison(brut: unknown): DonneesMaison | null {
     .map((a) => ({ jour: a.jour as string, doses: lireDoses(a.doses) ?? {} }))
     .filter((a) => Object.keys(a.doses).length > 0);
   if (!achats.length) return null;
-  return { achats, visites: (Array.isArray(o.visites) ? o.visites : []).filter(estJour) };
+  const notes: Record<string, number> = {};
+  if (o.notes && typeof o.notes === "object" && !Array.isArray(o.notes)) {
+    for (const [jour, n] of Object.entries(o.notes as Record<string, unknown>)) {
+      const x = Math.round(Number(n));
+      if (estJour(jour) && Number.isFinite(x) && x > 0) notes[jour] = x;
+    }
+  }
+  return { achats, visites: (Array.isArray(o.visites) ? o.visites : []).filter(estJour), notes };
 }
 
 /** Relit les horaires du club (`settings.discovery` : hours, hours_by_date, holidays). */
@@ -125,6 +139,9 @@ export function lireMaisonClub(brut: unknown): { horaires: ReglagesHoraires | nu
  * achat : un achat ajoute ses doses ; un jour passé SANS pointage retire une dose
  * de chaque produit qu'elle a (jamais sous zéro). Aujourd'hui ne retire rien :
  * la journée n'est pas finie. null si elle n'a rien emporté.
+ * Lot 5 : quand elle NOTE ses shakes de sachets, le journal fait foi pour le F1 et
+ * le PDM — n shakes notés = n doses, aujourd'hui compris, même un jour de club ;
+ * un jour passé sans club où elle n'a rien noté garde la règle (un sachet).
  */
 export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockMaison | null {
   if (!d || !d.achats.length) return null;
@@ -137,6 +154,7 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
     parJour.set(a.jour, cumul);
   }
   const visites = new Set(d.visites);
+  const notes = d.notes ?? {};
   const depuis = achats[achats.length - 1].jour;
   const stock = zero();
   let sur = zero();
@@ -146,8 +164,14 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
       for (const k of DOSES) stock[k] += ajout[k] ?? 0;
       if (j === depuis) sur = { ...stock };
     }
-    if (j < aujourdhui && !visites.has(j)) {
-      for (const k of DOSES) stock[k] = Math.max(0, stock[k] - 1);
+    const passe = j < aujourdhui;
+    const sansClub = passe && !visites.has(j);
+    const notes_j = notes[j] ?? 0;
+    for (const k of DOSES) {
+      // F1 et PDM : ce qu'elle a noté, sinon un par jour passé sans club.
+      // Thé et aloé : la règle seule (le journal ne les compte pas).
+      const pris = k === "f1" || k === "pdm" ? (notes_j > 0 ? notes_j : sansClub ? 1 : 0) : sansClub ? 1 : 0;
+      stock[k] = Math.max(0, stock[k] - pris);
     }
   }
   if (DOSES.every((k) => sur[k] <= 0)) return null;
@@ -157,9 +181,11 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
   for (let j = lendemain(depuis); j < aujourdhui; j = lendemain(j)) {
     const auClub = visites.has(j);
     if (!auClub) joursSansClub += 1;
-    jours.push({ jour: j, auClub });
+    jours.push({ jour: j, auClub, note: (notes[j] ?? 0) > 0 });
   }
-  if (depuis < aujourdhui && visites.has(aujourdhui)) jours.push({ jour: aujourdhui, auClub: true });
+  if (depuis < aujourdhui && (visites.has(aujourdhui) || (notes[aujourdhui] ?? 0) > 0)) {
+    jours.push({ jour: aujourdhui, auClub: visites.has(aujourdhui), note: (notes[aujourdhui] ?? 0) > 0 });
+  }
   return { depuis, restant: stock, sur, jours: jours.slice(-7), joursSansClub };
 }
 

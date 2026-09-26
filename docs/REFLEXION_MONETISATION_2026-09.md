@@ -512,6 +512,17 @@ recettes ; `anon` refusé.
 - Les PV affichés sont ceux de SES ventes au comptoir (estimés d'après le catalogue) ; la jauge du rang, elle,
   lit ses PV déclarés (fenêtres glissantes, comme sa fiche).
 
+### Lot 4 — « Ce mois-ci au club », codé (26/09)
+
+Thomas : « go lot 4 et 5 d'affilée ». Migration `20261215860000_comptoir_rentabilite_club` appliquée le 26/09
+vers 16 h 50, enregistrée au registre, empreinte = fichier. Essai en transaction annulée : Thomas voit les 9 cartes
+du mois (dont une sans prix), les 102 visites, les ventes et les vendeuses ; Romane ne voit rien ; `anon` refusé.
+- En tête de « Rentabilité » (pas de nouvel écran), comme la maquette : ce qui reste au club avant loyer et
+  charges = cartes − produits servis (visites × 3,67 €) + vos ventes + écarts estimés par coach.
+- « Vos ventes » = celles du propriétaire et des admins (Thomas, Mélanie). Les écarts : les coachs sous 50 %
+  (Romane à 35 % : PV × 15 % × 1,78 €). Le calcul de la maquette est vérifié par un test (159 PV → 42 €).
+- Écart voulu : une carte enregistrée sans prix est comptée au tarif du club, et l'écran le signale.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
