@@ -500,6 +500,7 @@ seulement : `_club_proprio`, rien pour les autres). Section `caisse/RentabiliteD
 - **L'écart d'une coach** = ses PV vendus au comptoir × (50 % − sa remise) × 1,78 € (`PV_TO_EUR_RATIO`) : ce que
   Herbalife verse à la lignée, le vrai montant arrive dans Bizworks. Une coach à 50 % qui n'est pas propriétaire
   (Maria) ne donne pas d'écart. Sans coût de visite (recette incomplète), pas de « reste » affiché.
+- **En prod depuis le 26/09** (« go main » de Thomas, avec le lot 5).
 
 ### Lot 5 : « le journal qui décompte » (26/09/2026)
 
@@ -532,6 +533,8 @@ seulement : `_club_proprio`, rien pour les autres). Section `caisse/RentabiliteD
 - **Sur sa fiche** : la puce d'un jour où elle a noté son shake dit « shake noté » (sauge), plus « chez elle ».
 - Le toast du journal (`.jr-toast`) passe sur deux lignes quand il ne tient pas (`width: max-content`,
   `max-width: calc(100vw - 32px)`) : en `nowrap`, « +5 XP · … Il te reste 3 sachets… » sortait de l'écran.
+- **En prod depuis le 26/09** (« go main » de Thomas ; aucune vente en base : « À la maison » et « tes sachets
+  du club » apparaîtront après la première vente de F1 / PDM au club).
 
 ---
 
