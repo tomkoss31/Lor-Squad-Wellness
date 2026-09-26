@@ -7,6 +7,8 @@
 // jauge que sa fiche (`get_distributor_qualifications`, fenêtres glissantes).
 // Le calcul est dans gains.ts (pur, testé). Elle ne voit que SES ventes ; le club
 // entier, c'est le lot 4.
+// Le mode d'emploi de la caisse (26/09) : le « ? » du bandeau, et une carte
+// « Nouveau » la première fois — jamais un popup (GuideCaisseSheet).
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
@@ -14,17 +16,41 @@ import { useDistributorQualifications } from "../../../hooks/useDistributorQuali
 import { rankProgressionFromWindows, tierPctForRank } from "../../../lib/herbalifeFormulas";
 import { BoutonDoux, Carte, Vide } from "../ui";
 import { euro } from "./caisse";
+import { GuideCaisseSheet } from "./GuideCaisseSheet";
 import { nomDuMois, parMembre, remiseDuRang, totalVentes, ventesDuJour, type DonneesMaCaisse } from "./gains";
 import { jourParis } from "./maison";
 import { chargerMaCaisse } from "./serviceCaisse";
 
 /** Au-delà, « N autres membres » : l'écran reste court. */
 const MEMBRES_VISIBLES = 5;
+/** La carte « Nouveau : la caisse du club » ne s'affiche qu'une fois. */
+const CLE_GUIDE = "ls-caisse-club-guide-vu";
 
 export function MaCaisse({ userId }: { userId?: string }) {
   const [donnees, setDonnees] = useState<DonneesMaCaisse | null>(null);
   const [etat, setEtat] = useState<"charge" | "pret" | "echec">("charge");
   const { qualifications } = useDistributorQualifications(userId);
+  const [guide, setGuide] = useState(false);
+  // Si le navigateur refuse le stockage, on ne montre pas la carte plutôt que de la remontrer à chaque visite.
+  const [guideVu, setGuideVu] = useState(() => {
+    try {
+      return localStorage.getItem(CLE_GUIDE) === "1";
+    } catch {
+      return true;
+    }
+  });
+  const marquerGuideVu = () => {
+    setGuideVu(true);
+    try {
+      localStorage.setItem(CLE_GUIDE, "1");
+    } catch {
+      /* navigation privée */
+    }
+  };
+  const ouvrirGuide = () => {
+    setGuide(true);
+    marquerGuideVu();
+  };
 
   const charger = useCallback(async () => {
     setEtat("charge");
@@ -80,11 +106,38 @@ export function MaCaisse({ userId }: { userId?: string }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 560 }}>
+      {/* La première fois seulement : une carte DANS la page, pas un popup. */}
+      {!guideVu ? (
+        <div style={carteAccueil}>
+          <span aria-hidden="true" style={{ fontSize: 22, flex: "none" }}>
+            👋
+          </span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ display: "block", fontSize: 14.5, fontWeight: 800 }}>Nouveau : la caisse du club</span>
+            <span style={{ display: "block", fontSize: 12.5, color: "var(--ls-bbc-muted)", marginTop: 2, lineHeight: 1.45 }}>
+              Une minute pour voir qui encaisse quoi, comment annuler, et ce que tu gagnes.
+            </span>
+          </span>
+          <button type="button" onClick={ouvrirGuide} style={boutonCarte}>
+            Voir
+          </button>
+          <button type="button" onClick={marquerGuideVu} aria-label="Masquer" style={croixCarte}>
+            ✕
+          </button>
+        </div>
+      ) : null}
+
       {/* Le gros chiffre : ce qu'elle a gagné aujourd'hui */}
       <div className="bbc-carte" style={hero}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <span style={{ fontFamily: "var(--ls-bbc-font-mono)", fontSize: 11, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ls-bbc-orange2)" }}>Aujourd'hui</span>
-          <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--ls-bbc-orange) 22%, transparent)", color: "var(--ls-bbc-orange2)" }}>ta remise {remise}{"\u00a0"}%</span>
+          <span style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, padding: "4px 10px", borderRadius: 999, background: "color-mix(in srgb, var(--ls-bbc-orange) 22%, transparent)", color: "var(--ls-bbc-orange2)" }}>ta remise {remise}{"\u00a0"}%</span>
+            {/* Le mode d'emploi : toujours là, jamais imposé. */}
+            <button type="button" onClick={ouvrirGuide} aria-label="La caisse, mode d'emploi" title="Mode d'emploi" style={boutonGuide}>
+              <span aria-hidden="true" style={rondGuide}>?</span>
+            </button>
+          </span>
         </div>
         <div style={{ fontFamily: "var(--ls-bbc-font-display)", fontSize: 44, lineHeight: 1, letterSpacing: ".01em", fontVariantNumeric: "tabular-nums" }}>{euro(jour.gagne)}</div>
         <div style={{ fontSize: 13, opacity: 0.85 }}>
@@ -149,6 +202,8 @@ export function MaCaisse({ userId }: { userId?: string }) {
         Gagné = prix du club − prix public × {(1 - remise / 100).toFixed(2).replace(".", ",")} (ta remise de {remise}{"\u00a0"}%). PV estimés d'après le catalogue.
         {sansCout > 0 ? ` ${sansCout} article${sansCout > 1 ? "s" : ""} sans coût connu (accessoires…) : dans le vendu, pas dans le gagné.` : ""}
       </p>
+
+      {guide ? <GuideCaisseSheet userId={userId} onClose={() => setGuide(false)} /> : null}
     </div>
   );
 }
@@ -162,6 +217,27 @@ function Tuile({ valeur, libelle, fort }: { valeur: string; libelle: string; for
   );
 }
 
+const carteAccueil: CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10, padding: "12px 12px 12px 14px", borderRadius: 16,
+  border: "1px solid var(--ls-bbc-orange)", background: "color-mix(in srgb, var(--ls-bbc-orange) 8%, var(--ls-bbc-s1))",
+};
+const boutonCarte: CSSProperties = {
+  flex: "none", minHeight: 44, padding: "0 16px", borderRadius: 999, border: 0, background: "var(--ls-bbc-grad)", color: "#fff",
+  fontFamily: "var(--ls-bbc-font-body)", fontSize: 14, fontWeight: 800, cursor: "pointer",
+};
+const croixCarte: CSSProperties = {
+  flex: "none", width: 44, minHeight: 44, borderRadius: 999, border: 0, background: "transparent", color: "var(--ls-bbc-muted)",
+  fontSize: 15, cursor: "pointer",
+};
+/** 44 px à toucher, un rond de 28 px à voir : le bandeau garde sa hauteur. */
+const boutonGuide: CSSProperties = {
+  flex: "none", width: 44, minHeight: 44, margin: "-10px -12px -10px 0", padding: 0, border: 0, background: "transparent",
+  display: "grid", placeItems: "center", cursor: "pointer",
+};
+const rondGuide: CSSProperties = {
+  width: 28, height: 28, borderRadius: 999, display: "grid", placeItems: "center", fontFamily: "var(--ls-bbc-font-body)", fontSize: 15, fontWeight: 800,
+  background: "color-mix(in srgb, var(--ls-bbc-bg) 14%, transparent)", color: "var(--ls-bbc-bg)",
+};
 const hero: CSSProperties = {
   background: "var(--ls-bbc-text)", color: "var(--ls-bbc-bg)", borderRadius: 20, padding: "14px 16px 16px", display: "grid", gap: 8,
 };
