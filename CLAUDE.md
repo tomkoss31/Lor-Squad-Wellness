@@ -467,6 +467,8 @@ et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/featu
   club ferme demain ou après-demain, et elle n'est pas passée aujourd'hui (la caisse le lui a déjà proposé). Clé
   `membre:<id>:f1bout:<jour fermé>`. Données : 3e appel de `useBbcSignaux` (`club_maison()`, tout le club).
 - Le journal qui décompte (« shake noté », les barres) reste le lot 5 : il touche l'espace des membres.
+- **En prod depuis le 26/09** (« go main » de Thomas ; aucune vente en base à ce moment-là : « À la maison » se
+  verra à la première vente de F1 / PDM / Thermo au club).
 
 ---
 
