@@ -8,6 +8,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { Club, ClubSettings } from "../../../types/domain";
 import { useClubSettings, DEFAULT_CLUB_SETTINGS } from "../useClubSettings";
+import { CarteReglages } from "../caisse/CarteReglages";
 
 const DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"];
 const CALL_LABELS: Record<string, string> = {
@@ -217,6 +218,12 @@ export function BbcReglages({ club, onSaved }: BbcReglagesProps) {
           </span>
         ) : null}
       </div>
+
+      {/* La carte du comptoir (lot 1, 26/09) : ses prix vivent dans club_carte,
+          pas dans clubs.settings — chaque changement s'enregistre tout seul. */}
+      <Section eye="la carte du comptoir" hint="un seul prix par produit pour tout le club · chaque changement s'enregistre tout seul">
+        <CarteReglages />
+      </Section>
     </div>
   );
 }

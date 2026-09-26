@@ -11,6 +11,8 @@ import { useBbcVisits, visitLevel, type VisitLevel, type VisitMember } from "../
 import { BbcScanner } from "../BbcScanner";
 import { BbcBilan10 } from "../BbcBilan10";
 import { BbcCardSheet } from "../BbcCardSheet";
+import { CaisseSheet } from "../caisse/CaisseSheet";
+import { euro } from "../caisse/caisse";
 import type { Club } from "../../../types/domain";
 
 /** Le premier mot de « Prénom Nom » — celui qu'on lit au comptoir (18/09). */
@@ -74,10 +76,17 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
    * une visite payée au premier doigt posé de travers, à 7h30, debout.
    */
   const [annuleFor, setAnnuleFor] = useState<string | null>(null);
+  /**
+   * « Elle prend quelque chose ? » (lot 1 du comptoir, 26/09) : s'ouvre après
+   * un « +1 » réussi, jamais après un doublon ni en atelier. Pas après un scan
+   * QR : à la tablette, c'est la membre qui est face à l'écran.
+   */
+  const [caissePour, setCaissePour] = useState<{ id: string; prenom: string } | null>(null);
 
   function direEtEffacer(texte: string, ton: "ok" | "deja") {
     setMot({ texte, ton });
-    window.setTimeout(() => setMot(null), 4000);
+    // N'efface que SON message : celui de la vente suit de près celui du pointage.
+    window.setTimeout(() => setMot((m) => (m?.texte === texte ? null : m)), 4000);
   }
 
   async function pointer(id: string, nomAffiche: string) {
@@ -89,6 +98,7 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
       direEtEffacer(`${nom} était déjà pointé·e il y a moins de 10 min — c'est bon, la visite est comptée.`, "deja");
     } else {
       direEtEffacer(`${nom} : +1 visite ✓${r.xpGained ? ` · +${r.xpGained} XP` : ""}`, "ok");
+      if (!apercu) setCaissePour({ id, prenom: prenom(nom) || nom });
     }
   }
 
@@ -344,6 +354,14 @@ export function BbcClub({ userId, club, apercu }: BbcClubProps) {
           ouvertureIso={club?.settings?.opening_date ?? null}
           onClose={() => setCardFor(null)}
           onAssign={(type, priceEur, days, debutIso) => assignCard(cardFor, type, priceEur, days, debutIso)}
+        />
+      ) : null}
+      {caissePour ? (
+        <CaisseSheet
+          clientId={caissePour.id}
+          prenom={caissePour.prenom}
+          onClose={() => setCaissePour(null)}
+          onVendu={(total) => direEtEffacer(`${caissePour.prenom} : ${euro(total)} d'achats notés ✓`, "ok")}
         />
       ) : null}
       {bilan && userId ? (

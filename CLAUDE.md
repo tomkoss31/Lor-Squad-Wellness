@@ -416,6 +416,35 @@ Migration `20261215780000_xp_membres.sql` (un seul lot), code `src/features/clie
 
 ---
 
+## 🧾 Le comptoir du club — lot 1 : la caisse au pointage (26/09/2026)
+
+Maquette v3 validée (artifact SHZYSBaqfgWVqdMncgrcPG), « go lot 1 » de Thomas. Toute la réflexion, les règles
+et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/features/bbc/caisse/`.
+- **Qui encaisse quoi (règle de Thomas)** : la carte de visites = le club (le propriétaire l'encaisse). Tout ce
+  qui s'ajoute — upgrades (grand thé-aloé, suppléments) ET à emporter — vient des pots de la coach EN CAISSE,
+  achetés avec sa remise, payé sur SON terminal : elle garde sa marge, rien à reverser. **L'app n'encaisse rien,
+  elle enregistre** (« Payé sur mon terminal »). Un seul prix par produit pour tout le club, fixé par le propriétaire.
+- **Base** (migration `20261215830000`, 100 % additive) : `club_carte` (les 34 lignes du tableau du 26/09 + le
+  grand thé-aloé 2,60 €) et `club_ventes` (lignes FIGÉES au prix du jour, `vendeur_id` = la coach en caisse) —
+  **à part** de `pv_transactions` / `pv_client_products` : rien n'est compté deux fois (PV, Rentabilité). Lecture
+  par le RLS (club de `bbc_mon_club()`, sa vendeuse, admin) ; écriture par 5 fonctions definer seulement :
+  `club_caisse`, `club_vendre` (**les prix sont relus en base**, le navigateur n'envoie que `{carte_id, qte}`),
+  `club_achats`, `club_vente_annuler` (le jour même, heure de Paris : vendeuse, propriétaire ou admin),
+  `club_carte_enregistrer` (propriétaire ou admin ; on ne supprime jamais, on retire du tableau).
+- **Qui vend à qui** : toute coach du club à toute membre du club (`_club_membre_du_club`, plus large que
+  `bbc_agir_pour` : la stagiaire en caisse sert tout le club, c'est voulu).
+- **Les écrans** : `CaisseSheet` (« Elle prend quelque chose ? ») s'ouvre après un « +1 » RÉUSSI dans Pointer
+  (`BbcClub`) et sur les puces du Matin — jamais après un doublon des 10 min, ni en atelier, ni après un scan QR
+  (à la tablette, c'est la membre qui est face à l'écran) ; « Ses habituels » (avec sa dernière quantité), puis
+  « Les plus demandés », les upgrades en une rangée, tout le tableau à un toucher, « Rien aujourd'hui ».
+  `AchatsMembre` : fiche du club, volet « Visites & carte » (ses achats, « Annuler » en deux temps, « Lui vendre
+  quelque chose »). `CarteReglages` : Réglages → « la carte du comptoir » (chaque changement s'enregistre seul,
+  rien à voir avec « Enregistrer les réglages » qui écrit `clubs.settings`).
+- Colonnes posées pour la suite, lues par aucun écran : `ref_herbalife` + `portions` (coût et PV, lots 3-4),
+  `maison` (doses mises « à la maison », lot 2).
+
+---
+
 ## 🔀 Workflow dev / prod
 
 Voir « Repères » en tête de fichier : `main` = prod, `dev/thomas-test` = dev, `feat/x` depuis dev,

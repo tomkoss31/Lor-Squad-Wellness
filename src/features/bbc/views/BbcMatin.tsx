@@ -11,7 +11,7 @@
 // Maquette validée : scratchpad/maquette-bbc-cliquable.html, v7.
 // =============================================================================
 
-import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import type { Club } from "../../../types/domain";
 import { useAppContext } from "../../../context/AppContext";
 import { useCoachsDuClub } from "../useCoachsDuClub";
@@ -20,7 +20,9 @@ import { couleurCoach, estIndispo, heureDe, jourDe, libelleNature, nomComplet, p
 import { useMaintenant } from "../agenda/useMaintenant";
 import { useBbcVisits, visitLevel } from "../useBbcVisits";
 import type { AContacter } from "../contacter";
-import { Carte, Ligne, Rond, Vide } from "../ui";
+import { Carte, Ligne, Rond, Toast, Vide } from "../ui";
+import { CaisseSheet } from "../caisse/CaisseSheet";
+import { euro } from "../caisse/caisse";
 import { XpNiveauxCarte } from "../../client-xp/XpNiveauxCarte";
 
 export type VueCible = "agenda" | "contacter" | "crm" | "club" | "messages" | "appels" | "plus";
@@ -77,6 +79,22 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
   const visites = useBbcVisits(userId, club?.id ?? null);
   const aPointer = [...visites.members].sort((a, b) => Number(a.visitedToday) - Number(b.visitedToday) || (b.card?.used ?? 0) - (a.card?.used ?? 0)).slice(0, 8);
   const pointes = visites.members.filter((m) => m.visitedToday).length;
+  // « Elle prend quelque chose ? » après un « + » réussi (lot 1 du comptoir, 26/09).
+  const [caissePour, setCaissePour] = useState<{ id: string; prenom: string } | null>(null);
+  const [mot, setMot] = useState<string | null>(null);
+  useEffect(() => {
+    if (!mot) return;
+    const t = window.setTimeout(() => setMot(null), 2600);
+    return () => window.clearTimeout(t);
+  }, [mot]);
+
+  async function pointer(id: string, nom: string) {
+    const r = await visites.addVisit(id);
+    const lePrenom = (r.name || nom).trim().split(/\s+/)[0] || nom;
+    if (!r.ok) setMot(`Le pointage de ${lePrenom} n'est pas parti — réessaie.`);
+    else if (r.alreadyCounted) setMot(`${lePrenom} était déjà pointé·e il y a moins de 10 min.`);
+    else setCaissePour({ id, prenom: lePrenom });
+  }
 
   const aFaire = contacts.filter((c) => !faits.has(c.key));
   const aujourdhuiListe = [...aFaire.slice(0, 5)];
@@ -166,7 +184,7 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
                   key={m.id}
                   type="button"
                   className="bbc-pression"
-                  onClick={() => (fait ? undefined : void visites.addVisit(m.id))}
+                  onClick={() => (fait ? undefined : void pointer(m.id, m.name))}
                   aria-label={`${m.name}${fait ? ", déjà pointée" : ", pointer une visite"}`}
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 7px 6px 11px", borderRadius: 999,
@@ -255,6 +273,16 @@ export function BbcMatin({ userId, club, contacts, faits, count, target, onGo, o
       <Carte eye="Tes liens" right={<button type="button" onClick={onLiens} style={lien}>Mes liens →</button>}>
         <Vide>Bilan en ligne · Réserver au club · Ta fiche. 1 tap = le message et le lien, prêts à envoyer.</Vide>
       </Carte>
+
+      {caissePour ? (
+        <CaisseSheet
+          clientId={caissePour.id}
+          prenom={caissePour.prenom}
+          onClose={() => setCaissePour(null)}
+          onVendu={(total) => setMot(`${caissePour.prenom} : ${euro(total)} d'achats notés ✓`)}
+        />
+      ) : null}
+      <Toast message={mot} />
     </div>
   );
 }

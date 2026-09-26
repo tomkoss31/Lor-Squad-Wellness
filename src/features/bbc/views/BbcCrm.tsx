@@ -30,6 +30,7 @@ import { NiveauPastille } from "../../client-xp/NiveauPastille";
 import { NiveauLigne } from "../../client-xp/XpNiveauxCarte";
 import { XpBarCoach } from "../../client-xp/XpBarLigne";
 import { DonnerXpSheet } from "../../client-xp/DonnerXpSheet";
+import { AchatsMembre } from "../caisse/AchatsMembre";
 import "../../journal/journal.css";
 
 function objLabel(o?: string) {
@@ -530,6 +531,10 @@ function MemberRow({
               >
                 🎟️ {m.card ? `Carte ${m.card.type} · ${m.card.remaining} restantes — renouveler ou changer` : "Lui donner une carte"}
               </button>
+
+              {/* Ses achats au comptoir (lot 1 du comptoir, 26/09) : upgrades et à emporter,
+                  vendus par la coach en caisse — et « Lui vendre quelque chose ». */}
+              <AchatsMembre clientId={m.id} prenom={prenomM || "elle"} />
 
               {/* ── CE QUI MANQUE, avec ce que ça coûte ──────────────────────
                   « Email — » veut dire « pas de rappel la veille de son RDV ». */}

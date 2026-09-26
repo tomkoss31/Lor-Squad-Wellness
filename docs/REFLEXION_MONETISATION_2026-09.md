@@ -453,6 +453,24 @@ en dernier parce qu'il touche l'app des membres et ses fonctions à jeton.
    téléphone. La base est la vraie : les ventes d'essai sont effacées après.
 4. Sur « go main » de Thomas, Claude reporte le lot sur `main` (après tsc) puis sur `dev/thomas-test`.
 
+### Lot 1 — codé, en recette (26/09)
+
+Thomas : « go lot 1 ». Sur la branche, pas encore sur `main` (attend la recette sur téléphone et le « go main »).
+- **Base** : migration `20261215830000_comptoir_caisse_du_club` appliquée le samedi 26/09 à 15 h (club fermé),
+  version du fichier enregistrée au registre (0 fichier sans entrée). Empreinte des 7 fonctions en base = celle
+  du fichier. 35 produits (somme des prix 257,40 € = le tableau), 0 vente.
+- **Essai en transaction annulée** (Thomas propriétaire, Romane coach) : 3 × F1 + grand thé-aloé = 14,00 € même
+  quand le navigateur envoie un faux prix ; Romane vend (4,60 €) et annule SA vente, mais ne peut ni changer un
+  prix ni annuler celle de Thomas ; quantité 0 et produit inconnu refusés ; `anon` refusé. Rien n'est resté en base.
+- **Écrans** (captures à 390 px, clair et sombre, sans débordement) : « Elle prend quelque chose ? » après un
+  « +1 » réussi (Pointer et le Matin) ; « Ses achats au comptoir » sur la fiche du club ; « la carte du comptoir »
+  dans Réglages. Pas après un scan QR : à la tablette, c'est la membre qui est face à l'écran (à rediscuter si
+  Thomas le veut).
+- **Écart avec la maquette, voulu pour le lot 1** : la maquette pré-remplissait « comme la dernière fois » ; ici
+  rien n'est pré-rempli, « Ses habituels » affiche « la dernière fois : 3 » à côté du produit. Le « club fermé
+  demain, de quoi tenir ? » et le pack 6 jours proposé sont le lot 2.
+- Les ventes d'essai de la recette seront effacées avant le « go main ».
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
