@@ -403,6 +403,21 @@ rien, le bouton devient « Payé sur mon terminal » (un enregistrement, pas un 
 (maquette v2, point 3) : le **sur place** (suppléments, grand thé-aloé) passe-t-il sur ce même terminal ?
 Défaut proposé : oui, et l'app compte ce que la coach doit au club, montré en fin de mois.
 
+### Qui encaisse quoi — la règle finale (26/09, maquette v3)
+
+Thomas : « 1 ok, 2 ok ; 3 : normalement c'est le propriétaire du club qui encaisse [les cartes] tant que la
+stagiaire n'est pas junior partenaire. La stagiaire encaisse juste les à emporter et les upgrades (F1 en pot,
+PDM, thé, aloé…) ; 4 : je ne sais pas, peut-être. »
+→ **La carte au club, le reste à la coach en caisse** :
+- la carte de visites (shake + boisson du matin compris, stock du club) : le propriétaire encaisse ; une
+  stagiaire passée junior partenaire (10 membres actives en première ligne) encaisse les cartes de SES membres ;
+- tout ce qui s'ajoute — upgrades (grand thé-aloé, suppléments) ET à emporter — vient des pots de la coach en
+  caisse, achetés avec sa remise, payé sur SON terminal ; elle garde sa marge ; **rien à reverser au club** ;
+- le propriétaire touche l'écart de remise (Herbalife) sur tout ce que vendent les coachs.
+(Ceci précise le « 1 ok » : les suppléments et le grand thé-aloé ne sont plus au club, seule la visite l'est.)
+- Grand thé-aloé : **2,60 € par défaut**, modifiable par le propriétaire comme tous les prix du tableau.
+Maquette v3 (même lien) : caisse de Romane 27,30 € gagnés sur 64,70 € vendus ; le club garde 891 € (exemple).
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
