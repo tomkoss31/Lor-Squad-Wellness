@@ -512,9 +512,9 @@ recettes ; `anon` refusé.
 - Les PV affichés sont ceux de SES ventes au comptoir (estimés d'après le catalogue) ; la jauge du rang, elle,
   lit ses PV déclarés (fenêtres glissantes, comme sa fiche).
 
-### Lot 4 — « Ce mois-ci au club », codé (26/09)
+### Lot 4 — « Ce mois-ci au club », en prod (26/09)
 
-Thomas : « go lot 4 et 5 d'affilée ». Migration `20261215860000_comptoir_rentabilite_club` appliquée le 26/09
+Thomas : « go lot 4 et 5 d'affilée », puis « go main » pour les deux lots ensemble. Migration `20261215860000_comptoir_rentabilite_club` appliquée le 26/09
 vers 16 h 50, enregistrée au registre, empreinte = fichier. Essai en transaction annulée : Thomas voit les 9 cartes
 du mois (dont une sans prix), les 102 visites, les ventes et les vendeuses ; Romane ne voit rien ; `anon` refusé.
 - En tête de « Rentabilité » (pas de nouvel écran), comme la maquette : ce qui reste au club avant loyer et
@@ -523,7 +523,10 @@ du mois (dont une sans prix), les 102 visites, les ventes et les vendeuses ; Rom
   (Romane à 35 % : PV × 15 % × 1,78 €). Le calcul de la maquette est vérifié par un test (159 PV → 42 €).
 - Écart voulu : une carte enregistrée sans prix est comptée au tarif du club, et l'écran le signale.
 
-### Lot 5 — « le journal qui décompte », codé (26/09)
+### Lot 5 — « le journal qui décompte », en prod (26/09)
+
+« go main » de Thomas avec le lot 4. Passés sur `main` (avance rapide : `main` n'avait pas bougé depuis le lot 3)
+puis reportés sur `dev/thomas-test`. Au « go main » : aucune vente ni aucun prix changé en base, rien à effacer.
 
 Migration `20261215870000_comptoir_journal_decompte` appliquée le 26/09 vers 17 h 15 (club fermé, jour férié),
 enregistrée au registre, empreinte des 4 fonctions = fichier. Essai en transaction annulée (Thomas vend à sa propre
