@@ -523,6 +523,29 @@ du mois (dont une sans prix), les 102 visites, les ventes et les vendeuses ; Rom
   (Romane à 35 % : PV × 15 % × 1,78 €). Le calcul de la maquette est vérifié par un test (159 PV → 42 €).
 - Écart voulu : une carte enregistrée sans prix est comptée au tarif du club, et l'écran le signale.
 
+### Lot 5 — « le journal qui décompte », codé (26/09)
+
+Migration `20261215870000_comptoir_journal_decompte` appliquée le 26/09 vers 17 h 15 (club fermé, jour férié),
+enregistrée au registre, empreinte des 4 fonctions = fichier. Essai en transaction annulée (Thomas vend à sa propre
+fiche F3 + une dose de PDM + collagène + 5 F1 = 25,00 €) : F3 (5 g) et la dose de PDM (7,5 g) entrent au petit-déj
+de son journal, pas le collagène ; son stock montre les 5 F1 et ce qu'il a noté ce jour-là (un shake F1 + 1 sachet
+de PDM = 1 F1 et 2 doses ; un shake au lait ajouté = 1 F1, 0 PDM) ; l'annulation enlève les deux lignes et le stock ;
+un faux jeton est refusé, `anon` n'atteint pas la fonction interne. Rien n'est resté en base.
+- **Ce qui suit la maquette v3** : « À la maison · 4 sachets F1 · 5 doses PDM », « Club fermé aujourd'hui », le shake
+  « tes sachets du club » en tête des habituels du petit-déj, « Noté. Il te reste 4 sachets de F1 à la maison. », et
+  « shake noté » sur la fiche. Un toucher = noté ET un sachet de moins ; l'app ne note jamais à sa place.
+- **Les upgrades du pointage** s'ajoutent à son petit-déj (F3, une dose de PDM, fibre pomme, Beta) ; annuler la
+  vente les retire. Le collagène, la créatine, la fibre orange-goji et le grand thé-aloé ne sont pas au catalogue
+  du journal : rien ne s'ajoute pour eux.
+- **Écarts voulus avec la maquette** :
+  - pas de barres dans « À la maison » (règle du lot 2 : ce qui dure seulement) ;
+  - le compteur est dans « Mes repas », là où elle note, plutôt qu'en haut du journal ;
+  - sans PDM chez elle, le shake proposé est « F1 + lait » (un shake n'existe qu'en combo) ;
+  - le shake de ses sachets est proposé dès qu'elle n'est pas pointée ce jour-là, club ouvert ou non : elle peut
+    le prendre chez elle un jour de semaine ;
+  - un shake noté un jour de club (le soir, chez elle) compte aussi.
+- Seulement dans l'espace membre du club : l'espace standard (La Base 360) ne change pas.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de

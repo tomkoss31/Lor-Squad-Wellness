@@ -466,7 +466,7 @@ et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/featu
 - **9e règle de Contacter** `f1_bout` : elle a emporté du F1 depuis moins de 30 jours, il lui en reste 1 ou 0, le
   club ferme demain ou après-demain, et elle n'est pas passée aujourd'hui (la caisse le lui a déjà proposé). Clé
   `membre:<id>:f1bout:<jour fermé>`. Données : 3e appel de `useBbcSignaux` (`club_maison()`, tout le club).
-- Le journal qui décompte (« shake noté », les barres) reste le lot 5 : il touche l'espace des membres.
+- Le journal qui décompte (« shake noté ») : voir le lot 5. Les barres ne vont toujours pas « à la maison ».
 - **En prod depuis le 26/09** (« go main » de Thomas ; aucune vente en base à ce moment-là : « À la maison » se
   verra à la première vente de F1 / PDM / Thermo au club).
 
@@ -500,6 +500,38 @@ seulement : `_club_proprio`, rien pour les autres). Section `caisse/RentabiliteD
 - **L'écart d'une coach** = ses PV vendus au comptoir × (50 % − sa remise) × 1,78 € (`PV_TO_EUR_RATIO`) : ce que
   Herbalife verse à la lignée, le vrai montant arrive dans Bizworks. Une coach à 50 % qui n'est pas propriétaire
   (Maria) ne donne pas d'écart. Sans coût de visite (recette incomplète), pas de « reste » affiché.
+
+### Lot 5 : « le journal qui décompte » (26/09/2026)
+
+« go lot 4 et 5 d'affilée ». Maquette v3, écran 3. Migration `20261215870000` : colonnes `club_carte.aliment` et
+`journal_lignes.vente_id`, fonction à jeton `journal_a_la_maison`, et `_club_maison_donnees`, `club_vendre`,
+`club_vente_annuler` remplacées. Logique pure et testée : `caisse/maison.ts` (`notesDesLignes`, `avecLeJournal`,
+`sachetsDuJour`, `pastillesStock`, `phraseSachets`, `clubFerme`).
+- **La règle (maquette)** : « Chez elle, l'app propose et elle confirme. Seul le pointage au club remplit à sa
+  place. Si elle ne note rien, l'app compte un sachet par jour sans club. » Un jour où elle a noté un shake F1
+  (origine `membre` ou `noaly`, jamais le pré-rempli du club), son journal fait foi pour le F1 ET le PDM :
+  f1demi = 1 F1 + 1 dose, f1plein = 1 F1 + 2 doses, f1lait / f1soja = 1 F1 seul, pdmdemi / pdmplein = 1 / 2
+  doses. Sinon la règle, et le PDM noté à part s'y ajoute. Thé et aloé : la règle seule. ⚠️ **Cette table de
+  doses existe DEUX fois** : `notes` dans `_club_maison_donnees` (SQL) et `DANS_SES_SACHETS` (`maison.ts`) —
+  changer l'une, c'est changer l'autre.
+- **Chez elle** (espace membre du club seulement, format `bbc` ; l'espace standard n'appelle rien) : dans
+  « Mes repas » de l'onglet Journal, « À la maison · 4 sachets F1 · 5 doses PDM » (+ « club fermé aujourd'hui ») ;
+  le petit-déj vide dit « Shake F1 · tes sachets du club » ; dans « Ajouter » (petit-déj), le shake de ses sachets
+  passe EN TÊTE des habituels — F1 + ½ PDM si elle a du PDM chez elle, sinon F1 + lait — tant qu'elle n'est pas
+  pointée ce jour-là et qu'aucun shake F1 n'y est noté (le même habituel et un « Pareil qu'hier » qui ne ferait que
+  ce shake ne sont pas reproposés). Un toucher = `journal_ajouter` (origine `membre`) : noté ET un sachet de moins,
+  « Noté. Il te reste 3 sachets de F1 à la maison. » Même proposition depuis « Noter mon petit-déj » de l'accueil
+  (`JournalAccueil` ne lit le stock que si le petit-déj reste à noter). Le compteur suit le journal ouvert sans
+  rappeler la base (`avecLeJournal`). Données : `journal/useALaMaison.ts` → `journal_a_la_maison(jeton)` (comme
+  `journal_jour` : ce qu'elle a emporté, ses visites, ses notes, les horaires du club ; ni prix, ni vendeuse).
+- **Les upgrades du pointage entrent dans son journal** : `club_vendre` ajoute au petit-déj du jour, origine
+  `club`, les upgrades qui ont un `aliment` (F3 → f3, PDM « une dose » → pdmdemi, Fibre pomme → multifibres,
+  Beta → betaheart ; rien pour le collagène, la créatine, la fibre orange-goji ni le grand thé-aloé, absents du
+  catalogue du journal). `vente_id` : annuler la vente les enlève. Jamais bloquant : un refus du journal
+  n'empêche pas la vente. Un produit ajouté à la carte n'a pas d'aliment (aucun écran pour le régler).
+- **Sur sa fiche** : la puce d'un jour où elle a noté son shake dit « shake noté » (sauge), plus « chez elle ».
+- Le toast du journal (`.jr-toast`) passe sur deux lignes quand il ne tient pas (`width: max-content`,
+  `max-width: calc(100vw - 32px)`) : en `nowrap`, « +5 XP · … Il te reste 3 sachets… » sortait de l'écran.
 
 ---
 

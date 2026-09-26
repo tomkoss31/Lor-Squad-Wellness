@@ -117,6 +117,8 @@ export const journalMembre = {
     appeler<EtatJour>("journal_activite", { p_token: token, p_jour: jour, p_activite: activite }),
   humeur: (token: string, jour: string, humeur: Humeur | null) =>
     appeler<EtatJour>("journal_humeur", { p_token: token, p_jour: jour, p_humeur: humeur }),
+  /** « À la maison » (lot 5 du comptoir) : ce qu'elle a emporté du club. Brut : lu par `useALaMaison`. */
+  aLaMaison: (token: string) => appeler<unknown>("journal_a_la_maison", { p_token: token }),
 };
 
 // ─── Noaly (edge `journal-noaly`, Claude Sonnet 5) ────────────────────────────

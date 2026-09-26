@@ -9,6 +9,8 @@
 // Lot 2 (26/09) : en tête, « À la maison · depuis vendredi » — ce qui lui reste
 // (un sachet compté par jour sans club), ses derniers jours, et « son F1 arrive
 // au bout » quand le club ferme demain ou après-demain.
+// Lot 5 (26/09) : un jour où elle a noté son shake dans son journal, la puce dit
+// « shake noté » (sinon « chez elle » : l'app compte, elle ne sait pas).
 // =============================================================================
 
 import { useCallback, useEffect, useState } from "react";
@@ -185,18 +187,23 @@ function ALaMaison({ stock, aujourdhui, bout }: { stock: StockMaison; aujourdhui
       })}
       {stock.jours.length ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-          {stock.jours.map((j) => (
-            <span
-              key={j.jour}
-              style={{
-                fontSize: 12, padding: "4px 9px", borderRadius: 999, border: "1px solid var(--ls-bbc-line)",
-                background: j.auClub ? "color-mix(in srgb, var(--ls-bbc-orange) 12%, transparent)" : "var(--ls-bbc-s1)",
-                color: j.auClub ? "var(--ls-bbc-orange-text)" : "var(--ls-bbc-muted)",
-              }}
-            >
-              {jourCourt(j.jour)} · {j.auClub ? "au club" : "chez elle"}
-            </span>
-          ))}
+          {stock.jours.map((j) => {
+            const note = !j.auClub && !!j.note;
+            return (
+              <span
+                key={j.jour}
+                style={{
+                  fontSize: 12, padding: "4px 9px", borderRadius: 999, border: "1px solid var(--ls-bbc-line)",
+                  background: j.auClub
+                    ? "color-mix(in srgb, var(--ls-bbc-orange) 12%, transparent)"
+                    : note ? "color-mix(in srgb, var(--ls-bbc-sage) 16%, transparent)" : "var(--ls-bbc-s1)",
+                  color: j.auClub ? "var(--ls-bbc-orange-text)" : note ? "var(--ls-bbc-text)" : "var(--ls-bbc-muted)",
+                }}
+              >
+                {jourCourt(j.jour)} · {j.auClub ? "au club" : note ? "shake noté" : "chez elle"}
+              </span>
+            );
+          })}
         </div>
       ) : null}
       {f1 ? (
@@ -204,7 +211,9 @@ function ALaMaison({ stock, aujourdhui, bout }: { stock: StockMaison; aujourdhui
           {stock.restant.f1 > 0
             ? `De quoi tenir encore ${stock.restant.f1} jour${stock.restant.f1 > 1 ? "s" : ""} sans club.`
             : "Plus de F1 à la maison."}{" "}
-          <span style={{ color: "var(--ls-bbc-muted)" }}>Un sachet compté par jour sans club.</span>
+          <span style={{ color: "var(--ls-bbc-muted)" }}>
+            {stock.jours.some((j) => j.note) ? "Ses shakes notés dans son journal, sinon un sachet par jour sans club." : "Un sachet compté par jour sans club."}
+          </span>
         </p>
       ) : null}
       {bout ? (

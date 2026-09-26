@@ -8,6 +8,9 @@
 // pas : ce qui dure seulement (colonne `maison` de la carte).
 // La base ne rend que les faits (`club_maison`, `club_caisse`) : ce qu'elle a
 // emporté, en doses et par jour, et ses jours au club.
+// Lot 5 (26/09) : « le journal qui décompte ». Les shakes F1 qu'ELLE note dans son
+// journal font foi (`notes`) ; son journal lui propose « Shake F1 · tes sachets du
+// club » les jours où elle n'est pas pointée (`sachetsDuJour`).
 // =============================================================================
 
 import { horairesDuJour, jourDe, type ReglagesHoraires } from "../agenda/agendaClub";
@@ -24,21 +27,27 @@ export interface AchatMaison {
   doses: Doses;
 }
 
+/** Ce qu'elle a noté elle-même dans son journal un jour donné : les F1 de ses shakes, les doses de PDM. */
+export interface NoteJournal {
+  f1: number;
+  pdm: number;
+}
+
 /** Ce que la base sait d'UNE membre : ce qu'elle a emporté et ses jours au club. */
 export interface DonneesMaison {
   achats: AchatMaison[];
   visites: string[];
   /**
-   * Lot 5 (26/09) : les shakes de ses sachets du club qu'ELLE a notés dans son journal,
-   * par jour (AAAA-MM-JJ → nombre). Le journal affine la règle, il ne la bloque pas.
+   * Lot 5 (26/09) : ce qu'ELLE a noté dans son journal, par jour (AAAA-MM-JJ) — jamais
+   * le shake pré-rempli au pointage. Le journal affine la règle, il ne la bloque pas.
    */
-  notes?: Record<string, number>;
+  notes?: Record<string, NoteJournal>;
 }
 
 export interface JourSansClub {
   jour: string;
   auClub: boolean;
-  /** Elle a noté son shake de sachets ce jour-là (lot 5). */
+  /** Elle a noté un shake F1 ce jour-là (lot 5). */
   note?: boolean;
 }
 
@@ -100,11 +109,14 @@ export function lireMaison(brut: unknown): DonneesMaison | null {
     .map((a) => ({ jour: a.jour as string, doses: lireDoses(a.doses) ?? {} }))
     .filter((a) => Object.keys(a.doses).length > 0);
   if (!achats.length) return null;
-  const notes: Record<string, number> = {};
+  const notes: Record<string, NoteJournal> = {};
   if (o.notes && typeof o.notes === "object" && !Array.isArray(o.notes)) {
-    for (const [jour, n] of Object.entries(o.notes as Record<string, unknown>)) {
-      const x = Math.round(Number(n));
-      if (estJour(jour) && Number.isFinite(x) && x > 0) notes[jour] = x;
+    for (const [jour, v] of Object.entries(o.notes as Record<string, unknown>)) {
+      if (!estJour(jour) || !v || typeof v !== "object") continue;
+      const x = v as Record<string, unknown>;
+      const f1 = Math.max(0, Math.round(Number(x.f1) || 0));
+      const pdm = Math.max(0, Math.round(Number(x.pdm) || 0));
+      if (f1 > 0 || pdm > 0) notes[jour] = { f1, pdm };
     }
   }
   return { achats, visites: (Array.isArray(o.visites) ? o.visites : []).filter(estJour), notes };
@@ -139,9 +151,9 @@ export function lireMaisonClub(brut: unknown): { horaires: ReglagesHoraires | nu
  * achat : un achat ajoute ses doses ; un jour passé SANS pointage retire une dose
  * de chaque produit qu'elle a (jamais sous zéro). Aujourd'hui ne retire rien :
  * la journée n'est pas finie. null si elle n'a rien emporté.
- * Lot 5 : quand elle NOTE ses shakes de sachets, le journal fait foi pour le F1 et
- * le PDM — n shakes notés = n doses, aujourd'hui compris, même un jour de club ;
- * un jour passé sans club où elle n'a rien noté garde la règle (un sachet).
+ * Lot 5 : un jour où elle a NOTÉ un shake F1, son journal fait foi pour le F1 et le
+ * PDM (aujourd'hui compris, même un jour de club : un shake du soir, chez elle) ;
+ * sinon la règle, et le PDM qu'elle a noté à part s'y ajoute.
  */
 export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockMaison | null {
   if (!d || !d.achats.length) return null;
@@ -164,15 +176,16 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
       for (const k of DOSES) stock[k] += ajout[k] ?? 0;
       if (j === depuis) sur = { ...stock };
     }
-    const passe = j < aujourdhui;
-    const sansClub = passe && !visites.has(j);
-    const notes_j = notes[j] ?? 0;
-    for (const k of DOSES) {
-      // F1 et PDM : ce qu'elle a noté, sinon un par jour passé sans club.
+    const unParJour = j < aujourdhui && !visites.has(j) ? 1 : 0;
+    const note = notes[j] ?? { f1: 0, pdm: 0 };
+    const pris: Record<Dose, number> = {
+      f1: note.f1 > 0 ? note.f1 : unParJour,
+      pdm: note.f1 > 0 ? note.pdm : Math.max(note.pdm, unParJour),
       // Thé et aloé : la règle seule (le journal ne les compte pas).
-      const pris = k === "f1" || k === "pdm" ? (notes_j > 0 ? notes_j : sansClub ? 1 : 0) : sansClub ? 1 : 0;
-      stock[k] = Math.max(0, stock[k] - pris);
-    }
+      the: unParJour,
+      aloe: unParJour,
+    };
+    for (const k of DOSES) stock[k] = Math.max(0, stock[k] - pris[k]);
   }
   if (DOSES.every((k) => sur[k] <= 0)) return null;
 
@@ -181,10 +194,10 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
   for (let j = lendemain(depuis); j < aujourdhui; j = lendemain(j)) {
     const auClub = visites.has(j);
     if (!auClub) joursSansClub += 1;
-    jours.push({ jour: j, auClub, note: (notes[j] ?? 0) > 0 });
+    jours.push({ jour: j, auClub, note: (notes[j]?.f1 ?? 0) > 0 });
   }
-  if (depuis < aujourdhui && (visites.has(aujourdhui) || (notes[aujourdhui] ?? 0) > 0)) {
-    jours.push({ jour: aujourdhui, auClub: visites.has(aujourdhui), note: (notes[aujourdhui] ?? 0) > 0 });
+  if (depuis < aujourdhui && (visites.has(aujourdhui) || (notes[aujourdhui]?.f1 ?? 0) > 0)) {
+    jours.push({ jour: aujourdhui, auClub: visites.has(aujourdhui), note: (notes[aujourdhui]?.f1 ?? 0) > 0 });
   }
   return { depuis, restant: stock, sur, jours: jours.slice(-7), joursSansClub };
 }
@@ -192,6 +205,11 @@ export function stockMaison(d: DonneesMaison | null, aujourdhui: string): StockM
 /** Le club a-t-il des horaires réglés ? Sans eux, on ne dit jamais « fermé ». */
 function horairesConnus(h: ReglagesHoraires | null | undefined): boolean {
   return !!h?.hours && Object.values(h.hours).some((p) => Array.isArray(p) && p.length > 0);
+}
+
+/** Le club est-il fermé toute la journée (dimanche, férié) ? Jamais « fermé » sans horaires réglés. */
+export function clubFerme(horaires: ReglagesHoraires | null | undefined, jour: string): boolean {
+  return horairesConnus(horaires) && horairesDuJour(horaires, jour).etat !== "ouvert";
 }
 
 /**
@@ -389,4 +407,95 @@ export function f1AuBout(
   if (ecartJours(stock.depuis, aujourdhui) > 30) return null;
   const ferme = prochaineFermeture(horaires, aujourdhui, 2);
   return ferme ? { reste: stock.restant.f1, ferme } : null;
+}
+
+// ─── Lot 5 : le journal qui décompte ─────────────────────────────────────────
+
+/**
+ * Ce qu'un aliment du journal prend dans ses sachets du club. La MÊME table que la
+ * base (`_club_maison_donnees`, migration 20261215870000) : les deux vont ensemble.
+ */
+const DANS_SES_SACHETS = new Map<string, NoteJournal>([
+  ["f1demi", { f1: 1, pdm: 1 }],
+  ["f1plein", { f1: 1, pdm: 2 }],
+  ["f1lait", { f1: 1, pdm: 0 }],
+  ["f1soja", { f1: 1, pdm: 0 }],
+  ["pdmdemi", { f1: 0, pdm: 1 }],
+  ["pdmplein", { f1: 0, pdm: 2 }],
+]);
+
+const SHAKES_F1 = new Set(["f1demi", "f1plein", "f1lait", "f1soja"]);
+
+interface LigneLue {
+  aliment: string | null;
+  quantite: number;
+  origine: string;
+}
+
+/** Ce qu'elle a noté elle-même dans ces lignes (le shake pré-rempli au club n'en est pas). */
+export function notesDesLignes(lignes: readonly LigneLue[]): NoteJournal {
+  const n: NoteJournal = { f1: 0, pdm: 0 };
+  for (const l of lignes) {
+    if (l.origine !== "membre" && l.origine !== "noaly") continue;
+    const d = l.aliment ? DANS_SES_SACHETS.get(l.aliment) : undefined;
+    if (!d) continue;
+    const q = Math.max(1, Math.round(l.quantite || 1));
+    n.f1 += d.f1 * q;
+    n.pdm += d.pdm * q;
+  }
+  return n;
+}
+
+/**
+ * Les notes d'un jour relues dans son journal ouvert : le compteur suit chaque ajout
+ * et chaque retrait tout de suite, sans rappeler la base.
+ */
+export function avecLeJournal(d: DonneesMaison | null, jour: string, lignes: readonly LigneLue[]): DonneesMaison | null {
+  if (!d) return null;
+  const notes = { ...(d.notes ?? {}) };
+  const n = notesDesLignes(lignes);
+  if (n.f1 > 0 || n.pdm > 0) notes[jour] = n;
+  else delete notes[jour];
+  return { ...d, notes };
+}
+
+export interface SachetsDuJour {
+  /** Le shake proposé : celui du club (F1 + ½ PDM) si elle a du PDM chez elle, sinon F1 + lait. */
+  aliment: "f1demi" | "f1lait";
+  /** Ses sachets de F1 à la maison, avant ce shake. */
+  f1: number;
+}
+
+/**
+ * « Shake F1 · tes sachets du club » : proposé quand elle a du F1 à la maison, qu'elle
+ * n'est pas pointée au club ce jour-là et qu'aucun shake F1 n'y est noté (le sien, ou
+ * celui du club). Elle confirme d'un toucher ; l'app ne note jamais à sa place.
+ */
+export function sachetsDuJour(
+  d: DonneesMaison | null,
+  stock: StockMaison | null,
+  jour: string,
+  lignesDuJour: ReadonlyArray<{ aliment: string | null }>,
+): SachetsDuJour | null {
+  if (!d || !stock || stock.restant.f1 <= 0 || d.visites.includes(jour)) return null;
+  if (lignesDuJour.some((l) => l.aliment != null && SHAKES_F1.has(l.aliment))) return null;
+  return { aliment: stock.restant.pdm > 0 ? "f1demi" : "f1lait", f1: stock.restant.f1 };
+}
+
+/** « 4 sachets F1 », « 5 doses PDM »… : ce qu'elle a chez elle, pour son journal. */
+export function pastillesStock(r: Partial<Record<Dose, number>>): string[] {
+  const n = (k: Dose) => Math.floor(r[k] ?? 0);
+  const s = (x: number) => (x > 1 ? "s" : "");
+  const p: string[] = [];
+  if (n("f1") > 0) p.push(`${n("f1")} sachet${s(n("f1"))} F1`);
+  if (n("pdm") > 0) p.push(`${n("pdm")} dose${s(n("pdm"))} PDM`);
+  if (n("the") > 0) p.push(`${n("the")} thé${s(n("the"))}`);
+  if (n("aloe") > 0) p.push(`${n("aloe")} dose${s(n("aloe"))} d'aloé`);
+  return p;
+}
+
+/** Ce que dit son journal quand elle note un shake de ses sachets. */
+export function phraseSachets(reste: number): string {
+  if (reste <= 0) return "C'était ton dernier sachet de F1.";
+  return `Il te reste ${reste} sachet${reste > 1 ? "s" : ""} de F1 à la maison.`;
 }
