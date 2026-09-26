@@ -475,9 +475,11 @@ Thomas : « go lot 1 », puis après sa recette sur iPhone : « c'est bon ça ma
   `club_ventes` était vide au « go main », rien à effacer. La vente elle-même n'a été essayée qu'en base
   (transaction annulée, identité de Thomas) : la première vraie vente se fera au club.
 
-### Lot 2 — « à la maison », codé, en recette (26/09)
+### Lot 2 — « à la maison », en prod (26/09)
 
-Thomas : « go lot 2 ». Sur la branche ; migration `20261215840000_comptoir_a_la_maison` appliquée le 26/09 vers
+Thomas : « go lot 2 », puis « go main » quelques minutes après la mise en ligne de la preview (16 h 17). Passé sur
+`main` (avance rapide) puis reporté sur `dev/thomas-test`. Au « go main » : aucune vente et aucun prix changé en
+base, rien à effacer. Migration `20261215840000_comptoir_a_la_maison` appliquée le 26/09 vers
 16 h (club fermé), enregistrée au registre, empreinte des 5 fonctions = celle du fichier. Essai en transaction
 annulée : une vente du 19/09 (5 F1 + 3 PDM + 2 barres) ressort en 5 F1 + 6 doses de PDM, sans les barres ni une
 vente annulée ; la vente du jour fige ses doses ; `anon` refusé.
@@ -490,8 +492,7 @@ vente annulée ; la vente du jour fige ses doses ; `anon` refusé.
   - « de quoi tenir » n'est pas pré-rempli : une ligne et un bouton « Ajouter » (on propose, on n'impose pas) ;
   - le pack n'apparaît qu'à partir de 4 F1 et s'il coûte au plus 40 % de son prix en plus ;
   - à Verdun, le samedi est ouvert (8 h 30–11 h) : la fermeture qui compte, c'est le dimanche et les fériés.
-- Pour voir « À la maison » en recette, il faut une vraie vente de F1 / PDM / Thermo : les ventes d'essai seront
-  effacées avant le « go main ».
+- « À la maison » n'apparaît qu'après une vraie vente de F1 / PDM / Thermo : la première se verra au club.
 
 ## Questions ouvertes
 
