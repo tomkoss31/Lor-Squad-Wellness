@@ -318,6 +318,41 @@ boutons ; « Tout le tableau » à un toucher, rangé comme le tableau (mêmes 5
 Reste à demander : le grand thé-aloé de Mélanie (absent du tableau) ; la part de la stagiaire ;
 le prix d'achat des accessoires ; les portions par pot des 7 produits ci-dessus (liste précise avec la maquette).
 
+### La règle de rentabilité, validée (26/09)
+
+Thomas : « pour 100 € [vendus], un coach à 25 % gagne 25 €, et moi aussi comme je suis à 50 % ».
+→ **La personne en caisse gagne son palier × ce qu'elle vend ; le club garde le reste de la marge.**
+- Produits au prix public (la plupart) : marge totale 50 % → 25 € pour elle, 25 € pour le club.
+- Produits au-dessus du prix public (sachets F1 3,80 €, PDM 4,50 €, shake à emporter, CR7, Rebuild) :
+  le surplus revient au club. 100 € de sachets F1 : coût 39,80 € à 50 % → 25 € pour elle, ~35 € pour le club.
+- Cas à confirmer : une coach à 50 % en caisse avec le stock du club garde toute la marge ; le club ne gagne
+  rien sur sa vente (sauf le surplus au-dessus du prix public).
+- **Grand thé-aloé** (Thomas) : « le prix public de vente noté sur l'app » → le supplément = les doses en plus
+  au prix public de la dose (thé 41/30 = 1,37 → 1,40 € ; aloé 54,50/47 = 1,16 → 1,20 €). Reste : combien de
+  doses en plus dans le grand ? (une de chaque → + 2,60 €).
+- Accessoires : Thomas n'a pas leur coût sous la main → plus tard.
+
+### Les portions, trouvées sur le web (26/09)
+
+Le site herbalife.com est **bloqué par le réseau de l'environnement** (WebFetch refusé) : les portions viennent
+des résultats de recherche (pages herbalife.com et revendeurs). Prix publics = `herbalifeCatalog.ts`.
+
+| Produit (réf.) | Contenant | Portions | Public / portion | Coût à 50 % | Tableau |
+|---|---|---|---|---|---|
+| Rebuild Strength (403K) | 1 000 g, 50,5 g | ~20 | 4,18 € | 2,09 € | 5,10 € |
+| CR7 Drive (1466) | 540 g, 27 g | 20 | 1,38 € | 0,69 € | 1,70 € |
+| Formula 3 (0242) | 240 g, 6 g | 40 | 1,23 € | 0,61 € | 1,30 € |
+| Boisson multi-fibres, « fibre pomme » (2554) | 204 g, 6,8 g | 30 | 1,45 € | 0,73 € | 1,50 € |
+| Beta Heart (0267) | 229 g, 7,6 g | 30 | 1,92 € | 0,96 € | 1,90 € |
+| Iced Coffee (012K) | 308 g | 14 | 5,25 € | 2,63 € | 5,30 € |
+| Barres Formula 1 Express (4472 / 4473 cranberry) | boîte de 7 | 7 | 4,43 € | 2,21 € | 4,40 € |
+
+Prix publics introuvables (pas dans le catalogue de l'app, site bloqué) :
+- Barres Achieve (149K cookie, 150K chocolat noir) : boîte de 6 × 60 g ;
+- Fibre Concentrate orange-goji (201K) : 500 ml, ~33 portions de 15 ml (3 g de fibres) ;
+- Collagen Skin Booster (076K) : 171 g, 30 portions.
+→ les lire sur le tarif de Thomas, ou autoriser `www.herbalife.com` dans l'accès réseau de l'environnement.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
