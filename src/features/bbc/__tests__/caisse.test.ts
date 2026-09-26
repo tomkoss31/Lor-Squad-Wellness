@@ -107,7 +107,7 @@ describe("lecture des réponses de la base", () => {
     expect(d.carte[0].prix).toBe(3.8);
     expect(d.habituels).toEqual([{ carteId: "f1", qte: 3 }]);
     expect(d.meilleures).toEqual(["f1"]);
-    expect(lireCaisse(null)).toEqual({ club: null, modifiable: false, carte: [], habituels: [], meilleures: [] });
+    expect(lireCaisse(null)).toEqual({ club: null, modifiable: false, carte: [], habituels: [], meilleures: [], horaires: null, maison: null });
   });
 
   it("relit club_achats", () => {

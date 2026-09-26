@@ -445,6 +445,29 @@ et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/featu
 - **En prod depuis le 26/09** (recette de Thomas sur iPhone : la caisse et « Ses achats » chargés ; aucune vente
   validée en recette, la vente n'a été essayée qu'en base — la première vraie vente se fera au club).
 
+### Lot 2 : « à la maison » (26/09/2026)
+
+« go lot 2 ». Migration `20261215840000` (remplace `club_caisse` et `club_vendre`, ajoute `club_maison`,
+`_club_maison_donnees`, `_club_horaires`). Logique pure et testée : `caisse/maison.ts`.
+- **La règle (maquette v3)** : « si elle ne note rien, l'app compte un sachet par jour sans club ». Un jour sans
+  pointage retire une dose de chaque produit qu'elle a (F1, PDM, thé, aloé), jamais sous zéro ; aujourd'hui ne
+  retire rien. Barres et chips ne vont PAS à la maison (colonne `maison` nulle). La base ne rend que les faits
+  (`_club_maison_donnees` : ses doses emportées par jour sur 60 j + ses jours de visite) ; `club_vendre` fige
+  désormais `maison` dans chaque ligne, comme le prix.
+- **Les jours fermés** viennent des horaires du tunnel public (`horairesDuJour`, rendus par `club_caisse` et
+  `club_maison`) ; sans horaires réglés, l'app ne dit JAMAIS « fermé ». Verdun : dimanche + fériés.
+- **À la caisse** : la veille d'une fermeture, « Club fermé dimanche, elle revient lundi. » + ce qu'elle a chez
+  elle + « De quoi tenir : 1 × Formula 1, 1 × PDM » et un bouton « Ajouter » (jamais pré-rempli) — un F1 par jour
+  fermé, le PDM et le thé seulement si elle en a déjà emporté, jamais l'aloé. **Le pack 6 jours** est proposé quand
+  le panier a 4 F1 ou plus en sachets et que le pack ne coûte pas plus de 40 % de son prix en plus (« Pack 6 jours
+  avec PDM : 1 F1 et 6 thés en plus pour 11,50 € », « Passer au pack » remplace les sachets).
+- **Sur sa fiche** (tête de « Ses achats ») : « À la maison · depuis vendredi », « 3 sur 5 » par produit, ses
+  derniers jours (au club / chez elle), « De quoi tenir encore 3 jours sans club ».
+- **9e règle de Contacter** `f1_bout` : elle a emporté du F1 depuis moins de 30 jours, il lui en reste 1 ou 0, le
+  club ferme demain ou après-demain, et elle n'est pas passée aujourd'hui (la caisse le lui a déjà proposé). Clé
+  `membre:<id>:f1bout:<jour fermé>`. Données : 3e appel de `useBbcSignaux` (`club_maison()`, tout le club).
+- Le journal qui décompte (« shake noté », les barres) reste le lot 5 : il touche l'espace des membres.
+
 ---
 
 ## 🔀 Workflow dev / prod

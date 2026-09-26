@@ -16,6 +16,10 @@
 // notait son journal au moins 5 jours sur 7, puis plus rien depuis 3 à 14 jours.
 // Même rang que « absente », qui passe devant ; relancée une fois, elle ne revient
 // pas tant qu'elle n'a pas repris (`journal_signaux_club`, `deja_relancee`).
+// 9e règle (comptoir, lot 2, 26/09) : « son F1 arrive au bout » — elle emporte du
+// F1, il lui en reste 1 ou 0, et le club ferme demain ou après-demain
+// (`club_maison`, `f1AuBout` dans caisse/maison.ts). Pas si elle est passée
+// aujourd'hui : la caisse lui a déjà proposé de quoi tenir.
 // =============================================================================
 
 import type { CrmLead } from "../../hooks/useCrmLeads";
@@ -23,6 +27,8 @@ import type { BbcMember } from "./useBbcMembers";
 import { nextPalier, type HeartMember } from "./useBbcHearts";
 import type { SignalVisites } from "./useBbcSignaux";
 import { nomAffiche } from "../crm/nomPropre";
+import type { ReglagesHoraires } from "./agenda/agendaClub";
+import { f1AuBout, jourParis, nomDuJour, type DonneesMaison } from "./caisse/maison";
 
 /** Le nom complet d'un lead pour la liste : « Amélie Durand », le prénom seul si on n'a pas le nom. */
 function nomCompletLead(l: CrmLead): string {
@@ -45,7 +51,9 @@ export type RaisonContact =
   | "journal"
   | "coeur"
   /** Montée de niveau (XP) depuis moins de 7 jours : la féliciter (24/09). */
-  | "niveau";
+  | "niveau"
+  /** Plus qu'un sachet de F1 à la maison, le club ferme bientôt (comptoir, lot 2). */
+  | "f1_bout";
 
 export interface AContacter {
   /** Stable : sert de clé React et de `contact_label` quand on note le geste. */
@@ -66,6 +74,8 @@ export interface AContacter {
   membreId?: string;
   /** Depuis quand elle attend, pour les leads (minutes). */
   attenteMin?: number;
+  /** Le jour de fermeture, pour « son F1 arrive au bout » (« dimanche »). */
+  quand?: string;
 }
 
 /** « attend depuis 21 min » / « attend depuis 8 h » / « attend depuis 3 jours ». */
@@ -100,9 +110,14 @@ export function aContacter(args: {
   signaux?: Map<string, SignalVisites>;
   /** Le niveau XP de chaque membre et le jour de sa dernière montée (24/09, useXpApercu). */
   niveaux?: Map<string, { niveau: number; monteLe: string | null; titre?: string }>;
+  /** Ce que chaque membre a emporté et ses jours au club (`club_maison`, lot 2 du comptoir). */
+  maison?: Map<string, DonneesMaison>;
+  /** Les horaires du club : sans eux, jamais de « club fermé ». */
+  horaires?: ReglagesHoraires | null;
   maintenant?: Date;
 }): AContacter[] {
   const now = args.maintenant ?? new Date();
+  const aujourdhui = jourParis(now);
   const JOUR = 24 * 60 * 60 * 1000;
   const out: AContacter[] = [];
 
@@ -161,12 +176,17 @@ export function aContacter(args: {
     const silence = journal ? joursDepuis(journal.derniereLigne, now) : null;
     const journalLache = !!journal && !journal.dejaRelancee && journal.joursNotes >= JOURNAL_LACHE.joursNotes
       && silence != null && silence >= JOURNAL_LACHE.silenceMin && silence <= JOURNAL_LACHE.silenceMax;
+    const bout = !m.visitedToday && args.maison ? f1AuBout(args.maison.get(m.id) ?? null, args.horaires, aujourdhui) : null;
     if (m.card.used >= m.card.type) {
       out.push({ key: `membre:${m.id}:carte`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "carte_finie", texte: `Carte ${m.card.type} finie : proposer le bilan et la carte suivante`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.card.used === m.card.type - 1) {
       out.push({ key: `membre:${m.id}:neuf`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "neuvieme_visite", texte: `${m.card.used}e visite : lui proposer le bilan de la ${m.card.type}e`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (!m.visitedToday && joursSans !== null && joursSans >= 6) {
       out.push({ key: `membre:${m.id}:absente`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "absente", texte: `Pas venue depuis ${Math.round(joursSans)} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
+    } else if (bout) {
+      // La clé porte le jour de fermeture : prévenue une fois pour ce dimanche-là.
+      const quand = nomDuJour(bout.ferme, aujourdhui);
+      out.push({ key: `membre:${m.id}:f1bout:${bout.ferme}`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "f1_bout", texte: `${bout.reste === 0 ? "Plus de F1 à la maison" : "Plus qu'un sachet de F1 à la maison"}, club fermé ${quand} : lui proposer de quoi tenir`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id, quand });
     } else if (journalLache && journal) {
       out.push({ key: `membre:${m.id}:journal`, nom: prenomDe(m.name, m.prenom), nomComplet: m.name, raison: "journal", texte: `Notait son journal ${journal.joursNotes} jours sur 7, plus rien depuis ${silence} jours`, geste: "ecrire", urgence: 3, telephone: m.phone ?? null, membreId: m.id });
     } else if (m.hearts === 0 && joursDepuisDebut !== null && joursDepuisDebut >= 21 && (sig?.visites30j ?? 0) >= 6) {
@@ -207,5 +227,7 @@ export function messagePour(c: AContacter, coachPrenom: string): string {
       return `${c.nom}, tu es à un cœur du palier suivant 💛 Tu as quelqu'un autour de toi qui aimerait essayer ? Je lui offre sa première visite.`;
     case "niveau":
       return `${c.nom}, tu viens de passer un niveau dans ton app 🎉 C'est ta régularité qui paie — continue comme ça, et tes XP te font gagner des cadeaux au bar.`;
+    case "f1_bout":
+      return `Coucou ${c.nom} ! Le club est fermé ${c.quand ?? "bientôt"} : il te reste de quoi faire tes shakes à la maison ? Passe avant, je te prépare tes sachets 🙂`;
   }
 }
