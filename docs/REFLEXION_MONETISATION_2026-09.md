@@ -396,6 +396,13 @@ Choix par défaut à valider (« 1 ok, 2 ok, 3 ok, 4 ok ») :
 3. La membre paie la coach qui la sert ; rien à reverser.
 4. Grand thé-aloé = +1 dose de thé 51 g et d'aloé 473 ml = 2,60 €.
 
+### Le paiement (26/09)
+
+Thomas : « la membre paie direct sur le terminal de la coach elle-même ». → Point 3 validé : l'app n'encaisse
+rien, le bouton devient « Payé sur mon terminal » (un enregistrement, pas un paiement). Question qui en découle
+(maquette v2, point 3) : le **sur place** (suppléments, grand thé-aloé) passe-t-il sur ce même terminal ?
+Défaut proposé : oui, et l'app compte ce que la coach doit au club, montré en fin de mois.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
