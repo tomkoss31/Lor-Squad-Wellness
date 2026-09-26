@@ -230,6 +230,49 @@ La liste attendue de Thomas (8 produits pour commencer) : nom · prix de vente a
 revient à lui (50 %) · pour ce qui dure, combien de jours. Plus les upgrades et leur supplément.
 Ensuite : maquette des 3 écrans (pointage, « À la maison » sur la fiche, rentabilité), puis le code.
 
+### Règles validées et ce qu'il manque (26/09, suite)
+
+**Thomas** : « ok pour les règles », **stock du club**, il envoie la liste. Qui encaisse quoi :
+- la stagiaire (coach en formation) en caisse vend les « à emporter » ;
+- le propriétaire encaisse les cartes de visites ;
+- une stagiaire devient **junior** avec **10 membres actives en première ligne** (pas les cœurs de ses
+  cœurs) : elle encaisse alors les cartes (de ses membres — à confirmer).
+- « Faire vraiment attention à ne pas compliquer l'app : simple et ludique. »
+
+Reste à trancher : sur un « à emporter » (stock du club), que gagne la stagiaire ? Proposition : la logique
+de l'écart Herbalife — elle gagne sa marge selon son rang, le propriétaire garde la différence jusqu'à ses
+50 %. Ex. un article à 4 € : coût club 2 €, stagiaire à 25 % → 1 €, propriétaire → 1 €.
+
+Junior automatique : aujourd'hui `useBbcRole` décide « junior » par le pré-lancement ou la main du
+propriétaire. La règle des 10 membres actives est calculable (`client_referrals.from_client_id` +
+`referred_client_id` + visites), MAIS la base ne compte que **2 cœurs** (26/09) pour 15 membres :
+personne ne note qui a amené qui. Idée : une question à la création d'une fiche, « Qui l'a amenée ? »
+(un toucher) → le cœur est donné, la première ligne se compte, junior devient automatique.
+
+**Les prix — ce qu'on a** :
+- la recette du club (`bbcClubPrices.ts`) : F1 26 g (21 shakes / pot 550 g), PDM 14 g (42 / 588 g),
+  thé 1,7 g (30 / 51 g), aloé 10 ml (47 / 473 ml) + le prix public de chaque contenant
+  (`herbalifeCatalog`) → coût d'une portion au palier du club (50 %, `clubs.settings.palier_remise`) ;
+- l'ancienne carte du club (26 lignes), retirée le 28/07 (commit `7525b6c`, voir `7525b6c^`) : 14 prix
+  relevés sur le tarif du 25/06, surtout en-cas et énergie (chips 3,30 €, barre protéinée 2,30 €,
+  Achieve 4,60 €, LiftOff Max 3,85 €, Rebuild 5,10 €, Immune Booster 2,50 €…), jamais validés dans l'app.
+  `clubs.settings.carte` est vide en base : rien n'a été saisi.
+- **Manque** : le prix à l'unité des « à emporter » (sachet F1, sachet PDM ½ ou entier, thé, aloé) et
+  les **upgrades** avec leur supplément (les « grand format » de l'ancienne carte étaient des tailles de
+  POT, pas de verre).
+- Leçon du 28/07 (« ne pas surcharger l'app ») : 8 produits au comptoir, pas 26.
+
+**Le journal qui se parle avec l'« à emporter »** (exemple de Thomas : Mélanie vient vendredi, club fermé
+samedi et dimanche → 5 sachets F1 + 3 PDM (½) + des barres) :
+- au pointage du vendredi, l'app connaît les horaires : « Club fermé 2 jours — elle prend de quoi tenir ? »,
+  une quantité proposée que la stagiaire corrige d'un toucher ;
+- chez elle, « Tes habituels » propose en tête « Shake F1 (tes sachets du club) » (l'aliment « Shake F1 +
+  ½ sachet PDM », repère du club, existe) : un toucher = noté ET un sachet de moins à la maison ;
+- à 1 sachet : elle le voit ; sa coach reçoit « son F1 arrive au bout » (Contacter) ;
+- si elle ne note pas, l'app compte 1 sachet par jour depuis l'achat : le journal affine, il ne bloque pas ;
+- au suivi, la coach voit si les shakes ont été pris les jours sans club (la vraie observance) ;
+- règle : chez elle on PROPOSE, on ne pré-remplit jamais (seul le club pré-remplit, on sait qu'elle l'a pris).
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
