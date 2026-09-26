@@ -17,6 +17,10 @@
 //   « Mes conseils du jour » (Noaly, en rose en BBC)
 // Lot 2 (21/09, maquette v8) : « Écris ton repas, Noaly calcule » dans l'ajout,
 // « Le mot de Noaly » dans les conseils — edge `journal-noaly`.
+// Lot 5 du comptoir (26/09, maquette SHZYSBaqfgWVqdMncgrcPG, écran 3) : au club,
+// « À la maison » dans « Mes repas » (ce qu'elle a emporté du club, décompté) et
+// « Shake F1 · tes sachets du club » au petit-déj les jours où elle n'est pas
+// pointée — un toucher = noté ET un sachet de moins. Jamais noté à sa place.
 // =============================================================================
 
 import "./journal.css";
@@ -26,6 +30,8 @@ import { FeuilleAjout, FeuilleConseils, FeuilleJournee, FeuilleModifier, Feuille
 import { CarteSemaine, FeuilleSemaine } from "./JournalSemaine";
 import { XpBarMembre } from "../client-xp/XpBarLigne";
 import { chargerAliments, journalMembre, noaly, prevenirCoachNiveau, signalerXp } from "./journalApi";
+import { useALaMaison } from "./useALaMaison";
+import { avecLeJournal, clubFerme, pastillesStock, phraseSachets, sachetsDuJour, stockMaison } from "../bbc/caisse/maison";
 import {
   ACTIVITES,
   COEFFICIENTS,
@@ -110,11 +116,13 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
   // Ta semaine (bloc B, 7)
   const [semaine, setSemaine] = useState<SemaineMembre | null>(null);
   const [semaineOuverte, setSemaineOuverte] = useState(false);
+  // À la maison (lot 5 du comptoir) : au club seulement.
+  const aLaMaison = useALaMaison(token, format === "bbc");
 
-  const dire = useCallback((txt: string) => {
+  const dire = useCallback((txt: string, duree = 2200) => {
     setMessage(txt);
     window.clearTimeout(minuteur.current);
-    minuteur.current = window.setTimeout(() => setMessage(null), 2200);
+    minuteur.current = window.setTimeout(() => setMessage(null), duree);
   }, []);
 
   const charger = useCallback(async () => {
@@ -178,7 +186,8 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
     niveauVu.current = n.level;
   }, [etat, format, token]);
 
-  const agir = useCallback(async (appel: () => Promise<EtatJour>, confirmation: string | null) => {
+  /** `suite` : une phrase dite même quand l'XP tombe (« Il te reste 4 sachets… »). */
+  const agir = useCallback(async (appel: () => Promise<EtatJour>, confirmation: string | null, suite?: string) => {
     if (!token) return;
     setOccupe(true);
     try {
@@ -187,11 +196,12 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
       const gains = e.gains ?? [];
       if (gains.length) {
         const xp = gains.reduce((a, g) => a + g.xp, 0);
-        dire(`+${xp} XP · ${gains.map((g) => LIBELLE_GAIN[g.cle] ?? g.cle).join(" + ")}`);
+        const txt = `+${xp} XP · ${gains.map((g) => LIBELLE_GAIN[g.cle] ?? g.cle).join(" + ")}`;
+        dire(suite ? `${txt}. ${suite}` : txt, suite ? 3600 : 2200);
         setJustes(gains.map((g) => g.cle));
         signalerXp();
       } else if (confirmation) {
-        dire(confirmation);
+        dire(suite ? `${confirmation}. ${suite}` : confirmation, suite ? 3600 : 2200);
       }
     } catch (err) {
       dire((err as Error).message);
@@ -243,6 +253,13 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
     <CarteSemaine s={semaine} bilan={bilan} onOuvrir={() => { setSemaineOuverte(true); void chargerSemaine(); }} />
   ) : null;
   const semaineEnHaut = semaine ? semaineEnTete(semaine.aujourdhui, new Date().getHours()) : false;
+  // À la maison (lot 5 du comptoir) : le stock suit son journal ouvert, sans rappeler la base.
+  const maisonJour = aujourdhui && aLaMaison ? avecLeJournal(aLaMaison.maison, e.jour, e.lignes) : null;
+  const stock = maisonJour ? stockMaison(maisonJour, e.jour) : null;
+  const pastilles = stock ? pastillesStock(stock.restant) : [];
+  const sachets = sachetsDuJour(maisonJour, stock, e.jour, e.lignes);
+  const shakeSachets = sachets ? aliments.find((a) => a.cle === sachets.aliment) ?? null : null;
+  const fermeAujourdhui = !!aLaMaison && clubFerme(aLaMaison.horaires, e.jour);
 
   const poserVerres = (v: number) => {
     setEtat({ ...e, verres: v }); // tout de suite à l'écran, la base suit
@@ -378,6 +395,13 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           <span className="jr-eye">Mes repas</span>
           {kcalOn && kcalJ.connu ? <span className="jr-kcal">{texteKcal(kcalJ.kcal, true, true)}</span> : null}
         </div>
+        {pastilles.length ? (
+          <div className="jr-maison" aria-label="À la maison, du club">
+            <span className="jr-maison-t">À la maison</span>
+            {pastilles.map((p) => <span key={p} className="jr-maison-p">{p}</span>)}
+            {fermeAujourdhui ? <span className="jr-maison-p ferme">club fermé aujourd'hui</span> : null}
+          </div>
+        ) : null}
         <div className="jr-repas">
           {[...CRENEAUX_REPAS, ...(e.lignes.some((x) => x.creneau === "aut") ? (["aut"] as Creneau[]) : [])].map((c) => {
             const ls = e.lignes.filter((x) => x.creneau === c);
@@ -403,7 +427,9 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
                 <span className="jr-ico"><JournalIcone nom={ICONE_CRENEAU[c]} taille={18} /></span>
                 <span className="jr-grow">
                   <b>{NOM_CRENEAU[c]}</b>
-                  {hier.length ? (
+                  {c === "pdj" && shakeSachets ? (
+                    <small className="hier">Shake F1 · tes sachets du club</small>
+                  ) : hier.length ? (
                     <small className="hier">hier : {resume(hier)} · {Math.round(protJour(hier))} g</small>
                   ) : (
                     <small>{INDICE_CRENEAU[c]}</small>
@@ -458,6 +484,11 @@ export function JournalMembre({ token, format, coachPrenom, motDuBilan, alertesS
           onLireRepas={(texte) => noaly.lireRepas(token!, feuille.creneau, texte)}
           onAjouterLot={(lignes) => { fermer(); void agir(() => journalMembre.ajouterLot(token!, e.jour, feuille.creneau, lignes), "Noté · calculé par Noaly"); }}
           onAjouterHabituel={(h) => { fermer(); void agir(() => journalMembre.ajouterHabituel(token!, e.jour, feuille.creneau, h), `Noté · ${resume([{ libelle: h.libelle, quantite: h.quantite }])}`); }}
+          sachets={sachets && shakeSachets ? { aliment: shakeSachets, restant: sachets.f1 } : null}
+          onSachets={sachets && shakeSachets ? () => {
+            fermer();
+            void agir(() => journalMembre.ajouter(token!, e.jour, "pdj", shakeSachets.cle, null, 1), "Noté", phraseSachets(sachets.f1 - 1));
+          } : undefined}
         />
       ) : null}
       {feuille?.type === "repas" ? (

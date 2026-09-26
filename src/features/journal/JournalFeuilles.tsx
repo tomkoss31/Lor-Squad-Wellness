@@ -5,6 +5,8 @@
 // Lot 2 (21/09, maquette v8) : « Écris ton repas, Noaly calcule » dans l'ajout,
 // les lignes estimées par Noaly (hors catalogue) se corrigent au poids, et
 // « Le mot de Noaly » ouvre les conseils du jour.
+// Lot 5 du comptoir (26/09) : « Shake F1 · tes sachets du club » en tête des
+// habituels du petit-déj, les jours où elle n'est pas pointée au club.
 // =============================================================================
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -222,9 +224,15 @@ function BoutonHabituel({ h, creneau, aliments, occupe, onClick }: {
   );
 }
 
-export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onPlusUn, onReprendreVeille, onLireRepas, onAjouterLot, onAjouterHabituel }: {
+export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjouter, onPlusUn, onReprendreVeille, onLireRepas, onAjouterLot, onAjouterHabituel, sachets, onSachets }: {
   creneau: Creneau; etat: EtatJour; aliments: Aliment[]; occupe: boolean;
   onFermer: () => void;
+  /**
+   * Lot 5 du comptoir : le shake de ses sachets du club (F1 + ½ PDM, ou F1 + lait) et ce
+   * qu'il lui reste de F1 — en tête des habituels du petit-déj. Absent : rien.
+   */
+  sachets?: { aliment: Aliment; restant: number } | null;
+  onSachets?: () => void;
   onAjouter: (a: Aliment, grammes: number | null, quantite: number) => void;
   /** Une portion de plus sur une ligne déjà notée à ce repas (24/09) — absent : pas de « +1 ». */
   onPlusUn?: (l: Ligne) => void;
@@ -246,15 +254,23 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
   const [proposition, setProposition] = useState<PropositionNoaly | null>(null);
   const [erreurNoaly, setErreurNoaly] = useState<string | null>(null);
   const champ = useRef<HTMLInputElement>(null);
-  const veille = etat.jour === etat.aujourdhui && !etat.lignes.some((l) => l.creneau === creneau)
+  // Ses sachets du club passent devant, et le même shake n'est pas reproposé en habituel.
+  const shakeSachets = creneau === "pdj" && sachets && onSachets ? sachets : null;
+  const veilleBrute = etat.jour === etat.aujourdhui && !etat.lignes.some((l) => l.creneau === creneau)
     ? etat.veille.filter((l) => l.creneau === creneau) : [];
-  const habituels = useMemo(() => (onAjouterHabituel ? habituelsDuCreneau(etat, creneau) : []), [onAjouterHabituel, etat, creneau]);
+  // « Pareil qu'hier » qui ne ferait que ce shake-là : un seul bouton suffit.
+  const veille = shakeSachets && veilleBrute.every((l) => l.aliment === shakeSachets.aliment.cle) ? [] : veilleBrute;
+  const habituels = useMemo(
+    () => (onAjouterHabituel ? habituelsDuCreneau(etat, creneau) : []).filter((h) => h.aliment == null || h.aliment !== shakeSachets?.aliment.cle),
+    [onAjouterHabituel, etat, creneau, shakeSachets],
+  );
   // Un habituel n'est pas reproposé plus bas parmi les idées.
   const idees = useMemo(() => {
     const s = suggestions(aliments, creneau);
     const pris = new Set(habituels.map((h) => h.aliment));
+    if (shakeSachets) pris.add(shakeSachets.aliment.cle);
     return { herbalife: s.herbalife.filter((a) => !pris.has(a.cle)), autres: s.autres.filter((a) => !pris.has(a.cle)) };
-  }, [aliments, creneau, habituels]);
+  }, [aliments, creneau, habituels, shakeSachets]);
   const trouves = useMemo(() => chercher(aliments, q), [aliments, q]);
   // Ce qui est déjà noté à ce repas, par aliment du catalogue : la liste le dit au lieu de doubler.
   const dejaNotes = useMemo(() => {
@@ -397,10 +413,22 @@ export function FeuilleAjout({ creneau, etat, aliments, occupe, onFermer, onAjou
 
   return (
     <Feuille titre={titre} onFermer={onFermer}>
-      {habituels.length && onAjouterHabituel && !q.trim() ? (
+      {(shakeSachets || (habituels.length && onAjouterHabituel)) && !q.trim() ? (
         <>
           <div className="jr-sec jr-sec-l">Tes habituels<em>un toucher et c'est noté</em></div>
-          {habituels.map((h) => (
+          {shakeSachets ? (
+            <button type="button" className="jr-hab" disabled={occupe} onClick={onSachets}>
+              <span className="jr-grow">
+                <b>{shakeSachets.aliment.nom}</b>
+                <small>
+                  tes sachets du club · il t'en reste {shakeSachets.restant}
+                </small>
+              </span>
+              <span className="jr-g">{fmtProt(protAliment(shakeSachets.aliment, null, 1))} g</span>
+              <span className="jr-hab-plus" aria-hidden="true"><JournalIcone nom="plus" taille={18} /></span>
+            </button>
+          ) : null}
+          {onAjouterHabituel && habituels.map((h) => (
             <BoutonHabituel key={`${h.aliment ?? h.libelle}-${h.grammes}-${h.quantite}`} h={h} creneau={creneau} aliments={aliments}
               occupe={occupe} onClick={() => onAjouterHabituel(h)} />
           ))}

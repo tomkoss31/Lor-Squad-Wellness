@@ -3,16 +3,23 @@ import type { ReglagesHoraires } from "../agenda/agendaClub";
 import type { ProduitCarte } from "../caisse/caisse";
 import {
   ajouterDeQuoiTenir,
+  avecLeJournal,
+  clubFerme,
   deQuoiTenir,
   depuisLisible,
   f1AuBout,
   joursFermesApres,
   jourParis,
+  lireMaison,
   lireMaisonClub,
+  notesDesLignes,
   passerAuPack,
+  pastillesStock,
   phraseFermeture,
+  phraseSachets,
   prochaineFermeture,
   resumeStock,
+  sachetsDuJour,
   stockMaison,
   suggestionPack,
   tenirDejaAuPanier,
@@ -64,24 +71,38 @@ describe("ce qu'elle a à la maison", () => {
 
   it("le journal fait foi quand elle note ses shakes (lot 5)", () => {
     const base = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6, the: 3 } }], visites: ["2026-09-25", "2026-09-28"] };
-    // Samedi noté (1 shake), dimanche rien noté : le même compte que la règle, mais « shake noté ».
-    const a = stockMaison({ ...base, notes: { "2026-09-26": 1 } }, "2026-09-28");
+    // Samedi noté (un shake du club), dimanche rien noté : le même compte que la règle, mais « shake noté ».
+    const a = stockMaison({ ...base, notes: { "2026-09-26": { f1: 1, pdm: 1 } } }, "2026-09-28");
     expect(a!.restant).toMatchObject({ f1: 3, pdm: 4, the: 1 });
     expect(a!.jours[0]).toEqual({ jour: "2026-09-26", auClub: false, note: true });
     // Deux shakes notés samedi : deux sachets partis ce jour-là. Le thé garde la règle.
-    const b = stockMaison({ ...base, notes: { "2026-09-26": 2 } }, "2026-09-28");
+    const b = stockMaison({ ...base, notes: { "2026-09-26": { f1: 2, pdm: 2 } } }, "2026-09-28");
     expect(b!.restant).toMatchObject({ f1: 2, pdm: 3, the: 1 });
   });
 
+  it("un shake au lait ne touche pas au PDM ; un sachet entier en prend deux doses", () => {
+    const base = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"] };
+    // Samedi : F1 + lait. Dimanche : F1 + un sachet de PDM. Lundi : on regarde.
+    const s = stockMaison({ ...base, notes: { "2026-09-26": { f1: 1, pdm: 0 }, "2026-09-27": { f1: 1, pdm: 2 } } }, "2026-09-28");
+    expect(s!.restant).toMatchObject({ f1: 3, pdm: 4 });
+  });
+
+  it("du PDM noté à part, sans shake F1 : la règle garde le F1, le PDM prend le plus grand", () => {
+    const base = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"] };
+    const s = stockMaison({ ...base, notes: { "2026-09-26": { f1: 0, pdm: 2 } } }, "2026-09-27");
+    expect(s!.restant).toMatchObject({ f1: 4, pdm: 4 });
+    expect(s!.jours).toEqual([{ jour: "2026-09-26", auClub: false, note: false }]);
+  });
+
   it("noté aujourd'hui : un sachet de moins tout de suite", () => {
-    const s = stockMaison({ achats: [{ jour: "2026-09-26", doses: { f1: 5 } }], visites: [], notes: { "2026-09-27": 1 } }, "2026-09-27");
+    const s = stockMaison({ achats: [{ jour: "2026-09-26", doses: { f1: 5 } }], visites: [], notes: { "2026-09-27": { f1: 1, pdm: 1 } } }, "2026-09-27");
     // Samedi 26 : achat (pas pointée, rien noté → un sachet compté) ; dimanche 27 : noté.
     expect(s!.restant.f1).toBe(3);
     expect(s!.jours).toEqual([{ jour: "2026-09-27", auClub: false, note: true }]);
   });
 
   it("un shake noté un soir de club compte aussi", () => {
-    const s = stockMaison({ achats: [{ jour: "2026-09-21", doses: { f1: 3 } }], visites: ["2026-09-21", "2026-09-22"], notes: { "2026-09-22": 1 } }, "2026-09-23");
+    const s = stockMaison({ achats: [{ jour: "2026-09-21", doses: { f1: 3 } }], visites: ["2026-09-21", "2026-09-22"], notes: { "2026-09-22": { f1: 1, pdm: 1 } } }, "2026-09-23");
     expect(s!.restant.f1).toBe(2);
   });
 
@@ -235,7 +256,78 @@ describe("lecture de la base", () => {
     expect(r.membres.get("m1")).toEqual({ achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"], notes: {} });
   });
 
+  it("relit les notes du journal, sans jamais planter", () => {
+    const d = lireMaison({
+      achats: [{ jour: "2026-09-25", doses: { f1: 5 } }],
+      visites: [],
+      notes: { "2026-09-26": { f1: 1, pdm: "2" }, "2026-09-27": { f1: 0, pdm: 0 }, "pas-un-jour": { f1: 1 }, "2026-09-28": 3 },
+    });
+    expect(d?.notes).toEqual({ "2026-09-26": { f1: 1, pdm: 2 } });
+  });
+
   it("donne le jour de Paris, pas celui du fuseau de l'appareil", () => {
     expect(jourParis(new Date("2026-09-26T23:30:00Z"))).toBe("2026-09-27");
+  });
+});
+
+describe("le journal qui décompte (lot 5)", () => {
+  const ligne = (aliment: string | null, origine = "membre", quantite = 1) => ({ aliment, origine, quantite });
+
+  it("lit ses shakes et son PDM, jamais le shake pré-rempli au club", () => {
+    expect(notesDesLignes([ligne("f1demi"), ligne("f1lait", "noaly"), ligne("pdmplein"), ligne("f1demi", "club"), ligne("barre"), ligne(null)])).toEqual({ f1: 2, pdm: 3 });
+    expect(notesDesLignes([ligne("f1plein", "membre", 2)])).toEqual({ f1: 2, pdm: 4 });
+    // Une clé qui ressemble à une propriété d'objet ne compte pour rien.
+    expect(notesDesLignes([ligne("constructor"), ligne("toString")])).toEqual({ f1: 0, pdm: 0 });
+  });
+
+  it("son journal ouvert remplace les notes du jour : le compteur suit tout de suite", () => {
+    const d = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"], notes: { "2026-09-27": { f1: 2, pdm: 2 } } };
+    expect(avecLeJournal(d, "2026-09-27", [ligne("f1demi")])?.notes).toEqual({ "2026-09-27": { f1: 1, pdm: 1 } });
+    // Elle retire son shake : la note du jour disparaît, la règle reprend.
+    expect(avecLeJournal(d, "2026-09-27", [])?.notes).toEqual({});
+    expect(avecLeJournal(null, "2026-09-27", [])).toBeNull();
+  });
+
+  it("« Shake F1 · tes sachets du club » : un jour sans pointage, avec du F1 chez elle", () => {
+    // Vendredi 25 : 5 F1 + 3 PDM au club. Samedi 26, chez elle, rien de noté encore.
+    const d = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"] };
+    const stock = stockMaison(d, "2026-09-26");
+    expect(sachetsDuJour(d, stock, "2026-09-26", [])).toEqual({ aliment: "f1demi", f1: 5 });
+    // Un café noté ne change rien ; un shake F1 noté (le sien ou celui du club), si.
+    expect(sachetsDuJour(d, stock, "2026-09-26", [{ aliment: "cafe" }])).not.toBeNull();
+    expect(sachetsDuJour(d, stock, "2026-09-26", [{ aliment: "f1lait" }])).toBeNull();
+    // Pointée au club ce jour-là : elle a eu son shake au club.
+    expect(sachetsDuJour({ ...d, visites: ["2026-09-25", "2026-09-26"] }, stock, "2026-09-26", [])).toBeNull();
+  });
+
+  it("sans PDM chez elle, le shake proposé est au lait ; sans F1, rien", () => {
+    const d = { achats: [{ jour: "2026-09-25", doses: { f1: 6, the: 6 } }], visites: ["2026-09-25"] };
+    expect(sachetsDuJour(d, stockMaison(d, "2026-09-26"), "2026-09-26", [])).toEqual({ aliment: "f1lait", f1: 6 });
+    const vide = { achats: [{ jour: "2026-09-20", doses: { f1: 1 } }], visites: [] };
+    expect(sachetsDuJour(vide, stockMaison(vide, "2026-09-26"), "2026-09-26", [])).toBeNull();
+    expect(sachetsDuJour(null, null, "2026-09-26", [])).toBeNull();
+  });
+
+  it("un toucher = noté ET un sachet de moins (la maquette : il en reste 4)", () => {
+    const d = { achats: [{ jour: "2026-09-25", doses: { f1: 5, pdm: 6 } }], visites: ["2026-09-25"] };
+    const apres = avecLeJournal(d, "2026-09-26", [ligne("f1demi")]);
+    const stock = stockMaison(apres, "2026-09-26");
+    expect(stock?.restant).toMatchObject({ f1: 4, pdm: 5 });
+    expect(pastillesStock(stock!.restant)).toEqual(["4 sachets F1", "5 doses PDM"]);
+    expect(phraseSachets(4)).toBe("Il te reste 4 sachets de F1 à la maison.");
+  });
+
+  it("dit ce qu'elle a, au singulier comme au pluriel", () => {
+    expect(pastillesStock({ f1: 1, pdm: 1, the: 1, aloe: 1 })).toEqual(["1 sachet F1", "1 dose PDM", "1 thé", "1 dose d'aloé"]);
+    expect(pastillesStock({ f1: 0, the: 3, aloe: 40 })).toEqual(["3 thés", "40 doses d'aloé"]);
+    expect(phraseSachets(1)).toBe("Il te reste 1 sachet de F1 à la maison.");
+    expect(phraseSachets(0)).toBe("C'était ton dernier sachet de F1.");
+  });
+
+  it("club fermé aujourd'hui : dimanche et fériés, jamais sans horaires", () => {
+    expect(clubFerme(VERDUN, "2026-09-27")).toBe(true);
+    expect(clubFerme(VERDUN, "2026-09-28")).toBe(false);
+    expect(clubFerme({ ...VERDUN, holidays: ["2026-09-28"] }, "2026-09-28")).toBe(true);
+    expect(clubFerme(null, "2026-09-27")).toBe(false);
   });
 });

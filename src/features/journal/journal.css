@@ -393,6 +393,17 @@
   width: 36px; height: 36px; border-radius: 11px; background: var(--jr-acc); color: var(--jr-acc-ink);
   display: grid; place-items: center; flex: none;
 }
+/* À la maison (lot 5 du comptoir, 26/09) : ce qu'elle a emporté du club, dans « Mes repas » */
+.jr-maison { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 0 2px; }
+.jr-maison-t {
+  font-family: var(--jr-fm); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--jr-hint); margin-right: 2px;
+}
+.jr-maison-p {
+  font-family: var(--jr-fm); font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px;
+  background: var(--jr-acc-soft); color: var(--jr-acc-tx); white-space: nowrap;
+}
+.jr-maison-p.ferme { background: color-mix(in srgb, var(--jr-mid) 16%, transparent); color: var(--jr-mid); }
 .jr-hier svg { color: var(--jr-acc-tx); }
 .jr-hier b { display: block; font-size: 14px; }
 .jr-hier small { display: block; font-size: 12px; color: var(--jr-mut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -516,8 +527,11 @@
 .jr-toast {
   position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -120px); z-index: 70;
   background: var(--jr-acc); color: var(--jr-acc-ink); font-weight: 700; font-size: 13px; padding: 10px 16px; border-radius: 99px;
-  transition: transform 0.28s var(--jr-ease); white-space: nowrap; box-shadow: 0 12px 24px -14px rgba(0, 0, 0, 0.8);
+  transition: transform 0.28s var(--jr-ease); box-shadow: 0 12px 24px -14px rgba(0, 0, 0, 0.8);
   font-family: var(--jr-fb);
+  /* Une ligne tant qu'elle tient ; deux au-delà (« +5 XP · … Il te reste 3 sachets… », 26/09) :
+     width max-content, sinon un fixed posé à left: 50 % se replierait dès la moitié de l'écran. */
+  width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.35;
 }
 .jr-toast.on { transform: translate(-50%, 0); }
 
