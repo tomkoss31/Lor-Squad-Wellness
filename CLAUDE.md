@@ -485,6 +485,8 @@ ordinateur : `PLUS` de `BbcApp`).
   puis la jauge vers le rang suivant — la même que sa fiche (`useDistributorQualifications` +
   `rankProgressionFromWindows`), absente à 50 %. Elle ne voit QUE ses ventes (`vendeur_id` = elle) ; le club
   entier et l'écart de remise du propriétaire, c'est le lot 4.
+- **En prod depuis le 26/09** (« go main » de Thomas, sans recette sur la preview : la première vraie vente
+  au club remplira l'écran).
 
 ---
 
