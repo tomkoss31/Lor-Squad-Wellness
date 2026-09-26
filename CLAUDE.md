@@ -545,6 +545,8 @@ carte « Nouveau : la caisse du club » la première fois (`ls-caisse-club-guide
 propriétaire ou un admin l'envoie par mail à une coach, « Moi (pour voir) » compris : edge **`mail-caisse-club`**,
 deux gestes, renvoyable. Le ton : un outil de plus, pas une obligation ; rien ne date le texte. Les coachs du club
 ne sont lus (`coachs_du_club`) qu'à l'ouverture du guide.
+- **En prod depuis le 26/09** (« Prod » de Thomas). Aucun mail envoyé par Claude : c'est Thomas qui l'envoie, à qui il
+  veut, depuis le « ? » de Ma caisse.
 
 ---
 
