@@ -174,6 +174,28 @@ mises à jour, guide) :
 - À 50 clubs (60 % petits, 30 % moyens, 10 % grands ≈ 89 € en moyenne) : ~3 000 à 3 500 €/mois de reste.
 - Plancher ~69 € : le support prend autant de temps pour un petit club que pour un grand.
 
+## Business validé (26/09)
+
+Thomas : « OK pour le business de l'app ! » (après la proposition des paliers 69 / 109 / 149 € + 290 €).
+Puis : « concernant l'optimisation de l'app, on commence par quoi ? »
+
+## Le chantier technique — l'ordre proposé (26/09)
+
+1. **Dès maintenant, sans payer ni toucher à la prod :**
+   a. le plan des bulles sur papier (qui voit quoi : propriétaire, coachs, stagiaire, membres, et Thomas en
+      webmaster qui ne voit pas leurs clientes) → une maquette à valider ;
+   b. la photographie de la STRUCTURE de la base (sans données) dans le dépôt. Aujourd'hui rien ne garantit
+      qu'on puisse reconstruire la base depuis le dépôt : `clients` n'est créée par aucune des 469 migrations
+      (elle vient de `supabase/schema.sql`, à côté de 5 autres fichiers SQL hors `migrations/`).
+2. **Une base d'essai + un faux club** (essais ET démos : jamais de vraies clientes devant un prospect).
+   Démarre avec l'hébergement payant de la plateforme : le plan gratuit n'autorise que 2 projets actifs
+   pour tout le compte (La Base + Shakes & Drinks les occupent probablement).
+3. **Les bulles**, construites et testées sur la base d'essai (le gros morceau).
+4. **La marque de chaque club** (nom, logo, mentions, mails) + **les paliers vérifiés par le serveur**.
+5. **Inscription, paiement de l'abonnement, mise en route**, guide en ligne.
+6. **Avant le premier pilote** : la prod sur l'hébergement payant + alertes d'erreurs.
+En parallèle, hors code : SAS, avocat (CGV, contrat RGPD), marque INPI. L'« à emporter » vient après.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
