@@ -442,6 +442,8 @@ et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/featu
   rien à voir avec « Enregistrer les réglages » qui écrit `clubs.settings`).
 - Colonnes posées pour la suite, lues par aucun écran : `ref_herbalife` + `portions` (coût et PV, lots 3-4),
   `maison` (doses mises « à la maison », lot 2).
+- **En prod depuis le 26/09** (recette de Thomas sur iPhone : la caisse et « Ses achats » chargés ; aucune vente
+  validée en recette, la vente n'a été essayée qu'en base — la première vraie vente se fera au club).
 
 ---
 

@@ -453,9 +453,10 @@ en dernier parce qu'il touche l'app des membres et ses fonctions à jeton.
    téléphone. La base est la vraie : les ventes d'essai sont effacées après.
 4. Sur « go main » de Thomas, Claude reporte le lot sur `main` (après tsc) puis sur `dev/thomas-test`.
 
-### Lot 1 — codé, en recette (26/09)
+### Lot 1 — en prod (26/09)
 
-Thomas : « go lot 1 ». Sur la branche, pas encore sur `main` (attend la recette sur téléphone et le « go main »).
+Thomas : « go lot 1 », puis après sa recette sur iPhone : « c'est bon ça marche, go main ». Passé sur `main`
+(avance rapide : `main` n'avait pas bougé depuis la base de la branche) puis reporté sur `dev/thomas-test`.
 - **Base** : migration `20261215830000_comptoir_caisse_du_club` appliquée le samedi 26/09 à 15 h (club fermé),
   version du fichier enregistrée au registre (0 fichier sans entrée). Empreinte des 7 fonctions en base = celle
   du fichier. 35 produits (somme des prix 257,40 € = le tableau), 0 vente.
@@ -469,7 +470,10 @@ Thomas : « go lot 1 ». Sur la branche, pas encore sur `main` (attend la recett
 - **Écart avec la maquette, voulu pour le lot 1** : la maquette pré-remplissait « comme la dernière fois » ; ici
   rien n'est pré-rempli, « Ses habituels » affiche « la dernière fois : 3 » à côté du produit. Le « club fermé
   demain, de quoi tenir ? » et le pack 6 jours proposé sont le lot 2.
-- Les ventes d'essai de la recette seront effacées avant le « go main ».
+- **La recette de Thomas** (journaux de l'API, 26/09, iPhone, preview) : la caisse chargée deux fois
+  (`club_caisse`) et « Ses achats » une fois (`club_achats`), tout en 200. Aucune vente validée : la table
+  `club_ventes` était vide au « go main », rien à effacer. La vente elle-même n'a été essayée qu'en base
+  (transaction annulée, identité de Thomas) : la première vraie vente se fera au club.
 
 ## Questions ouvertes
 
