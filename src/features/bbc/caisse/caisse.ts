@@ -10,6 +10,9 @@
 // n'envoie que des identifiants et des quantités.
 // =============================================================================
 
+import type { ReglagesHoraires } from "../agenda/agendaClub";
+import { lireDoses, lireHoraires, lireMaison, type DonneesMaison, type Doses } from "./maison";
+
 export type Rubrique = "petit_dej" | "supplement" | "encas" | "complement" | "h24" | "accessoire";
 /** 'upgrade' = ajouté au shake du jour, sur place ; 'emporter' = part avec elle. */
 export type Sorte = "emporter" | "upgrade";
@@ -23,6 +26,8 @@ export interface ProduitCarte {
   sorte: Sorte;
   ordre: number;
   actif: boolean;
+  /** Ce qu'une unité met « à la maison », en doses (lot 2) : `{ f1: 1 }`, `{ pdm: 2 }`… null = rien qui dure. */
+  maison?: Doses | null;
 }
 
 export interface Habituel {
@@ -37,6 +42,10 @@ export interface DonneesCaisse {
   carte: ProduitCarte[];
   habituels: Habituel[];
   meilleures: string[];
+  /** Les horaires du club, pour « club fermé demain » (lot 2). */
+  horaires: ReglagesHoraires | null;
+  /** Ce qu'elle a emporté et ses jours au club (lot 2). */
+  maison: DonneesMaison | null;
 }
 
 export interface LigneVendue {
@@ -98,6 +107,7 @@ export function lireCaisse(brut: unknown): DonneesCaisse {
       sorte: x.sorte === "upgrade" ? "upgrade" : "emporter",
       ordre: nombre(x.ordre),
       actif: x.actif !== false,
+      maison: lireDoses(x.maison),
     }));
   const habituels = (Array.isArray(o.habituels) ? o.habituels : [])
     .map((x) => (x && typeof x === "object" ? (x as Record<string, unknown>) : null))
@@ -110,6 +120,8 @@ export function lireCaisse(brut: unknown): DonneesCaisse {
     carte,
     habituels,
     meilleures,
+    horaires: lireHoraires(o.horaires),
+    maison: lireMaison(o.maison),
   };
 }
 

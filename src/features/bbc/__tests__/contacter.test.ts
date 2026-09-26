@@ -188,4 +188,21 @@ describe("le nom dans la liste, le prénom dans le message", () => {
     });
     expect(l.map((c) => c.nomComplet)).toEqual(["Sandrine Cottel", "Sandrine Miltgen"]);
   });
+
+  it("son F1 arrive au bout : vendredi, un sachet, le club ferme dimanche (lot 2 du comptoir)", () => {
+    // Les horaires de Verdun : samedi ouvert le matin, dimanche fermé.
+    const horaires = { hours: { "1": [["08:00", "15:00"]], "2": [["08:00", "15:00"]], "3": [["08:00", "15:00"]], "4": [["08:00", "15:00"]], "5": [["08:00", "15:00"]], "6": [["08:30", "11:00"]] } };
+    const m = membre({ id: "m7", name: "Mélanie Pierre", prenom: "Mélanie", card: { type: 10, used: 3, remaining: 7, expired: false } });
+    // Mardi 15 : 3 F1. Au club mardi, chez elle mercredi et jeudi : il en reste 1 ce vendredi.
+    const maison = new Map([["m7", { achats: [{ jour: "2026-09-15", doses: { f1: 3 } }], visites: ["2026-09-15"] }]]);
+    const l = aContacter({ leads: [], membres: [m], coeurs: [], maison, horaires, maintenant: now });
+    expect(l).toHaveLength(1);
+    expect(l[0].raison).toBe("f1_bout");
+    expect(l[0].key).toBe("membre:m7:f1bout:2026-09-20");
+    expect(l[0].texte).toBe("Plus qu'un sachet de F1 à la maison, club fermé dimanche : lui proposer de quoi tenir");
+    expect(messagePour(l[0], "Thomas")).toMatch(/^Coucou Mélanie ! Le club est fermé dimanche/);
+    // Passée aujourd'hui (la caisse lui a proposé de quoi tenir), ou sans horaires : rien.
+    expect(aContacter({ leads: [], membres: [{ ...m, visitedToday: true }], coeurs: [], maison, horaires, maintenant: now })).toHaveLength(0);
+    expect(aContacter({ leads: [], membres: [m], coeurs: [], maison, horaires: null, maintenant: now })).toHaveLength(0);
+  });
 });

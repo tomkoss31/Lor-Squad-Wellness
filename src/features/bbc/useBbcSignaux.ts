@@ -6,10 +6,15 @@
 // Sert aux règles « absente depuis 6 jours » et « contente depuis 3 semaines ».
 // + le journal (bloc B, 8, 21/09/2026) : RPC `journal_signaux_club()` (migration
 // 20261215630000, le RLS de la coach) pour « elle a lâché son journal ».
+// + « à la maison » (comptoir, lot 2, 26/09) : RPC `club_maison()` — ce que chaque
+// membre a emporté et ses jours au club, avec les horaires du club — pour
+// « son F1 arrive au bout ».
 // =============================================================================
 
 import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../services/supabaseClient";
+import type { ReglagesHoraires } from "./agenda/agendaClub";
+import { lireMaisonClub, type DonneesMaison } from "./caisse/maison";
 
 export interface SignalJournal {
   /** Le dernier jour où ELLE a noté (AAAA-MM-JJ, heure de Paris) ; le shake pré-rempli du club ne compte pas. */
@@ -26,8 +31,14 @@ export interface SignalVisites {
   journal?: SignalJournal;
 }
 
-export function useBbcSignaux(userId?: string | null): { signaux: Map<string, SignalVisites>; loading: boolean } {
+export function useBbcSignaux(userId?: string | null): {
+  signaux: Map<string, SignalVisites>;
+  maison: Map<string, DonneesMaison>;
+  horaires: ReglagesHoraires | null;
+  loading: boolean;
+} {
   const [signaux, setSignaux] = useState<Map<string, SignalVisites>>(new Map());
+  const [maison, setMaison] = useState<{ membres: Map<string, DonneesMaison>; horaires: ReglagesHoraires | null }>({ membres: new Map(), horaires: null });
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     let annule = false;
@@ -36,7 +47,13 @@ export function useBbcSignaux(userId?: string | null): { signaux: Map<string, Si
       try {
         const sb = await getSupabaseClient();
         if (!sb) return;
-        const [visites, journal] = await Promise.all([sb.rpc("bbc_dernieres_visites"), sb.rpc("journal_signaux_club")]);
+        const [visites, journal, aLaMaison] = await Promise.all([
+          sb.rpc("bbc_dernieres_visites"),
+          sb.rpc("journal_signaux_club"),
+          sb.rpc("club_maison"),
+        ]);
+        // « À la maison » : une panne ici n'enlève rien aux autres signaux.
+        if (!annule && !aLaMaison.error) setMaison(lireMaisonClub(aLaMaison.data));
         const data = visites.data;
         if (annule || !Array.isArray(data)) return;
         const m = new Map<string, SignalVisites>();
@@ -59,5 +76,5 @@ export function useBbcSignaux(userId?: string | null): { signaux: Map<string, Si
     })();
     return () => { annule = true; };
   }, [userId]);
-  return { signaux, loading };
+  return { signaux, maison: maison.membres, horaires: maison.horaires, loading };
 }

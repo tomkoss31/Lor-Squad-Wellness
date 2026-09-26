@@ -264,7 +264,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
   const leadsApi = useCrmLeads();
   const membresApi = useBbcMembers(userId);
   const heartsApi = useBbcHearts(userId);
-  const { signaux } = useBbcSignaux(userId);
+  const { signaux, maison, horaires } = useBbcSignaux(userId);
   const cdj = useContactsDuJour(userId);
   // Les niveaux XP (24/09) : la 8e règle de Contacter — féliciter une montée de niveau.
   const xp = useXpApercu(userId);
@@ -274,8 +274,8 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
     return m;
   }, [xp.donnees]);
   const contacts = useMemo(
-    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members, signaux, niveaux }),
-    [leadsApi.leads, membresApi.members, heartsApi.members, signaux, niveaux],
+    () => aContacter({ leads: leadsApi.leads, membres: membresApi.members, coeurs: heartsApi.members, signaux, niveaux, maison, horaires }),
+    [leadsApi.leads, membresApi.members, heartsApi.members, signaux, niveaux, maison, horaires],
   );
   const faits = useMemo(() => new Set(cdj.faits.keys()), [cdj.faits]);
   const [contact, setContact] = useState<AContacter | null>(null);

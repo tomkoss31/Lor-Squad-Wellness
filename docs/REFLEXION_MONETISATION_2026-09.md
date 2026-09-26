@@ -475,6 +475,24 @@ Thomas : « go lot 1 », puis après sa recette sur iPhone : « c'est bon ça ma
   `club_ventes` était vide au « go main », rien à effacer. La vente elle-même n'a été essayée qu'en base
   (transaction annulée, identité de Thomas) : la première vraie vente se fera au club.
 
+### Lot 2 — « à la maison », codé, en recette (26/09)
+
+Thomas : « go lot 2 ». Sur la branche ; migration `20261215840000_comptoir_a_la_maison` appliquée le 26/09 vers
+16 h (club fermé), enregistrée au registre, empreinte des 5 fonctions = celle du fichier. Essai en transaction
+annulée : une vente du 19/09 (5 F1 + 3 PDM + 2 barres) ressort en 5 F1 + 6 doses de PDM, sans les barres ni une
+vente annulée ; la vente du jour fige ses doses ; `anon` refusé.
+- **Ce qui suit la maquette v3** : « À la maison · depuis vendredi » et « 3 sur 5 » sur la fiche ; « Club fermé
+  dimanche, elle revient lundi » au pointage ; le pack 6 jours avec PDM, « 1 F1 et 6 thés en plus pour 11,50 € » ;
+  « son F1 arrive au bout » dans Contacter.
+- **Écarts voulus** :
+  - les barres ne sont pas « à la maison » (règle n° 3 : ce qui dure seulement) ; elles viendront avec le journal ;
+  - « Sam. shake noté » devient « sam. · chez elle » : sans journal, l'app COMPTE, elle ne sait pas (lot 5) ;
+  - « de quoi tenir » n'est pas pré-rempli : une ligne et un bouton « Ajouter » (on propose, on n'impose pas) ;
+  - le pack n'apparaît qu'à partir de 4 F1 et s'il coûte au plus 40 % de son prix en plus ;
+  - à Verdun, le samedi est ouvert (8 h 30–11 h) : la fermeture qui compte, c'est le dimanche et les fériés.
+- Pour voir « À la maison » en recette, il faut une vraie vente de F1 / PDM / Thermo : les ventes d'essai seront
+  effacées avant le « go main ».
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de

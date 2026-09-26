@@ -9,6 +9,9 @@
 //
 // Simple : ses habituels (ou les plus demandés) en gros, les upgrades en une
 // rangée, le reste du tableau à un toucher, rangé comme au comptoir.
+// Lot 2 (26/09) : la veille d'une fermeture, « Club fermé dimanche, elle revient
+// lundi » + de quoi tenir (un toucher, jamais pré-rempli) ; le pack 6 jours quand
+// le panier y ressemble. La règle est dans maison.ts (pure, testée).
 // =============================================================================
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -26,6 +29,19 @@ import {
   type ProduitCarte,
 } from "./caisse";
 import { chargerCaisse, vendre } from "./serviceCaisse";
+import {
+  ajouterDeQuoiTenir,
+  deQuoiTenir,
+  jourParis,
+  joursFermesApres,
+  passerAuPack,
+  phraseFermeture,
+  resumeStock,
+  stockMaison,
+  suggestionPack,
+  tenirDejaAuPanier,
+  type SuggestionPack,
+} from "./maison";
 
 interface CaisseSheetProps {
   clientId: string;
@@ -69,6 +85,18 @@ export function CaisseSheet({ clientId, prenom, onClose, onVendu }: CaisseSheetP
   const total = totalPanier(panier, carte);
   const nb = nbArticles(panier);
 
+  // Lot 2 : la fermeture qui vient, ce qu'elle a chez elle, de quoi tenir, le pack.
+  const aujourdhui = jourParis(new Date());
+  const stock = useMemo(() => stockMaison(donnees?.maison ?? null, aujourdhui), [donnees, aujourdhui]);
+  const fermes = useMemo(() => joursFermesApres(donnees?.horaires ?? null, aujourdhui), [donnees, aujourdhui]);
+  const tenir = useMemo(() => deQuoiTenir(fermes.length, stock, carte), [fermes, stock, carte]);
+  const phrase = phraseFermeture(fermes, aujourdhui);
+  const aLaMaison = stock ? resumeStock(stock.restant) : "";
+  const nomDe = (id: string) => carte.find((p) => p.id === id)?.nom ?? "";
+  const tenirTexte = Object.entries(tenir).map(([id, q]) => `${q} × ${nomDe(id)}`).join(", ");
+  const tenirOk = tenirDejaAuPanier(panier, tenir);
+  const pack = suggestionPack(panier, carte);
+
   function changer(id: string, delta: number) {
     setEnvoi("repos");
     setPanier((p) => ajouter(p, id, delta));
@@ -103,6 +131,36 @@ export function CaisseSheet({ clientId, prenom, onClose, onVendu }: CaisseSheetP
 
       {etat === "pret" && actifs.length > 0 ? (
         <>
+          {phrase ? (
+            <div role="note" style={{ display: "flex", flexDirection: "column", gap: 8, padding: "10px 12px", borderRadius: 14, background: "color-mix(in srgb, var(--ls-bbc-amber) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--ls-bbc-amber) 38%, transparent)" }}>
+              <span style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.35 }}>{phrase}</span>
+              {aLaMaison ? <span style={{ fontSize: 12.5, color: "var(--ls-bbc-muted)" }}>À la maison : {aLaMaison}.</span> : null}
+              {tenirTexte ? (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <span style={{ fontSize: 13, lineHeight: 1.35 }}>De quoi tenir : <b>{tenirTexte}</b></span>
+                  <button
+                    type="button"
+                    className="bbc-pression"
+                    disabled={tenirOk}
+                    onClick={() => {
+                      setEnvoi("repos");
+                      setPanier((p) => ajouterDeQuoiTenir(p, tenir));
+                    }}
+                    style={{
+                      minHeight: 44, flex: "none", padding: "0 14px", borderRadius: 999, cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700,
+                      border: "1px solid var(--ls-bbc-orange)", background: tenirOk ? "transparent" : "var(--ls-bbc-orange)",
+                      color: tenirOk ? "var(--ls-bbc-orange-text)" : "var(--ls-bbc-orange-ink)",
+                    }}
+                  >
+                    {tenirOk ? "Au panier ✓" : "Ajouter"}
+                  </button>
+                </div>
+              ) : (
+                <span style={{ fontSize: 13 }}>Elle a de quoi tenir à la maison.</span>
+              )}
+            </div>
+          ) : null}
+
           {siens.length > 0 ? (
             <Bloc titre="Ses habituels">
               {siens.map((p) => (
@@ -174,6 +232,8 @@ export function CaisseSheet({ clientId, prenom, onClose, onVendu }: CaisseSheetP
               ))
             : null}
 
+          {pack ? <Pack s={pack} onPasser={() => setPanier((p) => passerAuPack(p, pack))} /> : null}
+
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 10, paddingTop: 8, borderTop: "1px solid var(--ls-bbc-line)" }}>
             <span style={{ fontSize: 13, color: "var(--ls-bbc-muted)" }}>
               {nb === 0 ? "Rien de choisi" : `${nb} article${nb > 1 ? "s" : ""}, pour toi`}
@@ -197,6 +257,34 @@ export function CaisseSheet({ clientId, prenom, onClose, onVendu }: CaisseSheetP
 }
 
 const texteDoux = { margin: 0, fontSize: 13, lineHeight: 1.5, color: "var(--ls-bbc-muted)" } as const;
+
+/** « Pack 6 jours avec PDM : 1 F1 et 6 thés en plus pour 11,50 € » — un toucher remplace les sachets. */
+function Pack({ s, onPasser }: { s: SuggestionPack; onPasser: () => void }) {
+  const offre =
+    s.supplement > 0
+      ? `${s.enPlus} en plus pour ${euro(s.supplement)}`
+      : s.supplement < 0
+        ? `${s.enPlus ? `${s.enPlus} en plus, et ` : ""}${euro(-s.supplement)} de moins`
+        : `${s.enPlus || "la même chose"} en plus, au même prix`;
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, padding: "10px 12px", borderRadius: 14, background: "color-mix(in srgb, var(--ls-bbc-orange) 9%, transparent)", border: "1px dashed color-mix(in srgb, var(--ls-bbc-orange) 50%, transparent)" }}>
+      <span style={{ fontSize: 13, lineHeight: 1.4 }}>
+        {s.pack.nom} : <b>{offre}</b>.
+      </span>
+      <button
+        type="button"
+        className="bbc-pression"
+        onClick={onPasser}
+        style={{
+          minHeight: 44, flex: "none", padding: "0 14px", borderRadius: 999, cursor: "pointer", fontFamily: "var(--ls-bbc-font-body)", fontSize: 13, fontWeight: 700,
+          border: "1px solid var(--ls-bbc-orange)", background: "transparent", color: "var(--ls-bbc-orange-text)",
+        }}
+      >
+        Passer au pack
+      </button>
+    </div>
+  );
+}
 
 function Bloc({ titre, children }: { titre: string; children: ReactNode }) {
   return (
