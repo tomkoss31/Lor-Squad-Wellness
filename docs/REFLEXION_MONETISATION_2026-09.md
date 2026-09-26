@@ -494,9 +494,10 @@ vente annulée ; la vente du jour fige ses doses ; `anon` refusé.
   - à Verdun, le samedi est ouvert (8 h 30–11 h) : la fermeture qui compte, c'est le dimanche et les fériés.
 - « À la maison » n'apparaît qu'après une vraie vente de F1 / PDM / Thermo : la première se verra au club.
 
-### Lot 3 — « Ma caisse », codé, en recette (26/09)
+### Lot 3 — « Ma caisse », en prod (26/09)
 
-Thomas : « go lot 3 ». Sur la branche ; migration `20261215850000_comptoir_ma_caisse` appliquée le 26/09 vers
+Thomas : « go lot 3 », puis « go main » avant la mise en ligne de la preview. Passé sur `main` (avance rapide) puis
+reporté sur `dev/thomas-test` ; aucune vente ni aucun prix changé en base, rien à effacer. Migration `20261215850000_comptoir_ma_caisse` appliquée le 26/09 vers
 16 h 35 (colonne `recette` + `club_ma_caisse`), enregistrée au registre, empreinte = fichier. Essai en transaction
 annulée : Romane ne voit que SA vente (ni celle de Thomas, ni l'annulée), son rang 35 %, la carte avec les deux
 recettes ; `anon` refusé.
