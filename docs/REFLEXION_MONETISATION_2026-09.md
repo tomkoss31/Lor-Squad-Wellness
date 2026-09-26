@@ -381,6 +381,21 @@ Reste à confirmer (défauts proposés) :
 3. Grand thé-aloé = une dose de plus de chaque.
 Les 3 prix publics manquants (Achieve, Fibre Concentrate, collagène) : « pas importants pour le moment ».
 
+### Grand thé-aloé et maquette v1 (26/09)
+
+Thomas : deux tailles de thé (51 g et 102 g) et d'aloé (473 ml et 1,9 L) ; l'upgrade se fait **le plus souvent
+avec le thé 51 g et l'aloé 473 ml**. → Grand thé-aloé = +1 dose de chaque au prix public : thé 41/30 = 1,37 →
+1,40 € ; aloé 54,50/47 = 1,16 → 1,20 € → **2,60 €** (coût 1,26 € à 50 %). Le coût d'une visite de l'écran
+Rentabilité (3,67 €, petits pots) **reste juste** : la remarque « 3,55 € avec les grands pots » est retirée.
+
+**Maquette v1** : https://claude.ai/artifact/SHZYSBaqfgWVqdMncgrcPG (« Le comptoir du club », 5 écrans :
+pointage · à la maison · journal · la caisse de Romane · ce qui reste au club). Chiffres d'exemple.
+Choix par défaut à valider (« 1 ok, 2 ok, 3 ok, 4 ok ») :
+1. Sur place (boisson, suppléments, grand thé-aloé) = stock du club, le club encaisse.
+2. À emporter = stock de la coach en caisse, achetée avec sa remise ; elle encaisse et garde sa marge.
+3. La membre paie la coach qui la sert ; rien à reverser.
+4. Grand thé-aloé = +1 dose de thé 51 g et d'aloé 473 ml = 2,60 €.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
