@@ -418,6 +418,41 @@ PDM, thé, aloé…) ; 4 : je ne sais pas, peut-être. »
 - Grand thé-aloé : **2,60 € par défaut**, modifiable par le propriétaire comme tous les prix du tableau.
 Maquette v3 (même lien) : caisse de Romane 27,30 € gagnés sur 64,70 € vendus ; le club garde 891 € (exemple).
 
+## Le chantier du comptoir, en lots (26/09)
+
+Thomas : « ok, découpe le chantier en lots ! Je travaille sur téléphone, je ne pourrai pas pousser sur main. »
+Ordre : les lots 1 à 4 donnent la rentabilité (le but n°1) sans toucher à l'app des membres ; le journal vient
+en dernier parce qu'il touche l'app des membres et ses fonctions à jeton.
+
+1. **La caisse au pointage** (moyen) — la carte du club en base (les 34 lignes du tableau, prix modifiables par
+   le propriétaire dans Réglages) ; après « +1 visite », « Elle prend quelque chose ? » (meilleures ventes en gros
+   boutons, tout le tableau à un toucher, upgrades, « Payé sur mon terminal » / « Rien aujourd'hui ») ; aussi
+   depuis sa fiche si elle passe juste acheter ; chaque vente enregistrée (qui a vendu, à qui, quoi, quand, à
+   quel prix), corrigeable ou annulable le jour même ; « Ses achats » sur la fiche. Base : une table pour la carte,
+   une pour les ventes, À PART des commandes PV des fiches (`pv_transactions`, `pv_client_products`) pour ne rien
+   compter deux fois. RLS : la coach voit ses ventes, le propriétaire celles du club.
+2. **À la maison** (moyen) — le stock chez elle (F1, PDM, thé, aloé, packs), depuis quand, jusqu'à quand (un par
+   jour sans club, d'après `horairesDuJour`) ; au pointage de la veille d'une fermeture : « Club fermé samedi et
+   dimanche — de quoi tenir ? » + le pack 6 jours ; Contacter, 9e règle « son F1 arrive au bout » (pure, testée).
+3. **Ma caisse** (petit) — pour chaque coach : jour et mois, vendu, gagné selon son rang (`users.current_rank`,
+   `herbalife_margins`), PV, ce qui manque pour le rang suivant (`herbalifeFormulas.ts`).
+4. **La rentabilité du club** (petit) — dans l'écran Rentabilité existant (`BbcClub100`, pas de nouvel écran) :
+   cartes encaissées (`member_cards.price_eur`), coût des visites, ventes du propriétaire, écarts estimés par coach.
+5. **Le journal qui décompte** (moyen, le plus délicat) — les jours sans club, « Shake F1 · tes sachets du club »
+   en tête des habituels ; un toucher = noté ET un sachet de moins ; compteur « À la maison » ; les upgrades du
+   pointage s'ajoutent au shake du jour. Uniquement par les fonctions à jeton du journal (security definer).
+- **Plus tard** : une seule caisse (les ventes comptoir sans membre, `consumption_orders`, par le même écran) ;
+  « Qui l'a amenée ? » à la création d'une fiche → cœurs, première ligne, junior partenaire automatique.
+
+**Le circuit, depuis le téléphone** :
+1. Claude code le lot sur la branche `claude/app-monetization-duplication-419di7` (basée sur main), vérifie
+   (`npx tsc -b --noEmit`, tests, garde-fou visuel `gardeVisuelle.test.ts`).
+2. Migration additive, une par lot, appliquée l'après-midi hors heures du club (base unique = la prod, Nano),
+   puis version du fichier enregistrée au registre (cf. CLAUDE.md « Migrations »).
+3. Thomas teste sur la preview Vercel de la branche (chaque push est déployé, vérifié le 26/09) depuis son
+   téléphone. La base est la vraie : les ventes d'essai sont effacées après.
+4. Sur « go main » de Thomas, Claude reporte le lot sur `main` (après tsc) puis sur `dev/thomas-test`.
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
