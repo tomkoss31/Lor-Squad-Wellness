@@ -273,6 +273,51 @@ samedi et dimanche → 5 sachets F1 + 3 PDM (½) + des barres) :
 - au suivi, la coach voit si les shakes ont été pris les jours sans club (la vraie observance) ;
 - règle : chez elle on PROPOSE, on ne pré-remplit jamais (seul le club pré-remplit, on sait qu'elle l'a pris).
 
+### La carte du club, envoyée par Thomas (26/09)
+
+Photo du tableau : `docs/reflexion/tableau-du-club-2026-09-26.jpg`. **Le tableau fait foi.** 34 lignes.
+
+| Rubrique | Produit | Prix |
+|---|---|---|
+| Petit déj | Formula 1 (sachet) · PDM (sachet 2 doses) · Thermo (sachet 3 doses) | 3,80 · 4,50 · 4,10 € |
+| Petit déj | Pack 6 jours (F1 + Thermo) · Pack 6 jours avec PDM · Aloé Vera (flacon) | 31 · 44 · 54,50 € |
+| Accessoires | Shaker oublié · cuillère doseuse · shaker couleur · gourde 2 L | 3,50 · 2,50 · 13,50 · 19 € |
+| Suppléments sur place | Collagène · fibre pomme (5 g) · fibre orange goji (3 g) + vit. C · Beta (cholestérol) · F3 PPP (5 g) · PDM · Créatine+ | 2,80 · 1,50 · 2,10 · 1,90 · 1,30 · 1,90 · 1 € |
+| Encas (g = protéines) | Barres encas vanille amande / chocolat citron (10 g) | 2,30 € |
+| Encas | Barres Achieve cookie / chocolat noir (21 g) | 4,60 € |
+| Encas | Barres Formula 1 chocolat noir (13 g) / cranberry choco blanc (15 g) | 4,40 € |
+| Encas | Chips protéinées barbecue (11 g) / crème oignons (12 g) | 2,80 € |
+| Encas | Shake F1 à emporter (18 g) · Shake iced coffee à emporter (15 g) | 5,50 · 5,30 € |
+| Compléments | Microbiotic Max · Immune Booster | 3,30 · 2,50 € |
+| H24 | CR7 · LiftOff · LiftOff Max · Rebuild · Hydrate | 1,70 · 4 · 3,90 · 5,10 · 2,40 € |
+
+Ce que la carte apprend (vérifié avec `herbalifeCatalog.ts`) :
+- **Les prix = le prix public Herbalife ramené à la portion**, arrondi au-dessus : chips 27,50/10 = 2,75 →
+  2,80 ; barres 31,50/14 = 2,25 → 2,30 ; Immune 51/21 = 2,43 → 2,50 ; Microbiotic 64,50/20 → 3,30 ;
+  LiftOff Max 38,50/10 → 3,90 ; aloé = le flacon au prix public (54,50). Thermo = le thé 51 g :
+  41/30 × 3 = **4,10 € pile**. Donc au palier 50 %, le club garde ~la moitié de ce qu'il vend.
+- **Au-dessus du prix public** : sachet F1 3,80 € (public 3,02 → ~60 % de marge), sachet PDM 4,50 €
+  (public 3,57 → ~60 %), shake F1 à emporter 5,50 € (F1 + PDM ≈ 2,40 € de coût à 50 %).
+- **Les packs = la somme des sachets** : 6 F1 + 2 Thermo = 31,00 € ; + 3 PDM = 44,50 → vendu 44 €.
+  → un pack 6 jours = 6 shakes F1 + 6 thés (+ 6 doses PDM) « à la maison ».
+- Changés depuis l'ancienne carte du 25/06 : chips 3,30 → 2,80 ; CR7 1,40 → 1,70 ; LiftOff 1,95 → 4 ;
+  café glacé 5,25 → 5,30.
+- Pas dans le catalogue de l'app : Achieve (149K), fibre orange goji, collagène, barre F1 cranberry,
+  accessoires. Portions par pot inconnues : Rebuild, CR7, F3, fibre pomme, café glacé, Beta, barre F1.
+
+Comment chaque rubrique entre dans l'app :
+- **Petit déj** (sachets, packs, aloé) → « À la maison » (le stock chez elle, relié au journal) ;
+- **Suppléments sur place** → les upgrades, ajoutés au shake du jour (et à ses protéines dans le journal) ;
+- **Encas, compléments, H24** → vendus à l'unité ; barres, chips et shakes à emporter vont aussi au journal ;
+- **Accessoires** → dans le chiffre seulement.
+
+Caisse simple malgré 34 lignes : d'abord SES habituels (Mélanie : F1 + PDM) et les 6 meilleures ventes en gros
+boutons ; « Tout le tableau » à un toucher, rangé comme le tableau (mêmes 5 rubriques, mêmes couleurs) ;
+5-6 sachets F1 → l'écran propose le pack 6 jours.
+
+Reste à demander : le grand thé-aloé de Mélanie (absent du tableau) ; la part de la stagiaire ;
+le prix d'achat des accessoires ; les portions par pot des 7 produits ci-dessus (liste précise avec la maquette).
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
