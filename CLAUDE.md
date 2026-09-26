@@ -536,6 +536,16 @@ seulement : `_club_proprio`, rien pour les autres). Section `caisse/RentabiliteD
 - **En prod depuis le 26/09** (« go main » de Thomas ; aucune vente en base : « À la maison » et « tes sachets
   du club » apparaîtront après la première vente de F1 / PDM au club).
 
+### Le mode d'emploi de la caisse (26/09/2026)
+
+Thomas : « aide pour les coachs de l'équipe à comprendre ». Même modèle que l'agenda (`GuideAgendaSheet` +
+`mail-agenda-club`) : **`caisse/GuideCaisseSheet.tsx`** derrière un « ? » dans le bandeau de **Ma caisse**, et une
+carte « Nouveau : la caisse du club » la première fois (`ls-caisse-club-guide-vu`) — jamais un popup. Cinq points
+(le pointage, qui encaisse quoi, avant un jour fermé, une erreur, Ma caisse) + « ce que ça t'apporte ». Le
+propriétaire ou un admin l'envoie par mail à une coach, « Moi (pour voir) » compris : edge **`mail-caisse-club`**,
+deux gestes, renvoyable. Le ton : un outil de plus, pas une obligation ; rien ne date le texte. Les coachs du club
+ne sont lus (`coachs_du_club`) qu'à l'ouverture du guide.
+
 ---
 
 ## 🔀 Workflow dev / prod
@@ -1357,7 +1367,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 ---
 
-## ⚡ Edge Functions — les 76 (au 22/09/2026)
+## ⚡ Edge Functions — les 77 (au 26/09/2026)
 
 | Function | Déclenchement | Rôle |
 |---|---|---|
@@ -1401,6 +1411,7 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 | `audience-collect` | fetch front (site public, par paquets) | Compteurs d'audience : normalise le chemin contre une **liste blanche** (un chemin inconnu → `/autre`, sinon un bot créerait une ligne par URL inventée), résout le coach par slug, appelle la RPC `audience_bump`. Répond toujours 200 : une mesure ratée ne doit jamais gêner le visiteur. ⚠️ La liste `CHEMINS` est **dupliquée** dans `src/lib/audience.ts` — un test compare les deux fichiers. (no-verify-jwt) |
 | `mail-acces-coach` | fetch front (admin, bouton dans /users) | « Ton acces a change » : previent quelqu'un qui monte coach que son compte a evolue, et surtout que **ses identifiants ne changent pas** (c'est le moment ou l'on croit devoir recreer un compte). Lit `users.email` — l'adresse de CONNEXION, jamais `clients.email` : les deux divergent en vrai (Thomas se connecte avec une adresse et sa fiche en porte une autre). Aucun mot de passe ni lien magique dans le mail. **Un bouton, jamais un automatisme** : la promotion se fait en deux gestes, un envoi accroche au premier annoncerait « coach BBC » a quelqu'un qui ne l'est pas encore. verify_jwt + controle admin dans la fonction |
 | `mail-agenda-club` | fetch front (responsable du club, bouton dans le « ? » de L'agenda) | « L'agenda du club, en 4 gestes » : le mode d'emploi de l'agenda partagé, envoyé à UNE coach du club (`users.email`). **À la demande et renvoyable** — Thomas, 17/09 : « doit et peut être envoyé à plusieurs reprises pour les nouveaux » — donc un bouton, pas une campagne ni un automatisme. Droits : admin OU propriétaire du club, et la destinataire doit être de ce club. Identité Breakfast Club (crème) ; visuels = mini-écrans en tableaux HTML (s'affichent images bloquées, aucun vrai nom de lead) ; légende = coachs réels du club + `calendar_color`. ⚠️ Le TON : on PROPOSE un outil (« pas une obligation »), jamais « on arrête TimeTree » ni date butoir ; rien ne date le texte. verify_jwt + contrôle des droits dans la fonction |
+| `mail-caisse-club` | fetch front (propriétaire du club ou admin, bouton dans le « ? » de Ma caisse) | « La caisse du club, en 4 gestes » (26/09) : le mode d'emploi du comptoir, envoyé à UNE coach du club — même modèle, mêmes droits et mêmes réponses d'erreur que `mail-agenda-club` (le front les traduit : `envoyerModeEmploi(id, "mail-caisse-club")`). Texte et mini-écrans dans `gabarit.ts` (à part pour l'aperçu sans Deno) ; exemples inventés, prix du tableau du 26/09. verify_jwt + contrôle des droits dans la fonction. Déployée par MCP (le conteneur n'atteint pas l'API) |
 | `auth-email-hook` | Supabase Send Email Hook | Route TOUS les mails auth (signup/invite/magiclink/recovery/email_change/reauthentication) vers Resend + template `_shared/email.ts`. Signature standardwebhooks (`SEND_EMAIL_HOOK_SECRET`). À activer côté dashboard (Auth → Hooks). (no-verify-jwt) |
 | `book-club-discovery` | fetch front (site du club, `/reserver`) | Réservation d'un RDV découverte au club : créneau + capacité (`get_club_discovery_availability`), insert `rdv_bookings`, push coach (no-verify-jwt) |
 | `manage-club-booking` | lien dans le mail de confirmation | Le prospect gère SON rendez-vous (déplacer / annuler) |
@@ -1442,7 +1453,8 @@ puis `POST /auth/v1/verify` avec `{type:'magiclink', token_hash:<hashed_token>}`
 
 > **80 fonctions au 21/09/2026** (+ `journal-noaly`, `journal-rappel` et `journal-remarque-notifier` ; `request-testimonial` supprimée le 21/09 avec sa tâche de 10 h — 0 témoignage en 2 mois — et la tâche `business-plan-reminder` aussi — 0 plan business jamais envoyé ; puis `morning-suivis-digest` (« pas besoin ») et `formation-relay-to-admin` (0 formation en attente) supprimées avec leurs tâches, `stripe-manual-reconcile` passée à 1 fois par jour ; le partage public `/partage/:token` et ses 2 fonctions ont été
 > supprimés le 18/09, décision Thomas) — la table ci-dessus les liste toutes (`ls supabase/functions`
-> fait foi ; toute nouvelle fonction = une ligne ici). **En ligne = dépôt = 76 depuis le 22/09** : les
+> fait foi ; toute nouvelle fonction = une ligne ici). **En ligne = dépôt = 76 depuis le 22/09, 77 depuis le 26/09
+> (`mail-caisse-club`)** : les
 > 7 fonctions FANTÔMES (en ligne sans aucun code, appelées par rien) ont été supprimées le 21/09 —
 > `admin-cancel-campaign`, `admin-resend-rdv-confirm`, `coach-reminder-notifier`, `daily-actions-notifier`,
 > `flex-notifier`, `passive-supervisor-data`, `tmp-shop-upload` — puis, le 22/09 (Thomas : « fais au mieux »),

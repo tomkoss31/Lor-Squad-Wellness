@@ -5,6 +5,8 @@
 // pour les nouveaux ». C'est donc un geste, pas une campagne : la fonction
 // `mail-agenda-club` vérifie que celui qui clique est le propriétaire du club
 // ou un admin, et que la destinataire est bien une coach de ce club.
+// Depuis le 26/09, le même geste envoie aussi « La caisse du club, mode
+// d'emploi » (`mail-caisse-club`, mêmes droits, mêmes réponses).
 // =============================================================================
 
 import { getSupabaseClient } from "../../../services/supabaseClient";
@@ -20,11 +22,14 @@ const MESSAGES: Record<string, string> = {
 };
 const REPLI = "Le mail n'est pas parti — vérifie ta connexion, puis réessaie.";
 
-export async function envoyerModeEmploi(coachId: string): Promise<ResultatEnvoi> {
+export async function envoyerModeEmploi(
+  coachId: string,
+  fonction: "mail-agenda-club" | "mail-caisse-club" = "mail-agenda-club",
+): Promise<ResultatEnvoi> {
   try {
     const sb = await getSupabaseClient();
     if (!sb) return { ok: false, message: REPLI };
-    const { data, error } = await sb.functions.invoke("mail-agenda-club", { body: { user_id: coachId } });
+    const { data, error } = await sb.functions.invoke(fonction, { body: { user_id: coachId } });
     if (error) {
       // `functions.invoke` range le corps d'une réponse 4xx dans `error.context`.
       let code = "";
