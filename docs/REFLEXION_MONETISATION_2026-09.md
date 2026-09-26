@@ -353,6 +353,34 @@ Prix publics introuvables (pas dans le catalogue de l'app, site bloqué) :
 - Collagen Skin Booster (076K) : 171 g, 30 portions.
 → les lire sur le tarif de Thomas, ou autoriser `www.herbalife.com` dans l'accès réseau de l'environnement.
 
+### La vraie règle de l'« à emporter » (26/09, remplace « stock du club » et la règle précédente)
+
+Thomas : « Romane vend l'à emporter au prix affiché au club ; elle les achète au prix Herbalife avec SA remise
+(35 % en ce moment). Mélanie et moi, on gagne juste la différence entre ma remise et la sienne, sur son achat
+sur la plateforme Herbalife. »
+- **Le stock de l'à emporter est celui de la coach en caisse**, acheté avec sa remise. Elle encaisse et garde
+  sa marge : prix du tableau − prix public × (1 − sa remise). Au prix public : ~35 % pour une coach à 35 %.
+  Sachet F1 à 3,80 € : elle l'a payé 1,97 € → elle garde 1,83 €.
+- **Le propriétaire gagne l'écart de remise, payé par Herbalife** (pas par la caisse du club). L'app le calcule
+  déjà pour la lignée (`herbalifeFormulas.ts`) : **PV × écart × 1,78 €** (base HT, pas le prix du tableau).
+  100 € vendus au prix public ≈ 38 PV → 15 % × 38 × 1,78 ≈ **10 €** (et non 15 €). Chiffre réel : Bizworks.
+- Bonus ludique : ses ventes = SES PV → « ce mois : X PV vendus au club, encore Y PV pour passer à 42 % »
+  (paliers de `herbalifeFormulas.ts` : 1 000 PV sur 3 mois pour 42 %).
+
+**Les grands pots** (catalogue du Panier, `pvCatalog.ts`) : thé 102 g = 73,50 € (60 doses de 1,7 g →
+1,23 €/dose), aloé XXL 1,9 L = 200,50 € (189 doses de 10 ml → 1,06 €/dose). Grand thé-aloé = une dose de plus
+de chaque (à confirmer) → **2,30 € au prix public**, 1,14 € de coût à 50 %.
+Au passage : l'écran Rentabilité compte le thé et l'aloé en PETITS pots → coût d'une visite 3,67 € ; avec les
+grands pots, **3,55 €**.
+
+Reste à confirmer (défauts proposés) :
+1. Sur place (boisson, suppléments, grand thé-aloé) = le stock du club → le club encaisse ; à emporter = le
+   stock de la coach en caisse.
+2. Le paiement : la membre paie la coach, ou la caisse du club ? Si c'est la caisse du club, l'app calcule
+   chaque mois ce qu'il faut reverser à chaque coach.
+3. Grand thé-aloé = une dose de plus de chaque.
+Les 3 prix publics manquants (Achieve, Fibre Concentrate, collagène) : « pas importants pour le moment ».
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de
