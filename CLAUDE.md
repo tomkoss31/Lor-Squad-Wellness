@@ -470,6 +470,22 @@ et les lots 2 à 5 : `docs/REFLEXION_MONETISATION_2026-09.md`. Code : `src/featu
 - **En prod depuis le 26/09** (« go main » de Thomas ; aucune vente en base à ce moment-là : « À la maison » se
   verra à la première vente de F1 / PDM / Thermo au club).
 
+### Lot 3 : « Ma caisse » (26/09/2026)
+
+« go lot 3 ». Migration `20261215850000` (colonne `club_carte.recette`, fonction `club_ma_caisse(mois)`). Calcul
+pur et testé : `caisse/gains.ts` ; écran `caisse/MaCaisse.tsx`, dans « ⋯ Plus » (téléphone : `BbcPlus` ;
+ordinateur : `PLUS` de `BbcApp`).
+- **La règle (Thomas)** : sur une unité, gagné = prix du club − prix public de l'unité × (1 − sa remise). Sa
+  remise vient de `users.current_rank` (`tierPctForRank` : 25 · 35 · 42, et 50 pour tout Supervisor et au-dessus).
+- **Prix public et PV d'une unité** : sa référence et ses portions (`herbalifeCatalog` ; le collagène 076K vient de
+  `pvCatalog`), sinon ses doses × la recette du club (`RECETTE_CLUB`) — `recette` pour le grand thé-aloé (1 thé +
+  1 aloé) et le shake à emporter (F1 + PDM), `maison` pour les packs —, sinon INCONNU (accessoires, barre
+  chocolat-citron, chips crème-oignons) : dans le vendu, jamais dans le gagné, et l'écran le dit.
+- **L'écran** : le gagné du jour en gros (et le vendu, les PV), ses membres du jour, son mois (vendu, gagné, PV),
+  puis la jauge vers le rang suivant — la même que sa fiche (`useDistributorQualifications` +
+  `rankProgressionFromWindows`), absente à 50 %. Elle ne voit QUE ses ventes (`vendeur_id` = elle) ; le club
+  entier et l'écart de remise du propriétaire, c'est le lot 4.
+
 ---
 
 ## 🔀 Workflow dev / prod

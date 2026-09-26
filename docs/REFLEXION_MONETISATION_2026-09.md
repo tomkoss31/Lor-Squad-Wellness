@@ -494,6 +494,23 @@ vente annulée ; la vente du jour fige ses doses ; `anon` refusé.
   - à Verdun, le samedi est ouvert (8 h 30–11 h) : la fermeture qui compte, c'est le dimanche et les fériés.
 - « À la maison » n'apparaît qu'après une vraie vente de F1 / PDM / Thermo : la première se verra au club.
 
+### Lot 3 — « Ma caisse », codé, en recette (26/09)
+
+Thomas : « go lot 3 ». Sur la branche ; migration `20261215850000_comptoir_ma_caisse` appliquée le 26/09 vers
+16 h 35 (colonne `recette` + `club_ma_caisse`), enregistrée au registre, empreinte = fichier. Essai en transaction
+annulée : Romane ne voit que SA vente (ni celle de Thomas, ni l'annulée), son rang 35 %, la carte avec les deux
+recettes ; `anon` refusé.
+- **La règle** : gagné = prix du club − prix public de l'unité × (1 − sa remise). Exemple testé, Romane à 35 % :
+  5 F1 + un grand thé-aloé = 21,60 € vendus, **10,11 € gagnés**, 6,9 PV (le sachet F1 lui coûte 1,97 €, le grand
+  thé-aloé 1,64 €). À 50 %, le sachet F1 rapporte 2,29 € au lieu de 1,83 €.
+- **Ce que l'app ne sait pas chiffrer** (hors catalogue) : shaker, cuillère, shaker couleur, gourde, barre
+  chocolat-citron, chips crème-oignons. Ils comptent dans le vendu, pas dans le gagné, et l'écran le dit.
+  À compléter plus tard si Thomas donne leur prix d'achat.
+- **Écarts voulus avec la maquette** : les membres du jour sont listés un par un (5 au plus, puis « N autres
+  membres ») au lieu de « 3 autres membres · chips, Achieve… » ; pas de jauge pour une coach déjà à 50 %.
+- Les PV affichés sont ceux de SES ventes au comptoir (estimés d'après le catalogue) ; la jauge du rang, elle,
+  lit ses PV déclarés (fenêtres glissantes, comme sa fiche).
+
 ## Questions ouvertes
 
 - Combien de clubs de nutrition et de coachs Herbalife existent en France (et en francophonie) ? Ordre de

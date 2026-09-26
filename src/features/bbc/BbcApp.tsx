@@ -38,6 +38,7 @@ import { BbcBoites } from "./views/BbcBoites";
 import { BbcAgenda } from "./agenda/BbcAgenda";
 import { BbcMessages } from "./views/BbcMessages";
 import { BbcReglages } from "./views/BbcReglages";
+import { MaCaisse } from "./caisse/MaCaisse";
 import { BbcAppels } from "./views/BbcAppels";
 import { BbcLiensTiroir } from "./views/BbcLiens";
 import { BbcPrelancement } from "./views/BbcPrelancement";
@@ -87,6 +88,8 @@ export type BbcView =
   | "prelancement"
   | "club100"
   | "reglages"
+  /** Ma caisse (comptoir, lot 3, 26/09) : ce que la coach en caisse a vendu et gagné. */
+  | "caisse"
   /** Son journal à elle (22/09) : ouvert par le rond de l'en-tête et la carte du Matin. */
   | "journal";
 
@@ -124,6 +127,7 @@ const BARRE: { k: BbcView; icone: string; label: string }[] = [
 /** Les vues rangées derrière Plus — pour que la barre latérale (desktop) les garde à un clic. */
 const PLUS: { k: BbcView; label: string }[] = [
   { k: "club", label: "Les visites" },
+  { k: "caisse", label: "Ma caisse" },
   { k: "messages", label: "Messages" },
   { k: "appels", label: "Les appels" },
   { k: "coeurs", label: "Les cœurs" },
@@ -164,6 +168,7 @@ const TITLES: Record<BbcView, { eye: string; title: string }> = {
   prelancement: { eye: "avant l'ouverture", title: "Pré-lancement" },
   club100: { eye: "le modèle · tes chiffres", title: "Club 100 & rentabilité" },
   reglages: { eye: "config du club", title: "Réglages" },
+  caisse: { eye: "ce que tu as vendu et gagné", title: "Ma caisse" },
   journal: { eye: "ton journal perso · comme tes membres", title: "Mon journal" },
 };
 
@@ -491,6 +496,7 @@ export function BbcApp({ coachName, userId, isAdmin, vueAdresse, cleAdresse, peu
         {view === "prelancement" && <BbcPrelancement userId={userId} coachName={coachName} />}
         {view === "club100" && <BbcClub100 userId={userId} clubId={club?.id ?? null} />}
         {view === "reglages" && <BbcReglages club={club ?? null} onSaved={setReglagesFrais} />}
+        {view === "caisse" && <MaCaisse userId={userId} />}
       </main>
 
       {/* ── La barre du bas (mobile) : Matin · Agenda · ＋ · Contacter · Membres ── */}

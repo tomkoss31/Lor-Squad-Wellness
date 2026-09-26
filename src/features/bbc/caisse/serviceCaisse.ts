@@ -8,6 +8,7 @@ import { getSupabaseClient } from "../../../services/supabaseClient";
 import type { ReglagesHoraires } from "../agenda/agendaClub";
 import { lignesPanier, lireAchats, lireCaisse, type Achat, type DonneesCaisse, type Panier, type Rubrique, type Sorte } from "./caisse";
 import { lireMaisonClub, type DonneesMaison } from "./maison";
+import { lireMaCaisse, type DonneesMaCaisse } from "./gains";
 
 /** La carte, ses habituels et les plus vendus. null si l'appel a échoué. */
 export async function chargerCaisse(clientId: string | null): Promise<DonneesCaisse | null> {
@@ -58,6 +59,19 @@ export async function chargerMaison(clientId: string): Promise<{ horaires: Regla
     if (error) return null;
     const lu = lireMaisonClub(data);
     return { horaires: lu.horaires, donnees: lu.membres.get(clientId) ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/** Mes ventes du mois, la carte et mon rang (lot 3, « Ma caisse »). null si l'appel a échoué. */
+export async function chargerMaCaisse(): Promise<DonneesMaCaisse | null> {
+  try {
+    const sb = await getSupabaseClient();
+    if (!sb) return null;
+    const { data, error } = await sb.rpc("club_ma_caisse", { p_mois: null });
+    if (error) return null;
+    return lireMaCaisse(data);
   } catch {
     return null;
   }
